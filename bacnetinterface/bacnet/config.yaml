@@ -11,6 +11,7 @@ arch:
   - amd64
   - i386
 init: false
+ingress: true
 map:
   - share:rw
 options:
