@@ -1,9 +1,9 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: BACnet interface
 version: "0.0.1"
-slug: Bing
-description: Bepacom BACnet interface
-url: "https://github.com/GravySeal/Home-Assistant-Add-On/tree/main/BACnet"
+slug: BACnetInterface
+description: Bepacom BACnet interface for detecting BACnet devices on the network.
+url: "https://github.com/GravySeal/bepacom-repo/tree/main/BACnet"
 arch:
   - armhf
   - armv7
