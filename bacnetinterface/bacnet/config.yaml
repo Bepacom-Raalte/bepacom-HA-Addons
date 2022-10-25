@@ -12,6 +12,8 @@ arch:
   - i386
 init: false
 ingress: true
+ingress_port: 5000
+host_network: true
 map:
   - share:rw
 options:
