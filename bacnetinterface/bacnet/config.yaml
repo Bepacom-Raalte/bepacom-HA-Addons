@@ -2,7 +2,7 @@
 name: BACnet/IP Interface
 version: "0.0.1"
 slug: bacnetinterface
-description: BACnet/IP interface. It'll discover BACnet devices on your network. On the WebUI you'll be able to set up the devices to be used as Home Assistant Entities.
+description: Bepacom BACnet/IP interface.
 url: "https://github.com/GravySeal/bepacom-repo/tree/main/BACnet/BACnet"
 arch:
   - armhf
@@ -17,4 +17,4 @@ options:
   message: "Hello world..."
 schema:
   message: "str?"
-image: "ghcr.io/home-assistant/{arch}-addon-example"
+#image: "ghcr.io/home-assistant/{arch}-addon-example"
