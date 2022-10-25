@@ -11,6 +11,7 @@ Add-on documentation: <https://developers.home-assistant.io/docs/add-ons>
 This repository contains the following add-ons
 
 ### [Example add-on](./example)
+### [BACnet Interface](./BACnet)
 
 ![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]

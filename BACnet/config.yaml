@@ -1,0 +1,20 @@
+# https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
+name: BACnet interface
+version: "0.0.1"
+slug: example
+description: BACnet interface. All BACnet devices on the network will be displayed as integrations
+url: "https://github.com/GravySeal/Home-Assistant-Add-On/tree/main/BACnet"
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+init: false
+map:
+  - share:rw
+options:
+  message: "What's up bois'"
+schema:
+  message: "str?"
+image: "ghcr.io/home-assistant/{arch}-addon-example"
