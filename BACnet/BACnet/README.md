@@ -1,4 +1,4 @@
-# Home Assistant Add-on: Example add-on
+# BACnet interface addon
 
 _Example add-on to use as a blueprint for new add-ons._
 

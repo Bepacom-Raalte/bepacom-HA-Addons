@@ -1,0 +1,20 @@
+# https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
+name: BACnet interface
+version: "0.0.1"
+slug: Bing
+description: Bepacom BACnet interface
+url: "https://github.com/GravySeal/Home-Assistant-Add-On/tree/main/BACnet"
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+init: false
+map:
+  - share:rw
+options:
+  message: "Op je BACus"
+schema:
+  message: "str?"
+# image: "ghcr.io/home-assistant/{arch}-addon-example"
