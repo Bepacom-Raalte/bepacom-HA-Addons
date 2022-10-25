@@ -1,6 +1,6 @@
-# BACnet interface addon
+# BACnet/IP interface
 
-_Based off of example addon, creates an interface for BACnet devices on this network._
+_Example add-on to use as a blueprint for new add-ons._
 
 ![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]

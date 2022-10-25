@@ -1,6 +1,6 @@
-# BACnet interface addon
+# Bepacom BACnet interface
 
-_Based off of example addon, creates an interface for BACnet devices on this network._
+_so cool._
 
 ![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]
