@@ -20,4 +20,4 @@ options:
   message: "Hello world..."
 schema:
   message: "str?"
-image: homeassistant/{arch}-addon-bacnet
+
