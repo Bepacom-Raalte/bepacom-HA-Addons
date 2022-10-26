@@ -5,6 +5,9 @@
 # ==============================================================================
 
 # Add your code here
+echo "Running interface service"
+
+
 
 ## Print the message the user supplied, defaults to "Hello World..."
 bashio::log.info "${message:="Hello World..."}"
