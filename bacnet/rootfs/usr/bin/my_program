@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo "Python?"
 
-python3 FlaskServerTest.py
 
 echo "All done!" > /share/example_addon_output.txt

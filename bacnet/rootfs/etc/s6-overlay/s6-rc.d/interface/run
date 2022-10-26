@@ -9,4 +9,4 @@
 bashio::log.info "Running interface"
 
 ## Run your program
-exec /usr/bin/my_program
+exec python3 /usr/bin/FlaskServerTest.py
