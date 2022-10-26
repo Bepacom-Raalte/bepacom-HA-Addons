@@ -6,6 +6,12 @@
 
 # Add your code here
 
+# Install requirements for add-on
+RUN \
+  apk add --no-cache \
+    python3
+
+
 # Declare variables
 declare message
 

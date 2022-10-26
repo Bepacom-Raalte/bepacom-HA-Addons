@@ -11,9 +11,9 @@ arch:
   - amd64
   - i386
 init: false
-ingress: true
-ingress_port: 5000
-host_network: true
+ingress: true			#enable webui
+ingress_port: 5000		#specifieke poort voor web ui
+host_network: true		#voor gebruik van de Host adapter/netwerkverbinding
 map:
   - share:rw
 options:
