@@ -1,6 +1,4 @@
 #!/bin/bash
 
 
-python3 -m http.server 8000
-
 echo "All done!" > /share/example_addon_output.txt
