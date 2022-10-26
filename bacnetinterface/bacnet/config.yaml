@@ -11,8 +11,8 @@ arch:
   - amd64
   - i386
 init: false
-webui: http://127.0.0.1:5000
-
+ingress: true			#enable webui
+ingress_port: 5000		#specifieke poort voor web ui
 host_network: true		#voor gebruik van de Host adapter/netwerkverbinding
 map:
   - share:rw
