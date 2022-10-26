@@ -2,10 +2,22 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
+echo "Trying to build"
+
 # Install requirements for add-on
+WORKDIR /usr/src
 RUN \
   apk add --no-cache \
     python3
+    py3-pip
+
+echo "Trying to install libs"
+
+RUN pip install --no-cache-dir --upgrade pip \
+  && pip install --no-cache-dir -r requirements.txt
+
+
+echo "Trying to run"
 
 
 # Copy data for add-on
