@@ -4,12 +4,6 @@ FROM $BUILD_FROM
 
 RUN echo "Trying to build"
 
-RUN for file in /etc/services.d/*/*; do \
-dos2unix $file; \
-chmod a+xwr $file; \
-done
-
-RUN echo "PAIN"
 
 # Install requirements for add-on
 WORKDIR /usr/src
@@ -26,5 +20,13 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 RUN echo "Trying to run"
 
+WORKDIR /rootfs
+RUN for file in /etc/services.d/*/*; do \
+dos2unix $file; \
+chmod a+xwr $file; \
+done
+
+
 WORKDIR /
+
 COPY rootfs /
