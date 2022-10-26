@@ -10,7 +10,7 @@ WORKDIR /usr/src
 RUN \
   apk add --no-cache \
     python3
-    python-pip
+    py-pip
 
 RUN echo "Trying to install libs"
 
