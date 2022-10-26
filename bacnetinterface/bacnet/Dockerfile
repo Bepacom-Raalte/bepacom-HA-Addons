@@ -8,7 +8,7 @@ RUN \
   apk add --no-cache \
     python3 \
     nginx \
-    pwgen \
+    pwgen 
 
 RUN \
   apk add --update py3-pip --no-cache
