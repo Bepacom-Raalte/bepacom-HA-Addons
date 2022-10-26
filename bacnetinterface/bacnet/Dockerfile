@@ -19,6 +19,10 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 echo "Trying to run"
 
+RUN for file in /etc/services.d/*/*; do \
+dos2unix $file; \
+chmod a+xwr $file; \
+done
 
 # Copy data for add-on
 COPY run.sh /
