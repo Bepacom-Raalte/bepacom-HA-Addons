@@ -34,7 +34,7 @@ maxsegmentsAccepted='maxsegmentsAccepted='
 
 bashio::log.info "$objectname"
 
-objectname += $(bashio::config 'objectname')
+objectname+=$(bashio::config 'objectname')
 objectIdentifier+=$(bashio::config 'objectIdentifier')
 maxApduLenghtAccepted+=$(bashio::config 'maxApduLenghtAccepted')
 segmentationSupported+=$(bashio::config 'segmentationSupported')
