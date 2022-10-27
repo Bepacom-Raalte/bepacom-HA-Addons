@@ -22,8 +22,12 @@ declare maxsegmentsAccepted
 
 # Assigning value to vars from config 
 
+
+a = "objectname = "
+
+
 header="[BACpypes]"
-objectname = "objectname=$(bashio::config 'objectname')"
+objectname = $a $(bashio::config 'objectname')
 objectIdentifier=$(bashio::config 'objectIdentifier')
 maxApduLenghtAccepted=$(bashio::config 'maxApduLenghtAccepted')
 segmentationSupported=$(bashio::config 'segmentationSupported')
