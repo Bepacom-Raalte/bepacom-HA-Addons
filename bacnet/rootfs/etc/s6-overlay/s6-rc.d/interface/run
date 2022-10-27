@@ -7,11 +7,35 @@
 # Add your code here
 
 
-declare -a options
+# Declaring variables
+
+declare objectname
+declare objectIdentifier
+declare maxApduLenghtAccepted
+declare segmentationSupported
+declare vendorID
+declare foreignBBMD
+declare foreignTTL
+declare maxsegmentsAccepted
+
+
+cat bashio::config
+
+
+# Assigning value to vars from config 
+
+objectname=$(bashio::config 'objectname')
+objectIdentifier=$(bashio::config 'objectIdentifier')
+maxApduLenghtAccepted=$(bashio::config 'maxApduLenghtAccepted')
+segmentationSupported=$(bashio::config 'segmentationSupported')
+vendorID=$(bashio::config 'vendorID')
+foreignBBMD=$(bashio::config 'foreignBBMD')
+foreignTTL=$(bashio::config 'foreignTTL')
+maxsegmentsAccepted=$(bashio::config 'maxsegmentsAccepted')
+
 
 bashio::log.info "Running interface"
 
-pwd
 
 ## Run your program
 exec python3 /usr/bin/BACpypesFlask.py
