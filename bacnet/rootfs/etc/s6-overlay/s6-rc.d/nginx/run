@@ -1,5 +1,3 @@
 #!/command/execlineb -P
 
-bashio::log.info "Running nginx"
-
 nginx -g "daemon off;"
