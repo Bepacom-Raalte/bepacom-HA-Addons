@@ -21,20 +21,24 @@ declare maxsegmentsAccepted
 
 
 # Assigning value to vars from config 
-
-
-a = "objectname = "
-
-
 header="[BACpypes]"
-objectname = $a $(bashio::config 'objectname')
-objectIdentifier=$(bashio::config 'objectIdentifier')
-maxApduLenghtAccepted=$(bashio::config 'maxApduLenghtAccepted')
-segmentationSupported=$(bashio::config 'segmentationSupported')
-vendorID=$(bashio::config 'vendorID')
-foreignBBMD=$(bashio::config 'foreignBBMD')
-foreignTTL=$(bashio::config 'foreignTTL')
-maxsegmentsAccepted=$(bashio::config 'maxsegmentsAccepted')
+objectname = "objectname="
+objectIdentifier="objectIdentifier="
+maxApduLenghtAccepted="maxApduLenghtAccepted="
+segmentationSupported="segmentationSupported="
+vendorID="vendorID="
+foreignBBMD="foreignBBMD="
+foreignTTL="foreignTTL="
+maxsegmentsAccepted="maxsegmentsAccepted=="
+
+objectname += $(bashio::config 'objectname')
+objectIdentifier+=$(bashio::config 'objectIdentifier')
+maxApduLenghtAccepted+=$(bashio::config 'maxApduLenghtAccepted')
+segmentationSupported+=$(bashio::config 'segmentationSupported')
+vendorID+=$(bashio::config 'vendorID')
+foreignBBMD+=$(bashio::config 'foreignBBMD')
+foreignTT+L=$(bashio::config 'foreignTTL')
+maxsegmentsAccepted+=$(bashio::config 'maxsegmentsAccepted')
 
 bashio::log.info "$objectname"
 
