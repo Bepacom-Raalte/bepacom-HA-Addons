@@ -65,7 +65,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return "congrats, it's a webapp"
+    return "<p>congrats, it's a webapp</p>"
 
 #========================================
 # Some notes
@@ -910,8 +910,6 @@ def main():
 
     if _debug: _log.debug("initialization")
     if _debug: _log.debug("    - args: %r", args)
-
-    print(args.ini)
 
     # make a device object
     this_device = LocalDeviceObject(
