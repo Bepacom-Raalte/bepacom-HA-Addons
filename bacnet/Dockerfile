@@ -12,7 +12,7 @@ RUN \
 
   && apk add --update py3-pip --no-cache \
 
-  && pip install --no-cache-dir --upgrade  \
+  && pip install --no-cache-dir \
     pip \
     bacpypes == 0.18.6\
     flask
