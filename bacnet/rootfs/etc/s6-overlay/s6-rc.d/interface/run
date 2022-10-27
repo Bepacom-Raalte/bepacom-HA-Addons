@@ -31,7 +31,6 @@ segmentationSupported='segmentationSupported: '
 vendorID='vendorIdentifier: '
 foreignBBMD='foreignBBMD: '
 foreignTTL='foreignTTL: '
-maxsegmentsAccepted='maxsegmentsAccepted: '
 
 bashio::log.info "$objectname"
 
@@ -41,8 +40,7 @@ maxApduLenghtAccepted+="$(bashio::config 'maxApduLenghtAccepted')"
 segmentationSupported+="$(bashio::config 'segmentationSupported')"
 vendorID+="$(bashio::config 'vendorID')"
 foreignBBMD+="$(bashio::config 'foreignBBMD')"
-foreignTTL="$(bashio::config 'foreignTTL')"
-maxsegmentsAccepted+="$(bashio::config 'maxsegmentsAccepted')"
+foreignTTL+="$(bashio::config 'foreignTTL')"
 
 bashio::log.info "$objectname"
 
