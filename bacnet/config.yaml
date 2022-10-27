@@ -20,6 +20,13 @@ map:
   - media:rw
   - share:rw
   - ssl:rw
+ports:
+  5000/tcp: 5000
+  5000/udp: 5000
+  47808/tcp: 47808
+  47808/udp: 47808
+  47809/tcp: 47809
+  47809/udp: 47809
 options:
   objectname: BigBoss
   objectIdentifier: 420
