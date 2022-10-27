@@ -19,9 +19,6 @@ declare foreignTTL
 declare maxsegmentsAccepted
 
 
-cat bashio::config
-
-
 # Assigning value to vars from config 
 
 objectname=$(bashio::config 'objectname')
@@ -33,6 +30,7 @@ foreignBBMD=$(bashio::config 'foreignBBMD')
 foreignTTL=$(bashio::config 'foreignTTL')
 maxsegmentsAccepted=$(bashio::config 'maxsegmentsAccepted')
 
+bashio::log.info "$objectname"
 
 bashio::log.info "Running interface"
 
