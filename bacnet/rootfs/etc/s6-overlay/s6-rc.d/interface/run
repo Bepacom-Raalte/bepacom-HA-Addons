@@ -24,7 +24,7 @@ bashio::log.info "Declared"
 # Assigning value to vars from config 
 header='[BACpypes]'
 objectname='objectName: '
-address='address: 127.0.0.1/24'
+address="$(hostname -i)/24"
 objectIdentifier='objectIdentifier : '
 maxApduLenghtAccepted='maxApduLengthAccepted: '
 segmentationSupported='segmentationSupported: '
@@ -45,7 +45,7 @@ foreignTTL+="$(bashio::config 'foreignTTL')"
 bashio::log.info "$objectname"
 
 # Generate INI file
-printf "$header \n$objectname \n$address \n$objectIdentifier \n$maxApduLenghtAccepted \n$segmentationSupported \n$vendorID \n$foreignBBMD \n$foreignTTL \n$maxsegmentsAccepted" > BACpypes.ini
+printf "$header \n$objectname \n$address \n$objectIdentifier \n$maxApduLenghtAccepted \n$segmentationSupported \n$vendorID \n$foreignBBMD \n$foreignTTL" > BACpypes.ini
 cat BACpypes.ini
 
 bashio::log.info "Running interface"
