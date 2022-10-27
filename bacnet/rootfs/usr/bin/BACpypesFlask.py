@@ -935,9 +935,11 @@ def main():
 
     # make the thread object and start it
     bacpypes_thread = BACpypesThread()
-    #bacpypes_thread.start()
+    bacpypes_thread.start()
 
     app.run(host='0.0.0.0', debug=True)
     # main thread
     #    
-        
+       
+if __name__ == 'main':
+    main()
