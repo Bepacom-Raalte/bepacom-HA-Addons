@@ -5,6 +5,7 @@
 import sys
 from threading import Thread, active_count, enumerate
 from flask import Flask
+import socket
 
 
 from bacpypes.debugging import bacpypes_debugging, ModuleLogger
@@ -61,12 +62,14 @@ this_application = None
 devices = []
 rsvp = (True, None, None)
 
+IPAddr = socket.gethostbyname(socket.gethostname())
+print(IPAddr)
 
 app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return "<p>congrats, it's a webapp</p>"
+    return "congrats, it's a webapp"
 
 #========================================
 # Some notes
@@ -926,7 +929,7 @@ def main():
         this_device.maxSegmentsAccepted = int(args.ini.maxsegmentsaccepted)
 
     # make a simple application
-    this_application = Application(this_device, args.ini.address)
+    this_application = Application(this_device, IPAddr)
     if _debug: _log.debug("    - this_application: %r", this_application)
 
     # make a console
@@ -935,11 +938,14 @@ def main():
 
     # make the thread object and start it
     bacpypes_thread = BACpypesThread()
-    bacpypes_thread.start()
+    #
 
     app.run(host='0.0.0.0', debug=True)
     # main thread
-    #    
-       
-if __name__ == 'main':
+    #   
+    bacpypes_thread.start()
+        
+
+if __name__ == "__main__":
     main()
+
