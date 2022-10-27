@@ -58,5 +58,8 @@ cat BACpypes.ini
 
 bashio::log.info "Running interface"
 
+lsof -i :47808
+lsof -i :5000
+
 ## Run your program
 exec python3 /usr/bin/BACpypesFlask.py
