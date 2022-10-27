@@ -6,7 +6,7 @@ FROM $BUILD_FROM
 WORKDIR /usr/src
 RUN \
   apk add --no-cache \
-    python3.9 \
+    python3.9.0 \
     nginx \
     pwgen \
 
@@ -14,7 +14,7 @@ RUN \
 
   && pip install --no-cache-dir \
     pip \
-    bacpypes == 0.18.6\
+    bacpypes \
     flask
 
 WORKDIR /
