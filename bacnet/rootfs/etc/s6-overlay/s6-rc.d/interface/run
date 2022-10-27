@@ -24,15 +24,15 @@ bashio::log.info "Declared"
 
 # Assigning value to vars from config 
 header='[BACpypes]'
-objectname='objectname : '
-address='address : 127.0.0.1'
+objectname='objectname: '
+address='address: 127.0.0.1/24'
 objectIdentifier='objectIdentifier : '
-maxApduLenghtAccepted='maxApduLenghtAccepted : '
-segmentationSupported='segmentationSupported : '
-vendorID='vendorID : '
-foreignBBMD='foreignBBMD : '
-foreignTTL='foreignTTL : '
-maxsegmentsAccepted='maxsegmentsAccepted : '
+maxApduLenghtAccepted='maxApduLenghtAccepted: '
+segmentationSupported='segmentationSupported: '
+vendorID='vendorID: '
+foreignBBMD='foreignBBMD: '
+foreignTTL='foreignTTL: '
+maxsegmentsAccepted='maxsegmentsAccepted: '
 
 bashio::log.info "$objectname"
 
