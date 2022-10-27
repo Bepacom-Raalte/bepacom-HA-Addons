@@ -45,12 +45,11 @@ maxsegmentsAccepted+="$(bashio::config 'maxsegmentsAccepted')"
 
 bashio::log.info "$objectname"
 
-bashio::log.info "Running interface"
-
 # Generate INI file
-cat $header $objectname $objectIdentifier $maxApduLenghtAccepted $segmentationSupported $vendorID $foreignBBMD $foreignTTL $maxsegmentsAccepted > BACpypes.ini
+echo $header $objectname $objectIdentifier $maxApduLenghtAccepted $segmentationSupported $vendorID $foreignBBMD $foreignTTL $maxsegmentsAccepted > BACpypes.ini
 cat BACpypes.ini
 
+bashio::log.info "Running interface"
 
 ## Run your program
 exec python3 /usr/bin/BACpypesFlask.py
