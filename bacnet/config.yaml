@@ -16,7 +16,11 @@ ingress_port: 5000		#specifieke poort voor web ui
 host_network: true		#voor gebruik van de Host adapter/netwerkverbinding
 panel_icon: mdi:router-wireless-settings
 map:
+  - backup:rw
+  - config:rw
+  - media:rw
   - share:rw
+  - ssl:rw
 options:
   objectname: BigBoss
   objectIdentifier: 420
