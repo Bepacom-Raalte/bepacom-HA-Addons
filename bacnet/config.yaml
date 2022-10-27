@@ -29,6 +29,7 @@ options:
   vendorID: 15
   foreignBBMD: 128.253.109.254
   foreignTTL: 30
+  maxSegmentsAccepted: 16
 schema:
   objectname: str
   objectIdentifier: int
@@ -37,3 +38,4 @@ schema:
   vendorID: int?
   foreignBBMD: str?
   foreignTTL: int?
+  maxSegmentsAccepted: int?

@@ -21,7 +21,7 @@ declare segmentationSupported
 declare vendorID
 declare foreignBBMD
 declare foreignTTL
-declare maxsegmentsAccepted
+declare maxSegmentsAccepted
 
 
 # Assigning value to vars from config 
@@ -34,9 +34,11 @@ segmentationSupported='segmentationSupported: '
 vendorID='vendorIdentifier: '
 foreignBBMD='foreignBBMD: '
 foreignTTL='foreignTTL: '
+maxSegmentsAccepted='maxSegmentsAccepted: '
 
 bashio::log.info "Added header and keys"
 
+# Concatenating the config to the variables
 objectname+="$(bashio::config 'objectname')"
 address+="$(hostname -i)/24"
 objectIdentifier+="$(bashio::config 'objectIdentifier')"
@@ -45,11 +47,12 @@ segmentationSupported+="$(bashio::config 'segmentationSupported')"
 vendorID+="$(bashio::config 'vendorID')"
 foreignBBMD+="$(bashio::config 'foreignBBMD')"
 foreignTTL+="$(bashio::config 'foreignTTL')"
+maxSegmentsAccepted+="$(bashio::config 'maxSegmentsAccepted')"
 
 bashio::log.info "Added values"
 
 # Generate INI file
-printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" > BACpypes.ini
+printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
 cat BACpypes.ini
 
 bashio::log.info "Running interface"
