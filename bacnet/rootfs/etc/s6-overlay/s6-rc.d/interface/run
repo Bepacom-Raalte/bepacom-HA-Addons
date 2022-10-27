@@ -34,14 +34,14 @@ maxsegmentsAccepted='maxsegmentsAccepted='
 
 bashio::log.info "$objectname"
 
-objectname+=$(bashio::config 'objectname')
-objectIdentifier+=$(bashio::config 'objectIdentifier')
-maxApduLenghtAccepted+=$(bashio::config 'maxApduLenghtAccepted')
-segmentationSupported+=$(bashio::config 'segmentationSupported')
-vendorID+=$(bashio::config 'vendorID')
-foreignBBMD+=$(bashio::config 'foreignBBMD')
-foreignTT+L=$(bashio::config 'foreignTTL')
-maxsegmentsAccepted+=$(bashio::config 'maxsegmentsAccepted')
+objectname+="$(bashio::config 'objectname')"
+objectIdentifier+="$(bashio::config 'objectIdentifier')"
+maxApduLenghtAccepted+="$(bashio::config 'maxApduLenghtAccepted')"
+segmentationSupported+="$(bashio::config 'segmentationSupported')"
+vendorID+="$(bashio::config 'vendorID')"
+foreignBBMD+="$(bashio::config 'foreignBBMD')"
+foreignTT+L="$(bashio::config 'foreignTTL')"
+maxsegmentsAccepted+="$(bashio::config 'maxsegmentsAccepted')"
 
 bashio::log.info "$objectname"
 
