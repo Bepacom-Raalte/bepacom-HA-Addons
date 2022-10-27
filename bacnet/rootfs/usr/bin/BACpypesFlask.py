@@ -5,7 +5,6 @@
 import sys
 from threading import Thread, active_count, enumerate
 from flask import Flask
-import socket
 
 
 from bacpypes.debugging import bacpypes_debugging, ModuleLogger
@@ -61,9 +60,6 @@ _log = ModuleLogger(globals())
 this_application = None
 devices = []
 rsvp = (True, None, None)
-
-IPAddr = socket.gethostbyname(socket.gethostname())
-print(IPAddr)
 
 app = Flask(__name__)
 
@@ -929,7 +925,7 @@ def main():
         this_device.maxSegmentsAccepted = int(args.ini.maxsegmentsaccepted)
 
     # make a simple application
-    this_application = Application(this_device, IPAddr)
+    this_application = Application(this_device, args.ini.address)
     if _debug: _log.debug("    - this_application: %r", this_application)
 
     # make a console

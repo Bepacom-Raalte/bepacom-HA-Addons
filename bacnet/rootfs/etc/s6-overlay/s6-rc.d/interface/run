@@ -11,6 +11,7 @@
 
 declare header
 declare objectname
+declare address
 declare objectIdentifier
 declare maxApduLenghtAccepted
 declare segmentationSupported
@@ -24,6 +25,7 @@ bashio::log.info "Declared"
 # Assigning value to vars from config 
 header='[BACpypes]'
 objectname='objectname='
+address='address='
 objectIdentifier='objectIdentifier='
 maxApduLenghtAccepted='maxApduLenghtAccepted='
 segmentationSupported='segmentationSupported='
@@ -33,6 +35,9 @@ foreignTTL='foreignTTL='
 maxsegmentsAccepted='maxsegmentsAccepted='
 
 bashio::log.info "$objectname"
+
+echo ifconfig -a
+
 
 objectname+="$(bashio::config 'objectname')"
 objectIdentifier+="$(bashio::config 'objectIdentifier')"
@@ -46,7 +51,7 @@ maxsegmentsAccepted+="$(bashio::config 'maxsegmentsAccepted')"
 bashio::log.info "$objectname"
 
 # Generate INI file
-echo $header $objectname $objectIdentifier $maxApduLenghtAccepted $segmentationSupported $vendorID $foreignBBMD $foreignTTL $maxsegmentsAccepted > BACpypes.ini
+echo $header $objectname $address $objectIdentifier $maxApduLenghtAccepted $segmentationSupported $vendorID $foreignBBMD $foreignTTL $maxsegmentsAccepted > BACpypes.ini
 cat BACpypes.ini
 
 bashio::log.info "Running interface"
