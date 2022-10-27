@@ -18,7 +18,7 @@ panel_icon: mdi:router-wireless-settings
 map:
   - share:rw
 options:
-  objectname: Bingus
+  objectname: BigBoss
   objectIdentifier: 420
   maxApduLenghtAccepted: 1024
   segmentationSupported: segmentedBoth

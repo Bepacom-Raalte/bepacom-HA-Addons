@@ -15,7 +15,7 @@ RUN \
   && pip install --no-cache-dir --upgrade  \
     pip \
     bacpypes == 0.18.6\
-    flask == 2.2.2
+    flask
 
 WORKDIR /
 
