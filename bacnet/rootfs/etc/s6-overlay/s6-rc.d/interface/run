@@ -35,10 +35,6 @@ maxsegmentsAccepted='maxsegmentsAccepted: '
 
 bashio::log.info "$objectname"
 
-ifconfig -a
-
-hostname -I
-
 objectname+="$(bashio::config 'objectname')"
 objectIdentifier+="$(bashio::config 'objectIdentifier')"
 maxApduLenghtAccepted+="$(bashio::config 'maxApduLenghtAccepted')"
