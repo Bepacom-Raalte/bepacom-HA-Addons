@@ -911,6 +911,8 @@ def main():
     if _debug: _log.debug("initialization")
     if _debug: _log.debug("    - args: %r", args)
 
+    print(args)
+
     # make a device object
     this_device = LocalDeviceObject(
         objectName=args.ini.objectname,
