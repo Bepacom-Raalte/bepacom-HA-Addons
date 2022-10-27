@@ -9,6 +9,7 @@
 
 # Declaring variables
 
+declare header
 declare objectname
 declare objectIdentifier
 declare maxApduLenghtAccepted
@@ -21,7 +22,8 @@ declare maxsegmentsAccepted
 
 # Assigning value to vars from config 
 
-objectname=$(bashio::config 'objectname')
+header="[BACpypes]"
+objectname = "objectname=$(bashio::config 'objectname')"
 objectIdentifier=$(bashio::config 'objectIdentifier')
 maxApduLenghtAccepted=$(bashio::config 'maxApduLenghtAccepted')
 segmentationSupported=$(bashio::config 'segmentationSupported')
@@ -33,6 +35,10 @@ maxsegmentsAccepted=$(bashio::config 'maxsegmentsAccepted')
 bashio::log.info "$objectname"
 
 bashio::log.info "Running interface"
+
+# Generate INI file
+cat $header $objectname $objectIdentifier $maxApduLenghtAccepted $segmentationSupported $vendorID $foreignBBMD $foreignTTL $maxsegmentsAccepted > BACpypes.ini
+cat BACpypes.ini
 
 
 ## Run your program
