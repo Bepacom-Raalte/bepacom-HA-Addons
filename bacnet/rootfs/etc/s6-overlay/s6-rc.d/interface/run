@@ -25,7 +25,7 @@ bashio::log.info "Declared"
 # Assigning value to vars from config 
 header='[BACpypes]'
 objectname='objectname : '
-address='address : '
+address='address : 127.0.0.1'
 objectIdentifier='objectIdentifier : '
 maxApduLenghtAccepted='maxApduLenghtAccepted : '
 segmentationSupported='segmentationSupported : '
