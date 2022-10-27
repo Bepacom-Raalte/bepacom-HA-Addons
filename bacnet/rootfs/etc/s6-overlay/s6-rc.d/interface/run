@@ -6,7 +6,12 @@
 
 # Add your code here
 
+
+declare -a options
+
 bashio::log.info "Running interface"
+
+pwd
 
 ## Run your program
 exec python3 /usr/bin/BACpypesFlask.py
