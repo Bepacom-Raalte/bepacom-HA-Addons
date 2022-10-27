@@ -17,4 +17,21 @@ host_network: true		#voor gebruik van de Host adapter/netwerkverbinding
 panel_icon: mdi:router-wireless-settings
 map:
   - share:rw
-
+options:
+  objectname: Bingus
+  objectIdentifier: 420
+  maxApduLenghtAccepted: 1024
+  segmentationSupported: segmentedBoth
+  vendorID: 15
+  foreignBBMD: 128.253.109.254
+  foreignTTL: 30
+  maxsegmentsAccepted: 1024
+schema:
+  objectname: str
+  objectIdentifier: int
+  maxApduLenghtAccepted: int?
+  segmentationSupported: str?
+  vendorID: int?
+  foreignBBMD: str?
+  foreignTTL: int?
+  maxsegmentsAccepted: int?

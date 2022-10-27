@@ -1,4 +1,25 @@
 configuration:
-  message:
-    name: Message
-    description: The message that will be printed to the log when starting this example add-on.
+  objectname:
+    name: Object Name
+    description: The name of the interface in the BACnet network
+  objectIdentifier:
+    name: Object ID
+    description: The identifier of the interface
+  maxApduLenghtAccepted: 
+    name: Maximum  APDU Length Accepted
+    description: Maximum amount of Application Layer Protocol Data Units allowed
+  segmentationSupported:
+    name: Segmentation Supported
+    description: Supported type of segmentation of the interface
+  vendorID:
+    name: Vendor Identifier
+    description: The vendor ID of the interface
+  foreignBBMD:
+    name: BACnet/IP Broadcast Banagement Device
+    description: IP address of the BBMD
+  foreignTTL: 
+    name: Object Name
+    description: an object
+  maxsegmentsAccepted:
+    name: Maximum Segments Accepted
+    description: The maximum amount of segments accepted in a message
