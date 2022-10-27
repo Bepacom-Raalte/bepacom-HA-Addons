@@ -6,7 +6,7 @@ FROM $BUILD_FROM
 WORKDIR /usr/src
 RUN \
   apk add --no-cache \
-    python3.9.0 \
+    python3 \
     nginx \
     pwgen \
 
