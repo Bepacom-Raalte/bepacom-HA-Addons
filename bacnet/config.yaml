@@ -14,10 +14,7 @@ init: false
 ingress: true			#enable webui
 ingress_port: 5000		#specifieke poort voor web ui
 host_network: true		#voor gebruik van de Host adapter/netwerkverbinding
+panel_icon: mdi:router-wireless-settings
 map:
   - share:rw
-options:
-  message: "Hello world..."
-schema:
-  message: "str?"
 
