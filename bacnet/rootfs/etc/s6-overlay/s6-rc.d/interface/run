@@ -51,7 +51,7 @@ maxsegmentsAccepted+="$(bashio::config 'maxsegmentsAccepted')"
 bashio::log.info "$objectname"
 
 # Generate INI file
-echo $header $objectname $address $objectIdentifier $maxApduLenghtAccepted $segmentationSupported $vendorID $foreignBBMD $foreignTTL $maxsegmentsAccepted > BACpypes.ini
+echo "$header $'\n' $objectname $'\n' $address $'\n' $objectIdentifier $'\n' $maxApduLenghtAccepted $'\n' $segmentationSupported $'\n' $vendorID $'\n' $foreignBBMD $'\n' $foreignTTL $'\n' $maxsegmentsAccepted" > BACpypes.ini
 cat BACpypes.ini
 
 bashio::log.info "Running interface"
