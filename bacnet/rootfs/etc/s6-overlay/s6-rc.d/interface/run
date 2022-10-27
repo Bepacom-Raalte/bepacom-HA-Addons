@@ -1,14 +1,3 @@
-#!/usr/bin/with-contenv bashio
-# ==============================================================================
-# Start the example service
-# s6-overlay docs: https://github.com/just-containers/s6-overlay
-# ==============================================================================
-
-# Add your code here
-
-
-# Declaring variables
-
 declare header
 declare objectname
 declare address
@@ -38,6 +27,7 @@ bashio::log.info "$objectname"
 
 ifconfig -a
 
+hostname -I
 
 objectname+="$(bashio::config 'objectname')"
 objectIdentifier+="$(bashio::config 'objectIdentifier')"
@@ -51,7 +41,7 @@ maxsegmentsAccepted+="$(bashio::config 'maxsegmentsAccepted')"
 bashio::log.info "$objectname"
 
 # Generate INI file
-printf "$header $'\n' $objectname $'\n' $address $objectIdentifier $maxApduLenghtAccepted $segmentationSupported $vendorID $foreignBBMD $foreignTTL $maxsegmentsAccepted" > BACpypes.ini
+printf "$header \n$objectname \n$address \n$objectIdentifier \n$maxApduLenghtAccepted \n$segmentationSupported \n$vendorID \n$foreignBBMD \n$foreignTTL \n$maxsegmentsAccepted" > BACpypes.ini
 cat BACpypes.ini
 
 bashio::log.info "Running interface"
