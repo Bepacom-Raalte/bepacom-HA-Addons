@@ -184,7 +184,8 @@ def main():
 
     _log.debug("running")
 
-    run()
+    while True:
+        run()
 
     _log.debug("fini")
 
