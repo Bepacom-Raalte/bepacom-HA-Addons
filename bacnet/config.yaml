@@ -28,7 +28,7 @@ ports:
   47809/udp: 47809
 options:
   objectname: BigBoss
-  address: 127.0.0.1
+  address: host
   objectIdentifier: 420
   maxApduLenghtAccepted: 1024
   segmentationSupported: segmentedBoth
