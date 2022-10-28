@@ -59,7 +59,7 @@ cat BACpypes.ini
 bashio::log.info "Running interface"
 
 
-netstat -tulpn | grep LISTEN | grep :47808
+ss -tulpn | grep LISTEN | grep :47808
 
 ## Run your program
 exec python3 /usr/bin/BACpypesFlask.py
