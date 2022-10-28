@@ -40,8 +40,13 @@ bashio::log.info "Added header and keys"
 
 # Concatenating the config to the variables
 objectname+="$(bashio::config 'objectname')"
-#address+="$(hostname -i)"
+if [ $(bashio::config 'address') = host ]
+then
+address+="$(hostname -i)"
+else
 address+="$(bashio::config 'address')"
+fi
+
 objectIdentifier+="$(bashio::config 'objectIdentifier')"
 maxApduLenghtAccepted+="$(bashio::config 'maxApduLenghtAccepted')"
 segmentationSupported+="$(bashio::config 'segmentationSupported')"
