@@ -59,8 +59,6 @@ cat BACpypes.ini
 bashio::log.info "Running interface"
 
 #lsof -i :47808
-netstat -ltnp | grep -w ':47808' 
-
 
 ## Run your program
 exec python3 /usr/bin/BACpypesFlask.py
