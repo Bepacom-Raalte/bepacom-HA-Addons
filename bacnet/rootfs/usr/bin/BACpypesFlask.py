@@ -884,19 +884,6 @@ class BACpypesThread(Thread):
         stop()
         self.join()
 
-#class GUI(Thread):
-
-#    def __init__(self):
-#        Thread.__init__(self)
-
-#    def run(self):
-
-#        ui.run()
-
-#    def stop(self):
-#        stop()
-#        self.join()
-
 
 #========================================
 #   __main__
@@ -936,7 +923,7 @@ def main():
     bacpypes_thread = BACpypesThread()
     #
 
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='127.0.0.1', debug=True)
     # main thread
     #   
     bacpypes_thread.start()
