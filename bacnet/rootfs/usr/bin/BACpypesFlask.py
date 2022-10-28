@@ -923,10 +923,11 @@ def main():
     bacpypes_thread = BACpypesThread()
     #
 
-    app.run(host='127.0.0.1', debug=True)
+    #app.run(host='127.0.0.1', debug=True)
     # main thread
     #   
-    bacpypes_thread.start()
+    #bacpypes_thread.start()
+    run()
         
 
 if __name__ == "__main__":
