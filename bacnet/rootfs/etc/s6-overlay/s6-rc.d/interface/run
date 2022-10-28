@@ -64,4 +64,4 @@ nmap -p 47808 $(hostname -i)
 
 
 ## Run your program
-exec python3 /usr/bin/BACpypesFlask.py
+exec python3 /usr/bin/BAC.py
