@@ -12,7 +12,6 @@ arch:
   - i386
 init: false
 ingress: true			#enable webui
-host_network: true		#voor gebruik van de Host adapter/netwerkverbinding
 panel_icon: mdi:router-wireless-settings
 map:
   - backup:rw
