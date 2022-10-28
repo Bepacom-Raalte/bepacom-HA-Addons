@@ -59,7 +59,8 @@ cat BACpypes.ini
 bashio::log.info "Running interface"
 
 
-ss -tulpn | grep LISTEN | grep :47808
+nmap -p 47808 127.0.0.1
+
 
 ## Run your program
 exec python3 /usr/bin/BACpypesFlask.py
