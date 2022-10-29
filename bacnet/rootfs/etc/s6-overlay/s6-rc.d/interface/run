@@ -11,7 +11,6 @@
 #wait for nginx
 bashio::net.wait_for 5000
 
-
 declare header
 declare objectname
 declare address
@@ -22,7 +21,6 @@ declare vendorID
 declare foreignBBMD
 declare foreignTTL
 declare maxSegmentsAccepted
-
 
 # Assigning value to vars from config 
 header='[BACpypes]'
@@ -40,11 +38,12 @@ bashio::log.info "Added header and keys"
 
 # Concatenating the config to the variables
 objectname+="$(bashio::config 'objectname')"
+
 if [ $(bashio::config 'address') = host ]
 then
-address+="$(hostname -i)"
+	address+="$(hostname -i)"
 else
-address+="$(bashio::config 'address')"
+	address+="$(bashio::config 'address')"
 fi
 
 objectIdentifier+="$(bashio::config 'objectIdentifier')"
