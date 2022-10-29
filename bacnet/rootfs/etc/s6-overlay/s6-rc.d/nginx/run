@@ -1,7 +1,5 @@
 #!/usr/bin/with-contenv bashio
 
-exec nginx -t
-
 bashio::log.info "Running nginx"
 
 exec nginx 
