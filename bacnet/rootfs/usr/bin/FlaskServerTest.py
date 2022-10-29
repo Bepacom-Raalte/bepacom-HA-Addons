@@ -1,9 +1,6 @@
 from flask import Flask
 
-
-
 app = Flask(__name__)
-
 
 @app.route("/")
 def hello_world():
@@ -12,7 +9,7 @@ def hello_world():
 
 
 class main:
-    app.run(host = '0.0.0.0', debug= True)
+    app.run(host = '127.0.0.1', debug= True)
 
 
 

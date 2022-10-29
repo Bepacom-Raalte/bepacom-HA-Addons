@@ -20,6 +20,14 @@ from bacpypes.errors import DecodingError
 from bacpypes.app import BIPSimpleApplication
 from bacpypes.local.device import LocalDeviceObject
 
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route("/")
+def hello_world():
+    return "<p>Hello, World!</p>"
+
 # some debugging
 _debug = 1
 _log = ModuleLogger(globals())
@@ -186,6 +194,7 @@ def main():
 
     while True:
         run()
+        app.run(host = '127.0.0.1', debug= True)
 
     _log.debug("fini")
 
