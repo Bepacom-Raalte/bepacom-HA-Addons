@@ -27,6 +27,7 @@ header='[BACpypes]'
 objectname='objectName: '
 address='address: '
 objectIdentifier='objectIdentifier : '
+webServ='webServ: '
 maxApduLenghtAccepted='maxApduLengthAccepted: '
 segmentationSupported='segmentationSupported: '
 vendorID='vendorIdentifier: '
@@ -47,6 +48,7 @@ else
 fi
 
 objectIdentifier+="$(bashio::config 'objectIdentifier')"
+webServ+="$(bashio::config 'webServ')"
 maxApduLenghtAccepted+="$(bashio::config 'maxApduLenghtAccepted')"
 segmentationSupported+="$(bashio::config 'segmentationSupported')"
 vendorID+="$(bashio::config 'vendorID')"

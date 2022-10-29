@@ -30,6 +30,7 @@ options:
   objectname: BigBoss
   address: host
   objectIdentifier: 420
+  webServ: 127.0.0.1
   maxApduLenghtAccepted: 1024
   segmentationSupported: segmentedBoth
   vendorID: 15
@@ -40,6 +41,7 @@ schema:
   objectname: str
   address: str
   objectIdentifier: int
+  webServ: str
   maxApduLenghtAccepted: int?
   segmentationSupported: str?
   vendorID: int?
