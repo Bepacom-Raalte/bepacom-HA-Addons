@@ -1,6 +1,17 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\bacnet",
+    "\\bacnet\\rootfs",
+    "\\bacnet\\rootfs\\etc",
+    "\\bacnet\\rootfs\\etc\\s6-overlay",
+    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d",
+    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\interface",
+    "\\bacnet\\rootfs\\usr",
+    "\\bacnet\\rootfs\\usr\\bin",
+    "\\bacnet\\rootfs\\usr\\share",
+    "\\bacnet\\rootfs\\usr\\share\\tempio"
   ],
+  "SelectedNode": "\\bacnet\\rootfs\\usr\\bin\\BACpypesFlask.py",
   "PreviewInSolutionExplorer": false
 }
