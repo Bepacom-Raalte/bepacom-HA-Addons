@@ -7,7 +7,7 @@ WORKDIR /usr/src
 RUN \
   apk add --no-cache \
     python3 \
-    nginx --with-debug \
+    nginx -with-debug \
     pwgen \
     nmap \
 
