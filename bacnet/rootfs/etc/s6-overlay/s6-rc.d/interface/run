@@ -65,7 +65,8 @@ bashio::log.info "Running interface"
 
 nmap -p 47808 127.0.0.1
 nmap -p 47808 $(hostname -i)
-
+nmap -p 5000 127.0.0.1
+nmap -p 5000 $(hostname -i)
 
 ## Run your program
 exec python3 /usr/bin/BAC.py
