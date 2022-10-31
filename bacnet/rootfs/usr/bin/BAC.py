@@ -38,6 +38,25 @@ _log = ModuleLogger(globals())
 this_device = None
 this_application = None
 
+#========================================
+#   Threads
+#========================================
+#   BACpypes thread
+class BACpypesThread(Thread):
+
+    def __init__(self):
+        Thread.__init__(self)
+        
+    def run(self):
+        _log.debug("running")
+
+        run()
+
+        _log.debug("fini")
+
+    def stop(self):
+        stop()
+        self.join()
 
 
 
@@ -193,11 +212,14 @@ def main():
     this_console = WhoIsIAmConsoleCmd()
     if _debug: _log.debug("    - this_console: %r", this_console)
 
+    # make the thread object and start it
+    bacpypes_thread = BACpypesThread()
+    bacpypes_thread.start()
+
+
     _log.debug("running")
 
-    while True:
-        run()
-        app.run(host = args.ini.webserv ,port=5000, debug= True)
+    app.run(host = args.ini.webserv ,port=5000, debug= True)
         
 
     _log.debug("fini")
