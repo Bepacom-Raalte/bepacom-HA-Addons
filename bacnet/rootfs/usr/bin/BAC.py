@@ -21,6 +21,8 @@ from bacpypes.errors import DecodingError
 from bacpypes.app import BIPSimpleApplication
 from bacpypes.local.device import LocalDeviceObject
 
+from flask import Flask
+
 # some debugging
 _debug = 1
 _log = ModuleLogger(globals())
