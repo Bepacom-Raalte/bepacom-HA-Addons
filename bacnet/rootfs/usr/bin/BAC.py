@@ -34,7 +34,7 @@ _log = ModuleLogger(globals())
 # globals
 this_device = None
 this_application = None
-args = None
+flask_ip = str()
 
 app = Flask(__name__)
 
@@ -169,7 +169,7 @@ class WhoIsIAmConsoleCmd(ConsoleCmd):
 
 class flaskthread(Thread):
     def run(self):
-        app.run(host = args.ini.webserv ,port=7813, debug= True, use_reloader=False)
+        app.run(host = flask_ip ,port=7813, debug= True, use_reloader=False)
 
 class BACthread(Thread):
 
@@ -197,6 +197,8 @@ def main():
 
     # parse the command line arguments
     args = ConfigArgumentParser(description=__doc__).parse_args()
+
+    flask_ip = args.ini.webserv
 
     if _debug: _log.debug("initialization")
     if _debug: _log.debug("    - args: %r", args)
