@@ -167,8 +167,9 @@ class WhoIsIAmConsoleCmd(ConsoleCmd):
 
 
 class flaskthread(Thread):
-    def run(self):
-        app.run(host = '0.0.0.0' ,port=7813, debug= True, use_reloader=False)
+    ipaddr = str()
+    def run(self, ipaddr):
+        app.run(host = ipaddr ,port=7813, debug= True, use_reloader=False)
 
 class BACthread(Thread):
 
@@ -220,7 +221,7 @@ def main():
     sys.stdout.write("before run")
 
     flask = flaskthread()
-
+    flask.ipaddr = args.ini.webserv
     flask.start()
 
     

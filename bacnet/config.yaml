@@ -12,6 +12,7 @@ arch:
   - i386
 init: false
 ingress: true
+ingress_port: 7813
 panel_icon: mdi:router-wireless-settings
 map:
   - backup:rw
@@ -20,8 +21,8 @@ map:
   - share:rw
   - ssl:rw
 ports:
-  5000/tcp: 5000
-  5000/udp: 5000
+  7813/tcp: 7813
+  7813/udp: 7813
   47808/tcp: 47808
   47808/udp: 47808
   47809/tcp: 47809
