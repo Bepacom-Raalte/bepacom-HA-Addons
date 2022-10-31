@@ -8,16 +8,14 @@
 
 # Declaring variables
 
-#wait for nginx
-bashio::net.wait_for 5000
-
-
-bashio::log.info "Running webserver"
-
 
 nmap -p 5000 127.0.0.1
 nmap -p 5000 $(hostname -i)
 nmap -p 5000 127.0.0.2
 
+
 ## Run your program
+
+bashio::log.info "Running webserver"
+
 exec python3 /usr/bin/FlaskServerTest.py
