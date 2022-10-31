@@ -35,7 +35,7 @@ foreignBBMD='foreignBBMD: '
 foreignTTL='foreignTTL: '
 maxSegmentsAccepted='maxSegmentsAccepted: '
 
-bashio::log.info "Added header and keys"
+#bashio::log.info "Added header and keys"
 
 # Concatenating the config to the variables
 objectname+="$(bashio::config 'objectname')"
@@ -56,17 +56,13 @@ foreignBBMD+="$(bashio::config 'foreignBBMD')"
 foreignTTL+="$(bashio::config 'foreignTTL')"
 maxSegmentsAccepted+="$(bashio::config 'maxSegmentsAccepted')"
 
-bashio::log.info "Added values"
+#bashio::log.info "Added values"
 
 # Generate INI file
 printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$webServ" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
 cat BACpypes.ini
 
 bashio::log.info "Running interface"
-
-
-nmap -p 47808 127.0.0.1
-nmap -p 47808 $(hostname -i)
 
 ## Run your program
 exec python3 /usr/bin/BAC.py
