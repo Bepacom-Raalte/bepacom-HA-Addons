@@ -21,6 +21,10 @@ from bacpypes.errors import DecodingError
 from bacpypes.app import BIPSimpleApplication
 from bacpypes.local.device import LocalDeviceObject
 
+from threading import Thread
+
+import time
+
 from flask import Flask
 
 # some debugging
@@ -161,6 +165,16 @@ class WhoIsIAmConsoleCmd(ConsoleCmd):
         this_application.nsap.update_router_references(None, router_address, network_list)
 
 
+
+class flaskthread(Thread):
+    def run():
+        app.run(host = '0.0.0.0' ,port=7813, debug= True, use_reloader=False)
+
+class BACthread(Thread):
+    def run():
+        run()
+
+
 #
 #   __main__
 #
@@ -193,11 +207,9 @@ def main():
 
     _log.debug("running")
     sys.stdout.write("before run")
-
-    run()
-    app.run(host = '0.0.0.0' ,port=7813, debug= True, use_reloader=False)
     
-    
+    while True:
+        time.sleep(2)
 
     print("after run")
     _log.debug("fini")
