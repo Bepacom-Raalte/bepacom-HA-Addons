@@ -8,8 +8,9 @@ def hello_world():
 
 
 
-class main:
-    app.run(host = '127.0.0.1', port=7812, debug= True)
+def main():
+    while True:
+        app.run(host = '127.0.0.1', port=7812, debug= True)
 
 
 
