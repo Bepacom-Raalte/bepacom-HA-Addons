@@ -24,8 +24,8 @@ configuration:
     name: BACnet/IP Broadcast Banagement Device
     description: IP address of the BBMD
   foreignTTL: 
-    name: Object Name
-    description: an object
+    name: Foreignt TTL
+    description: no clue what it is
   maxsegmentsAccepted:
     name: Maximum Segments Accepted
     description: The maximum amount of segments accepted in a message
