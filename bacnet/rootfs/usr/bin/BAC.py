@@ -29,6 +29,14 @@ _log = ModuleLogger(globals())
 this_device = None
 this_application = None
 
+app = Flask(__name__)
+
+@app.route("/")
+def hello_world():
+    return "<p>Hello, World!</p>"
+
+
+
 #
 #   WhoIsIAmApplication
 #
@@ -182,8 +190,10 @@ def main():
     if _debug: _log.debug("    - this_console: %r", this_console)
 
     _log.debug("running")
-    print("before run")
+    sys.stdout.write("before run")
 
+    app.run(host = '0.0.0.0' ,port=7813, debug= True, use_reloader=False)
+    
     while True:
         run()
 
