@@ -11,9 +11,6 @@
 #wait for nginx
 bashio::net.wait_for 5000
 
-# Generate INI file
-printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$webServ" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
-cat BACpypes.ini
 
 bashio::log.info "Running webserver"
 
