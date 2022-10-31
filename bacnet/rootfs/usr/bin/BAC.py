@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 """
 This application presents a 'console' prompt to the user asking for Who-Is and I-Am
@@ -20,10 +21,6 @@ from bacpypes.errors import DecodingError
 from bacpypes.app import BIPSimpleApplication
 from bacpypes.local.device import LocalDeviceObject
 
-from threading import Thread
-
-
-
 # some debugging
 _debug = 1
 _log = ModuleLogger(globals())
@@ -31,8 +28,6 @@ _log = ModuleLogger(globals())
 # globals
 this_device = None
 this_application = None
-
-
 
 #
 #   WhoIsIAmApplication
@@ -127,6 +122,7 @@ class WhoIsIAmConsoleCmd(ConsoleCmd):
 
     def do_any(self, args):
         """any
+
         Print all of the I-Am's received as if an unconstrained Who-Is was
         sent out, without actually sending an unconstrained Who-Is.
         """
@@ -185,14 +181,12 @@ def main():
     this_console = WhoIsIAmConsoleCmd()
     if _debug: _log.debug("    - this_console: %r", this_console)
 
-    # make the thread object and start it
+    # enable sleeping will help with threads
+    enable_sleeping()
 
     _log.debug("running")
 
     run()
-
-    #app.run(host = args.ini.webserv ,port=5025, debug= True)
-        
 
     _log.debug("fini")
 
