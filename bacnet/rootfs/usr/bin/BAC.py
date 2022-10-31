@@ -41,19 +41,6 @@ this_application = None
 
 
 
-class ProcessThread(Thread):
-
-    def __init__(self):
-        Thread.__init__(self)
-        self.daemon = True
-
-    def run(self):
-        while True:
-            app.run(host = args.ini.webserv ,port=5000, debug= True)
-
-
-
-
 
 #
 #   WhoIsIAmApplication
@@ -213,6 +200,7 @@ def main():
 
     while True:
         run()
+        app.run(host = args.ini.webserv ,port=5000, debug= True)
         
 
     _log.debug("fini")
