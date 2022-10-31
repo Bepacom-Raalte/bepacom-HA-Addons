@@ -1,6 +1,6 @@
 # BACnet/IP interface
 
-_BACnet/IP interface. It'll discover BACnet devices on your network. On the WebUI you'll be able to set up the devices to be used as Home Assistant Entities._
+_BACnet/IP interface. It'll discover BACnet devices on your network. On the WebUI you'll be able to set up the devices to be used as Home Assistant Entities_
 
 ![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]
