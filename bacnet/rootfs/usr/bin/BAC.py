@@ -167,7 +167,7 @@ class WhoIsIAmConsoleCmd(ConsoleCmd):
 
 
 class flaskthread(Thread):
-    def run():
+    def run(self):
         app.run(host = '0.0.0.0' ,port=7813, debug= True, use_reloader=False)
 
 class BACthread(Thread):
