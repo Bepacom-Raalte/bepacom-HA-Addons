@@ -220,13 +220,12 @@ def main():
     sys.stdout.write("before run")
 
     flask = flaskthread()
-    BAC = BACthread()
-    BAC.start()
+
     flask.start()
 
     
     while True:
-        time.sleep(2)
+        run()
 
     print("after run")
     _log.debug("fini")
