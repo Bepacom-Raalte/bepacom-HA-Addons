@@ -193,9 +193,6 @@ def main():
     this_console = WhoIsIAmConsoleCmd()
     if _debug: _log.debug("    - this_console: %r", this_console)
 
-    thread = ProcessThread()
-    thread.start()
-
     _log.debug("running")
 
     while True:
