@@ -15,4 +15,5 @@ if [[ "${APP_EXIT_CODE}" -ne 0 ]] && [[ "${APP_EXIT_CODE}" -ne 256 ]]; then
   exec /run/s6/basedir/bin/halt
 fi
 
-bashio::log.info "Interface restart after closing"
+
+bashio::log.info "Interface restart after closing with "${APP_EXIT_CODE}""
