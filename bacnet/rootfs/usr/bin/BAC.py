@@ -181,9 +181,6 @@ def main():
     this_console = WhoIsIAmConsoleCmd()
     if _debug: _log.debug("    - this_console: %r", this_console)
 
-    # enable sleeping will help with threads
-    enable_sleeping()
-
     _log.debug("running")
 
     run()
