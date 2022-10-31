@@ -2,4 +2,4 @@
 
 bashio::log.info "Running nginx"
 
-#exec nginx 
+exec nginx 

@@ -9,7 +9,7 @@
 # Declaring variables
 
 #wait for nginx
-#bashio::net.wait_for 5000
+bashio::net.wait_for 7812
 
 declare header
 declare objectname
