@@ -2,9 +2,15 @@ configuration:
   objectname:
     name: Object Name
     description: The name of the interface in the BACnet network
+  address:
+    name: Interface IP
+    description: BACnet/IP address
   objectIdentifier:
     name: Object ID
     description: The identifier of the interface
+  webServ:
+    name: Webserver IP
+    description: IP of web server (webUI)
   maxApduLenghtAccepted: 
     name: Maximum  APDU Length Accepted
     description: Maximum amount of Application Layer Protocol Data Units allowed
