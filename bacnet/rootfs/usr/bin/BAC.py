@@ -182,9 +182,12 @@ def main():
     if _debug: _log.debug("    - this_console: %r", this_console)
 
     _log.debug("running")
+    print("before run")
 
-    run()
+    while True:
+        run()
 
+    print("after run")
     _log.debug("fini")
 
 if __name__ == "__main__":
