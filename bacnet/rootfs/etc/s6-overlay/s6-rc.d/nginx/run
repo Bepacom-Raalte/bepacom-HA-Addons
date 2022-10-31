@@ -3,3 +3,5 @@
 bashio::log.info "Running nginx"
 
 exec nginx 
+
+bashio::log.info "After exec nginx"
