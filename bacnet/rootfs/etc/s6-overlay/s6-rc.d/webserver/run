@@ -1,0 +1,26 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Start the example service
+# s6-overlay docs: https://github.com/just-containers/s6-overlay
+# ==============================================================================
+
+# Add your code here
+
+# Declaring variables
+
+#wait for nginx
+bashio::net.wait_for 5000
+
+# Generate INI file
+printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$webServ" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
+cat BACpypes.ini
+
+bashio::log.info "Running webserver"
+
+
+nmap -p 5000 127.0.0.1
+nmap -p 5000 $(hostname -i)
+nmap -p 5000 127.0.0.2
+
+## Run your program
+exec python3 /usr/bin/FlaskServerTest.py
