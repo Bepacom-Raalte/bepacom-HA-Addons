@@ -11,6 +11,7 @@ arch:
   - amd64
   - i386
 init: false
+ingress: true
 panel_icon: mdi:router-wireless-settings
 map:
   - backup:rw
