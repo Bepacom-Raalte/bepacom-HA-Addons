@@ -9,9 +9,7 @@
 # Declaring variables
 
 
-nmap -p 5000 127.0.0.1
-nmap -p 5000 $(hostname -i)
-nmap -p 5000 127.0.0.2
+lsof -i 4
 
 
 ## Run your program
