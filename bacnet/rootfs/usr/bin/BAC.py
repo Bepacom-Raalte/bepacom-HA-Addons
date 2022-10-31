@@ -171,8 +171,19 @@ class flaskthread(Thread):
         app.run(host = '0.0.0.0' ,port=7813, debug= True, use_reloader=False)
 
 class BACthread(Thread):
-    def run():
+
+    def __init__(self):
+        Thread.__init__(self)
+        
+    def run(self):
+        _log.debug("running")
+
         run()
+
+        _log.debug("fini")
+
+    def stop(self):
+        self.join()
 
 
 #
