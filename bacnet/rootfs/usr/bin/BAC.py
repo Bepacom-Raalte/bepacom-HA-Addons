@@ -194,10 +194,10 @@ def main():
     _log.debug("running")
     sys.stdout.write("before run")
 
+    run()
     app.run(host = '0.0.0.0' ,port=7813, debug= True, use_reloader=False)
     
-    while True:
-        run()
+    
 
     print("after run")
     _log.debug("fini")
