@@ -34,6 +34,7 @@ _log = ModuleLogger(globals())
 # globals
 this_device = None
 this_application = None
+args = None
 
 app = Flask(__name__)
 
@@ -167,9 +168,8 @@ class WhoIsIAmConsoleCmd(ConsoleCmd):
 
 
 class flaskthread(Thread):
-    ipaddr = str()
-    def run(self, ipaddr):
-        app.run(host = ipaddr ,port=7813, debug= True, use_reloader=False)
+    def run(self):
+        app.run(host = args.ini.webserv ,port=7813, debug= True, use_reloader=False)
 
 class BACthread(Thread):
 
@@ -221,7 +221,6 @@ def main():
     sys.stdout.write("before run")
 
     flask = flaskthread()
-    flask.ipaddr = args.ini.webserv
     flask.start()
 
     
