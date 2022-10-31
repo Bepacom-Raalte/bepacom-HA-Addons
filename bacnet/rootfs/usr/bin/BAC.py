@@ -207,6 +207,12 @@ def main():
 
     _log.debug("running")
     sys.stdout.write("before run")
+
+    flask = flaskthread()
+    BAC = BACthread()
+    BAC.start()
+    flask.start()
+
     
     while True:
         time.sleep(2)
