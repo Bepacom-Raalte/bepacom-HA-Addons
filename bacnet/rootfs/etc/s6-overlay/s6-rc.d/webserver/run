@@ -9,9 +9,6 @@
 # Declaring variables
 
 
-lsof -i 4
-
-
 ## Run your program
 
 bashio::log.info "Running webserver"
