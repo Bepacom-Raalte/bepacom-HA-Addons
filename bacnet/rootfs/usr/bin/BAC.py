@@ -213,11 +213,13 @@ def main():
     if _debug: _log.debug("    - this_console: %r", this_console)
 
     # make the thread object and start it
-    bacpypes_thread = BACpypesThread()
-    bacpypes_thread.start()
+    #bacpypes_thread = BACpypesThread()
+    #bacpypes_thread.start()
 
 
     _log.debug("running")
+
+    run()
 
     #app.run(host = args.ini.webserv ,port=5025, debug= True)
         
