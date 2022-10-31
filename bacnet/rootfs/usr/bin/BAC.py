@@ -20,6 +20,8 @@ from bacpypes.errors import DecodingError
 from bacpypes.app import BIPSimpleApplication
 from bacpypes.local.device import LocalDeviceObject
 
+from threading import Thread
+
 from flask import Flask
 
 app = Flask(__name__)
@@ -35,6 +37,23 @@ _log = ModuleLogger(globals())
 # globals
 this_device = None
 this_application = None
+
+
+
+
+class ProcessThread(Thread):
+
+    def __init__(self):
+        Thread.__init__(self)
+        self.daemon = True
+
+    def run(self):
+        while True:
+            app.run(host = args.ini.webserv ,port=5000, debug= True)
+
+
+
+
 
 #
 #   WhoIsIAmApplication
@@ -187,12 +206,14 @@ def main():
     this_console = WhoIsIAmConsoleCmd()
     if _debug: _log.debug("    - this_console: %r", this_console)
 
+    thread = ProcessThread()
+    thread.start()
 
     _log.debug("running")
 
     while True:
         run()
-        app.run(host = '0.0.0.0',port=5000, debug= True)
+        
 
     _log.debug("fini")
 
