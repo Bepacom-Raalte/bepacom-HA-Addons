@@ -7,3 +7,4 @@ else
 fi
 
 echo "$e" > /run/s6-linux-init-container-results/exitcode
+bashio::log.info "$e"
