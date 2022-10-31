@@ -22,13 +22,7 @@ from bacpypes.local.device import LocalDeviceObject
 
 from threading import Thread
 
-from flask import Flask
 
-app = Flask(__name__)
-
-@app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
 
 # some debugging
 _debug = 1
@@ -37,27 +31,6 @@ _log = ModuleLogger(globals())
 # globals
 this_device = None
 this_application = None
-
-#========================================
-#   Threads
-#========================================
-#   BACpypes thread
-class BACpypesThread(Thread):
-
-    def __init__(self):
-        Thread.__init__(self)
-        
-    def run(self):
-        _log.debug("running")
-
-        run()
-
-        _log.debug("fini")
-
-    def stop(self):
-        stop()
-        self.join()
-
 
 
 
@@ -213,9 +186,6 @@ def main():
     if _debug: _log.debug("    - this_console: %r", this_console)
 
     # make the thread object and start it
-    #bacpypes_thread = BACpypesThread()
-    #bacpypes_thread.start()
-
 
     _log.debug("running")
 
