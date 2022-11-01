@@ -16,6 +16,7 @@ RUN \
 
 RUN pip install --no-cache-dir --upgrade pip\
     bacpypes \
+    PEP517 \
     flask
 
 RUN pip install --no-cache-dir nicegui \
