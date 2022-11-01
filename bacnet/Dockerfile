@@ -18,6 +18,8 @@ RUN \
     bacpypes \
     flask
 
+RUN pip install --no-cache-dir nicegui
+
 WORKDIR /
 
 COPY rootfs /
