@@ -10,7 +10,6 @@ RUN \
     nginx \
     nmap 
 
-echo "installed software, now going for libraries"
 
 RUN apk add --update py3-pip \
   && pip install pip  \
