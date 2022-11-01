@@ -9,6 +9,7 @@ RUN \
     nginx \
     nmap \
     python3 \
+    python3-dev \
     py3-pip \
     py3-wheel \
     py3-setuptools \
@@ -16,7 +17,6 @@ RUN \
 
 RUN pip install --no-cache-dir --upgrade pip\
     bacpypes \
-    PEP517 \
     flask
 
 RUN pip install --no-cache-dir nicegui \
