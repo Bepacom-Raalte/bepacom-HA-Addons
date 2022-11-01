@@ -17,7 +17,7 @@ RUN \
     pip \
     bacpypes \
     flask \
-    nicegui \
+    nicegui 
 
 WORKDIR /
 
