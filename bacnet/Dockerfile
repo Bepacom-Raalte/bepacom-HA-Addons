@@ -8,6 +8,7 @@ RUN \
   apk add --no-cache \
     nginx \
     nmap \
+    make \
     python3 \
     python3-dev \
     py3-pip \
