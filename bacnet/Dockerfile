@@ -12,11 +12,10 @@ RUN \
     nmap \
 
   && apk add --update py3-pip --no-cache \
-
-  && pip install --no-cache-dir \
-    bacpypes \
-    justpy \
-    flask 
+  && pip install --no-cache-dir bacpypes \
+  && pip install --no-cache-dir justpy \
+  && pip install --no-cache-dir flask 
+    
 
 WORKDIR /
 
