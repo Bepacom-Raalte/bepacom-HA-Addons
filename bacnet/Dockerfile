@@ -8,15 +8,14 @@ RUN \
   apk add --no-cache \
     python3 \
     nginx \
-    pwgen \
     nmap \
 
   && apk add --update py3-pip \
-  && pip install pip --no-cache-dir \
-  && pip install wheel --no-cache-dir \
-  && pip install bacpypes --no-cache-dir \
-  && pip install nicegui --no-cache-dir \
-  && pip install flask --no-cache-dir 
+  && pip install pip  \
+  && pip install wheel \
+  && pip install bacpypes \
+  && pip install nicegui \
+  && pip install flask
     
 
 WORKDIR /
