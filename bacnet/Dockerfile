@@ -6,18 +6,19 @@ FROM $BUILD_FROM
 WORKDIR /usr/src
 RUN \
   apk add --no-cache \
-    python3 \
     nginx \
     nmap \
+    python3 \
     py3-pip \
     py3-wheel \
     py3-setuptools \
-    py3-matplotlib \
+    py3-matplotlib 
 
-  && pip install --no-cache-dir --upgrade pip\
+RUN pip install --no-cache-dir --upgrade pip\
     bacpypes \
-    nicegui \
     flask
+
+RUN pip install --no-cache-dir nicegui \
 
 WORKDIR /
 
