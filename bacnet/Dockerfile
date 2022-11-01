@@ -9,13 +9,11 @@ RUN \
     python3 \
     nginx \
     nmap \
-    rust \
 
   && apk add --update py3-pip --no-cache \
 
-  && pip install --no-cache-dir --upgrade pip \
+  && pip install --no-cache-dir --upgrade pip\
   && pip install --no-cache-dir \
-    justpy \
     bacpypes \
     flask
 
