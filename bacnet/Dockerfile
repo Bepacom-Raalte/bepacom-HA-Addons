@@ -12,8 +12,7 @@ RUN \
 
   && apk add --update py3-pip --no-cache \
 
-  && pip install --no-cache-dir \
-    pip \
+  && pip install --no-cache-dir pip \
     bacpypes \
     flask
 
