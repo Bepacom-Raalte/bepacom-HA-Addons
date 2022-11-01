@@ -14,6 +14,7 @@ RUN \
     python3-dev \
     py3-pip \
     py3-wheel \
+    py3-numpy \
     py3-setuptools \
     py3-matplotlib 
 
