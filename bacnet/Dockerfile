@@ -13,7 +13,6 @@ RUN \
 
   && apk add --update py3-pip \
   && pip install bacpypes --no-cache-dir \
-  && pip install justpy --no-cache-dir \
   && pip install flask --no-cache-dir 
     
 
