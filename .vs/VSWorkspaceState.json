@@ -7,11 +7,11 @@
     "\\bacnet\\rootfs\\etc\\s6-overlay",
     "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d",
     "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\interface",
+    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user",
+    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user\\contents.d",
     "\\bacnet\\rootfs\\usr",
-    "\\bacnet\\rootfs\\usr\\bin",
-    "\\bacnet\\rootfs\\usr\\share",
-    "\\bacnet\\rootfs\\usr\\share\\tempio"
+    "\\bacnet\\rootfs\\usr\\bin"
   ],
-  "SelectedNode": "\\bacnet\\rootfs\\usr\\bin\\BACpypesFlask.py",
+  "SelectedNode": "\\bacnet\\rootfs\\usr\\bin\\BAC.py",
   "PreviewInSolutionExplorer": false
 }
