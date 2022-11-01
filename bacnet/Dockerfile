@@ -15,6 +15,7 @@ RUN \
   && pip install --no-cache-dir --upgrade pip\
   && pip install --no-cache-dir \
     bacpypes \
+    nicegui \
     flask
 
 WORKDIR /
