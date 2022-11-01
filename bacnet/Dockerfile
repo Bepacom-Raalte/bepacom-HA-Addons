@@ -9,16 +9,13 @@ RUN \
     python3 \
     nginx \
     nmap \
-
-  && apk add --update py3-pip --no-cache \
+    py3-pip \
 
   && pip install --no-cache-dir --upgrade pip\
-  && pip install --no-cache-dir \
     setuptools \
     bacpypes \
+    matplotlib \
     flask
-
-RUN pip install --no-cache-dir nicegui
 
 WORKDIR /
 
