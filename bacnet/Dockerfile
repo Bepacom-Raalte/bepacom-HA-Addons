@@ -14,7 +14,8 @@ RUN \
   && apk add --update py3-pip --no-cache \
 
   && pip install --no-cache-dir --upgrade pip \
-  && pip install --no-cache-dir nicegui==0.9.21 \
+  && pip install --no-cache-dir \
+    justpy \
     bacpypes \
     flask
 
