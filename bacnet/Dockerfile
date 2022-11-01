@@ -10,13 +10,10 @@ RUN \
     nmap \
     make \
     build-base \
-    python3 \
-    python3-dev \
-    py3-pip \
-    py3-wheel \
-    py3-numpy \
-    py3-setuptools \
-    py3-matplotlib 
+    python3 
+
+RUN python3 -m pip install -U pip
+
 
 RUN pip install --no-cache-dir --upgrade pip\
     bacpypes \
