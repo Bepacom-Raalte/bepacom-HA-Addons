@@ -9,6 +9,7 @@ RUN \
     python3 \
     nginx \
     nmap \
+    rust \
 
   && apk add --update py3-pip --no-cache \
 
