@@ -15,6 +15,7 @@ RUN \
 
   && pip install --no-cache-dir \
     bacpypes \
+    justpy \
     flask 
 
 WORKDIR /
