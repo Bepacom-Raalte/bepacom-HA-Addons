@@ -8,14 +8,15 @@ RUN \
   apk add --no-cache \
     python3 \
     nginx \
-    nmap \
+    nmap 
 
-  && apk add --update py3-pip \
+echo "installed software, now going for libraries"
+
+RUN apk add --update py3-pip \
   && pip install pip  \
-  && pip install wheel \
-  && pip install bacpypes \
-  && pip install nicegui \
-  && pip install flask
+    wheel \
+    bacpypes \
+    flask
     
 
 WORKDIR /
