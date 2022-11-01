@@ -64,6 +64,6 @@ cat BACpypes.ini
 
 bashio::log.info "Running interface"
 
-exec python3 /usr/bin/BACgui.py
+exec python3 /usr/bin/BAC.py
 
 bashio::log.info "After exec python"

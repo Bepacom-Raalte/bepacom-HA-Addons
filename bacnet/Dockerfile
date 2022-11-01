@@ -16,7 +16,7 @@ RUN \
   && pip install --no-cache-dir \
     pip \
     bacpypes \
-    nicegui
+    justpy
 
 WORKDIR /
 
