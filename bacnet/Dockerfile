@@ -11,15 +11,14 @@ RUN \
     make \
     build-base \
     python3 \
-    py3-pip
-
-RUN python3 -m pip install -U pip \
-    matplotlib
+    py3-pip \
+    py3-mathplotlib
 
 
 RUN pip install --no-cache-dir --upgrade pip\
     bacpypes \
-    flask
+    flask \
+    mathplotlib --prefer-binary
 
 RUN pip install --no-cache-dir nicegui 
 
