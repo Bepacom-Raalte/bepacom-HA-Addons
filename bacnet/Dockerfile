@@ -10,11 +10,12 @@ RUN \
     nginx \
     nmap \
     py3-pip \
+    py3-wheel \
+    py3-setuptools \
+    py3-matplotlib \
 
   && pip install --no-cache-dir --upgrade pip\
-    setuptools \
     bacpypes \
-    matplotlib \
     flask
 
 WORKDIR /
