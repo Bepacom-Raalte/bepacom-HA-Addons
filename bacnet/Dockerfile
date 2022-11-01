@@ -15,6 +15,7 @@ RUN \
   && pip install pip --no-cache-dir \
   && pip install wheel --no-cache-dir \
   && pip install bacpypes --no-cache-dir \
+  && pip install nicegui --no-cache-dir \
   && pip install flask --no-cache-dir 
     
 
