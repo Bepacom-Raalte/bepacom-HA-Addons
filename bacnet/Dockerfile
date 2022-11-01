@@ -10,9 +10,11 @@ RUN \
     nmap \
     make \
     build-base \
-    python3 
+    python3 \
+    py3-pip
 
-RUN python3 -m pip install -U pip
+RUN python3 -m pip install -U pip \
+    matplotlib
 
 
 RUN pip install --no-cache-dir --upgrade pip\
