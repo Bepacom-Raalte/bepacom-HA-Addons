@@ -21,10 +21,19 @@ RUN pip install --no-cache-dir --upgrade pip\
     bacpypes \
     flask 
     
+RUN RUN pip install --no-cache-dir \
+    contourpy \
+    cycler \
+    dateutil \
+    fontTools \
+    kiwisolver \
+    Numpy \
+    packaging \
+    Pillow \
+    pyparsing \
+    setuptools
 
-RUN pip install --no-cache-dir --prefer-binary -U \
-    numpy \
-    matplotlib 
+RUN pip install --no-cache-dir --prefer-binary -U matplotlib 
 
 
 RUN pip install --no-cache-dir nicegui 
