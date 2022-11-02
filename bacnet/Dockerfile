@@ -14,7 +14,8 @@ RUN \
     py3-pip \
     python3-dev \
     py3-setuptools \
-    py3-wheel 
+    py3-wheel \
+    py3-certifi
 
 
 RUN pip install --no-cache-dir --upgrade pip\
