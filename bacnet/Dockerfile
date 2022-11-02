@@ -12,9 +12,16 @@ RUN \
     build-base \
     python3 \
     py3-pip \
+    python3-dev \
     py3-setuptools \
-    py3-packaging 
+    py3-wheel 
 
+
+RUN pip install --no-cache-dir --upgrade pip\
+    bacpypes \
+    flask 
+    
+RUN pip install --no-cache-dir -only-binary nicegui 
 
 WORKDIR /
 
