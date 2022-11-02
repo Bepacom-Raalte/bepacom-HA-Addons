@@ -8,8 +8,6 @@ RUN \
   apk add --no-cache \
         nginx \
         nmap \
-        make \
-        build-base \
         py3-pip \
         python3 \
     && pip3 install \
@@ -17,8 +15,7 @@ RUN \
         --prefer-binary \
         --find-links "https://wheels.home-assistant.io/musllinux/" \
         bacpypes \
-        flask \
-        matplotlib
+        flask 
 
 WORKDIR /
 
