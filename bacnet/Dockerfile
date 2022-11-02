@@ -13,10 +13,9 @@ RUN \
     python3 \
     py3-pip \
     py3-setuptools \
+    py3-packaging \
 
-  && pip install --no-cache-dir --only-binary numpy\
-
-  && pip install --no-cache-dir bacpypes \
+  && pip install --no-cache-dir --only-binary bacpypes \
     flask \
     nicegui
 
