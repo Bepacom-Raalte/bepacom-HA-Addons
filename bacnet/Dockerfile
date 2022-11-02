@@ -22,26 +22,10 @@ RUN \
     py3-matplotlib \
     py3-numpy 
 
-
 RUN pip install --no-cache-dir --upgrade pip\
     bacpypes \
-    flask 
-    
-RUN pip install --no-cache-dir \
-    contourpy \
-    cycler \
-    python-dateutil \
-    fontTools \
-    kiwisolver \
-    Numpy \
-    packaging \
-    Pillow \
-    pyparsing \
-    setuptools
-
-RUN pip install --no-cache-dir --prefer-binary matplotlib 
-
-RUN pip install --no-cache-dir nicegui 
+    flask \
+    nicegui 
 
 WORKDIR /
 
