@@ -24,13 +24,14 @@ RUN \
     python-dateutil \
     fontTools \
     kiwisolver \
-    Numpy \
     packaging \
     Pillow \
     pyparsing \
     setuptools \
 
-    && pip install --no-cache-dir --prefer-binary -U mathplotlib \
+    && pip install --no-cache-dir --prefer-binary -U \
+        Numpy \
+        mathplotlib \
     && pip install --no-cache-dir nicegui 
 
 
