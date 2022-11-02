@@ -24,7 +24,7 @@ RUN pip install --no-cache-dir --upgrade pip\
 RUN pip install --no-cache-dir \
     contourpy \
     cycler \
-    dateutil \
+    python-dateutil \
     fontTools \
     kiwisolver \
     Numpy \
