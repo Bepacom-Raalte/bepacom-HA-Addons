@@ -14,14 +14,11 @@ RUN \
     py3-pip \
     python3-dev \
     py3-setuptools \
-    py3-wheel 
+    py3-wheel \
 
-
-RUN pip install --no-cache-dir --upgrade pip\
+    && pip install --no-cache-dir pip\
     bacpypes \
-    flask 
-    
-RUN pip install --no-cache-dir \
+    flask \
     contourpy \
     cycler \
     python-dateutil \
@@ -31,12 +28,12 @@ RUN pip install --no-cache-dir \
     packaging \
     Pillow \
     pyparsing \
-    setuptools
+    setuptools \
 
-RUN pip install --no-cache-dir --prefer-binary -U mathplotlib 
+    && pip install --no-cache-dir --prefer-binary -U mathplotlib \
+    && pip install --no-cache-dir nicegui 
 
 
-RUN pip install --no-cache-dir nicegui 
 
 WORKDIR /
 
