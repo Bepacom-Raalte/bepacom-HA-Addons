@@ -17,12 +17,10 @@ RUN \
     setuptools \
     wheel \
 
-  && pip install --no-cache-dir \
-    bacpypes \
+  && pip install --no-cache-dir bacpypes \
     flask \
 
-  && pip install --no-cache-dir --only-binary \
-    Numpy 
+  && pip install --no-cache-dir --only-binary Numpy 
 
 
 
