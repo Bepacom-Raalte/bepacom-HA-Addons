@@ -6,37 +6,19 @@ FROM $BUILD_FROM
 WORKDIR /usr/src
 RUN \
   apk add --no-cache \
-    nginx \
-    nmap \
-    make \
-    build-base \
-    python3 \
-    py3-pip \
-    python3-dev \
-    py3-setuptools \
-    py3-wheel \
-    py3-certifi
-
-
-RUN pip install --no-cache-dir --upgrade pip\
-    bacpypes \
-    flask 
-    
-RUN pip install --no-cache-dir --prefer-binary \
-    contourpy \
-    cycler \
-    dateutil \
-    fontTools \
-    kiwisolver \
-    Numpy \
-    packaging \
-    Pillow \
-    pyparsing \
-    setuptools
-
-RUN pip install --no-cache-dir --prefer-binary -U matplotlib 
-
-RUN pip install --no-cache-dir nicegui 
+        nginx \
+        nmap \
+        make \
+        build-base \
+        py3-pip \
+        python3 \
+    && pip3 install \
+        --no-cache-dir \
+        --prefer-binary \
+        --find-links "https://wheels.home-assistant.io/alpine-3.14/${BUILD_ARCH}/" \
+        hass-configurator=="${CONFIGURATOR_VERSION}" \
+        bacpypes \
+        flask
 
 WORKDIR /
 
