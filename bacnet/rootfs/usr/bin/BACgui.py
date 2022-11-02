@@ -49,29 +49,24 @@ class MyApp(App):
         super(MyApp, self).__init__(*args)
 
     def main(self):
-        #creating a container VBox type, vertical
-        wid = gui.VBox(width=300, height=200)
+        container = gui.VBox(width=120, height=100)
+        self.lbl = gui.Label('Hello world!')
+        self.bt = gui.Button('Press me!')
 
-        #creating a text label, "white-space":"pre" preserves newline
-        self.lbl = gui.Label('Hello\n test', width='80%', height='50%', style={"white-space":"pre"})
+        # setting the listener for the onclick event of the button
+        self.bt.onclick.do(self.on_button_pressed)
 
-        #a button for simple interaction
-        bt = gui.Button('Press me!', width=200, height=30)
-
-        #setting up the listener for the click event
-        bt.onclick.do(self.on_button_pressed)
-        
-        #adding the widgets to the main container
-        wid.append(self.lbl)
-        wid.append(bt)
+        # appending a widget to another, the first argument is a string key
+        container.append(self.lbl)
+        container.append(self.bt)
 
         # returning the root widget
-        return wid
+        return container
 
     # listener function
-    def on_button_pressed(self, emitter):
-        self.lbl.set_text('Hello World!')
-
+    def on_button_pressed(self, widget):
+        self.lbl.set_text('Button pressed!')
+        self.bt.set_text('Hi!')
 
 
 #=======================================================================
