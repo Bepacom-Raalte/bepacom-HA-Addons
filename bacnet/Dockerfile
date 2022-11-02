@@ -21,8 +21,7 @@ RUN pip install --no-cache-dir --upgrade pip\
     bacpypes \
     flask 
     
-RUN pip install --no-cache-dir --only-binary :all: \
-    matplotlib 
+RUN pip install --no-cache-dir --only-binary :all: matplotlib 
 
 
 WORKDIR /
