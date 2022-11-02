@@ -4,7 +4,7 @@ FROM $BUILD_FROM
 
 
 # Install requirements for add-on
-WORKDIR /usr/src
+WORKDIR /
 RUN \
   apk add --no-cache \
     nginx \
