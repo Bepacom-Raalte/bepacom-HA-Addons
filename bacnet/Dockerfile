@@ -15,9 +15,6 @@ RUN \
     py3-setuptools \
     py3-packaging \
 
-  && pip install --no-cache-dir --only-binary bacpypes \
-    flask \
-    nicegui
 
 WORKDIR /
 
