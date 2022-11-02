@@ -252,15 +252,16 @@ def main():
     _log.debug("running")
     sys.stdout.write("before run")
 
-    #BACthread = BACthread()
-    #BACthread.start()
+    BACthread = BACthread()
+    BACthread.start()
 
-    webserv = webthread()
-    webserv.start()
+    #webserv = webthread()
+    #webserv.start()
 
     
     while True:
-        run()
+        #run()
+        start(MyApp, address='127.0.0.1', port=7813, multiple_instance=False, enable_file_cache=True, update_interval=0.1, start_browser=False)
 
     print("after run")
     _log.debug("fini")
