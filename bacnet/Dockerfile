@@ -22,8 +22,8 @@ RUN pip install --no-cache-dir --upgrade pip\
     
 
 RUN python3 -m pip install --no-cache-dir --prefer-binary -U \
-    numpy==1.22.0 \
-    matplotlib==3.5.0 
+    numpy \
+    matplotlib 
 
 
 RUN pip install --no-cache-dir nicegui 
