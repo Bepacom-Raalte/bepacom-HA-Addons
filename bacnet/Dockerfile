@@ -17,11 +17,11 @@ RUN \
     py3-wheel 
 
 
-RUN python pip install --no-cache-dir --upgrade pip\
+RUN python3 pip install --no-cache-dir --upgrade pip\
     bacpypes \
     flask 
     
-RUN python pip install --no-cache-dir --only-binary :all: matplotlib 
+RUN python3 pip install --no-cache-dir --only-binary :all: matplotlib 
 
 
 WORKDIR /
