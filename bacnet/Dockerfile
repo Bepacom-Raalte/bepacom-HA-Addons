@@ -2,9 +2,6 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-echo ""
-
-
 
 # Install requirements for add-on
 WORKDIR /usr/src
