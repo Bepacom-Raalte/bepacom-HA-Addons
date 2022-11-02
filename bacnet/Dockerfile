@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir --upgrade pip\
     flask 
     
 RUN pip install --no-cache-dir --only-binary :all: \
-    numpy \
+    python-numpy \
     matplotlib 
 
 
