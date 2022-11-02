@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir --upgrade pip\
     bacpypes \
     flask 
     
-RUN RUN pip install --no-cache-dir \
+RUN pip install --no-cache-dir \
     contourpy \
     cycler \
     dateutil \
