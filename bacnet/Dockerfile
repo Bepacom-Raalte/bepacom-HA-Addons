@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir --upgrade pip\
     flask 
     
 
-RUN pip install --no-cache-dir --prefer-binary mathplotlib
+RUN pip install --no-cache-dir --prefer-binary -U matplotlib
 
 RUN pip install --no-cache-dir nicegui 
 
