@@ -16,7 +16,7 @@ RUN \
     py3-setuptools \
     py3-wheel \
 
-    && pip install --no-cache-dir pip\
+    && pip install --no-cache-dir --prefer-binary pip\
     bacpypes \
     flask \
     contourpy \
@@ -27,6 +27,7 @@ RUN \
     packaging \
     Pillow \
     pyparsing \
+    setuptools \
 
     && pip install --no-cache-dir --prefer-binary -U \
         Numpy \
