@@ -13,10 +13,9 @@ RUN \
     && pip3 install \
         --no-cache-dir \
         --prefer-binary \
-        --find-links "https://wheels.home-assistant.io/musllinux/" \
+        https://wheels.home-assistant.io/alpine-3.14/amd64/matplotlib-3.5.2-cp39-none-any.whl \
         bacpypes \
-        flask \
-        matplotlib
+        flask 
 
 WORKDIR /
 
