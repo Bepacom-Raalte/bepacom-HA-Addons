@@ -6,22 +6,36 @@ FROM $BUILD_FROM
 WORKDIR /usr/src
 RUN \
   apk add --no-cache \
-        nginx \
-        nmap \
-        py3-pip \
-        python3 \
-    && pip3 install \
-        --no-cache-dir \
-        --prefer-binary \
-        --find-links "https://wheels.home-assistant.io/musllinux/" \
-        matplotlib \
-        numpy \
-    && pip3 install \
-        --no-cache-dir \
-        --prefer-binary \
-        --find-links "https://wheels.home-assistant.io/musllinux/" \
-        bacpypes \
-        flask 
+    nginx \
+    nmap \
+    make \
+    build-base \
+    python3 \
+    py3-pip \
+    python3-dev \
+    py3-setuptools \
+    py3-wheel 
+
+
+RUN pip install --no-cache-dir --upgrade pip\
+    bacpypes \
+    flask 
+    
+RUN pip install --no-cache-dir \
+    contourpy \
+    cycler \
+    python-dateutil \
+    fontTools \
+    kiwisolver \
+    Numpy \
+    packaging \
+    Pillow \
+    pyparsing \
+    setuptools
+
+RUN pip install --no-cache-dir --prefer-binary -U matplotlib 
+
+RUN pip install --no-cache-dir nicegui 
 
 WORKDIR /
 
