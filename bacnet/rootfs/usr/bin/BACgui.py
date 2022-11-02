@@ -25,7 +25,8 @@ from threading import Thread
 
 import time
 
-from nicegui import ui
+import remi.gui as gui
+from remi import start, App
 
 
 
@@ -39,25 +40,37 @@ this_application = None
 webserv_ip = str()
 
 #=======================================================================
-# nicegui app
+# remi app
 #=======================================================================
 
 
-@ui.page('/')
-async def index():
-    ui.label('Hello NiceGUI!')
-    with ui.row().style('margin: auto; width: 50%; border: 1px solid black; padding: 10px'):
-        ui.label("nice")
-        ui.label("2")
-        with ui.column().style('margin: auto; width: 50%; border: 1px solid black; padding: 10px'):
-            ui.label("lol")
-            ui.button('bingo', on_click=lambda: ui.notify('womp')).style('margin: auto; width: 50%; padding: 10px')
-            ui.button('Wauw', on_click=lambda: ui.open(add_dev)).style('margin: auto; width: 50%; padding: 10px')
+class MyApp(App):
+    def __init__(self, *args):
+        super(MyApp, self).__init__(*args)
 
-@ui.page('/add_dev')
-async def add_dev():
-    ui.button('Yoinks', on_click=lambda: ui.open(index).style('margin: auto; width: 50%; padding: 10px'))
+    def main(self):
+        #creating a container VBox type, vertical
+        wid = gui.VBox(width=300, height=200)
 
+        #creating a text label, "white-space":"pre" preserves newline
+        self.lbl = gui.Label('Hello\n test', width='80%', height='50%', style={"white-space":"pre"})
+
+        #a button for simple interaction
+        bt = gui.Button('Press me!', width=200, height=30)
+
+        #setting up the listener for the click event
+        bt.onclick.do(self.on_button_pressed)
+        
+        #adding the widgets to the main container
+        wid.append(self.lbl)
+        wid.append(bt)
+
+        # returning the root widget
+        return wid
+
+    # listener function
+    def on_button_pressed(self, emitter):
+        self.lbl.set_text('Hello World!')
 
 
 
@@ -191,7 +204,7 @@ class WhoIsIAmConsoleCmd(ConsoleCmd):
 
 class webthread(Thread):
     def run(self):
-        ui.run(host=webserv_ip,port=7813)
+        start(MyApp, address='127.0.0.1', port=7813, multiple_instance=False, enable_file_cache=True, update_interval=0.1, start_browser=False)
 
 class BACthread(Thread):
 
@@ -244,15 +257,15 @@ def main():
     _log.debug("running")
     sys.stdout.write("before run")
 
-    BACthread = BACthread()
-    BACthread.start()
+    #BACthread = BACthread()
+    #BACthread.start()
 
-    #webserv = webthread()
-    #webserv.start()
+    webserv = webthread()
+    webserv.start()
 
     
     while True:
-        ui.run(host=webserv_ip,port=7813)
+        run()
 
     print("after run")
     _log.debug("fini")
