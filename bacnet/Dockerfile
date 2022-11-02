@@ -12,7 +12,8 @@ RUN \
     build-base \
     python3 \
     py3-pip \
-    py3-mathplotlib
+    py3-setuptools \
+    py3-wheel 
 
 
 RUN pip install --no-cache-dir --upgrade pip\
