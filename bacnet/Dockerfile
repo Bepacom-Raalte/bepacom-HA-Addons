@@ -13,7 +13,6 @@ RUN \
     python3 \
     py3-pip \
     py3-setuptools \
-    py3-packaging \
 
   && pip install --no-cache-dir --only-binary numpy\
 
