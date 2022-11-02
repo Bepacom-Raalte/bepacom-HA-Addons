@@ -13,17 +13,11 @@ RUN \
     python3 \
     py3-pip \
 
-  && pip install --no-cache-dir --upgrade pip \
-    setuptools \
-    wheel \
+  && pip install --no-cache-dir --only-binary Numpy \
+  mathplotlib \
 
   && pip install --no-cache-dir bacpypes \
-    flask \
-
-  && pip install --no-cache-dir --only-binary Numpy 
-
-
-
+    flask 
 
 WORKDIR /
 
