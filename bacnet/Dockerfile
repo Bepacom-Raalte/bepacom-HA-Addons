@@ -15,10 +15,10 @@ RUN \
     && pip3 install \
         --no-cache-dir \
         --prefer-binary \
-        --find-links "https://wheels.home-assistant.io/alpine-3.14/${BUILD_ARCH}/" \
+        --find-links "https://wheels.home-assistant.io/musllinux/" \
         bacpypes \
         flask \
-        matlibplot
+        matplotlib
 
 WORKDIR /
 
