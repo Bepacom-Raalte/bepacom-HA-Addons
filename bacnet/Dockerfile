@@ -12,6 +12,7 @@ RUN \
     build-base \
     python3 \
     py3-pip \
+    python3-dev \
     py3-setuptools \
     py3-wheel 
 
