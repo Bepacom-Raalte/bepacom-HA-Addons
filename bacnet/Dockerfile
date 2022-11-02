@@ -15,7 +15,6 @@ RUN \
     python3-dev \
     py3-setuptools \
     py3-wheel \
-    py3-mathplotlib \
 
     && pip install --no-cache-dir pip\
     bacpypes \
