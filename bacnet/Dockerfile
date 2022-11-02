@@ -16,7 +16,6 @@ RUN \
     py3-packaging \
 
   && pip install --no-cache-dir --only-binary numpy\
-    matlibplot \
 
   && pip install --no-cache-dir bacpypes \
     flask \
