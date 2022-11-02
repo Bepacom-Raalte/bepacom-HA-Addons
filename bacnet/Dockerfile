@@ -4,7 +4,7 @@ FROM $BUILD_FROM
 
 
 # Install requirements for add-on
-WORKDIR /
+WORKDIR /usr/src
 RUN \
   apk add --no-cache \
     nginx \
@@ -37,6 +37,7 @@ RUN pip install --no-cache-dir \
     pyparsing \
     setuptools
 
+RUN pip install --no-cache-dir --prefer-binary -U matplotlib 
 
 RUN pip install --no-cache-dir nicegui 
 
