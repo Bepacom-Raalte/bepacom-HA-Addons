@@ -13,7 +13,8 @@ RUN \
     && pip3 install \
         --no-cache-dir \
         --prefer-binary \
-        https://wheels.home-assistant.io/alpine-3.14/amd64/matplotlib-3.5.2-cp39-none-any.whl \
+        https://wheels.home-assistant.io/alpine-3.14/${BUILD_ARCH}/matplotlib-3.5.2-cp39-none-any.whl \
+        https://wheels.home-assistant.io/alpine-3.14/${BUILD_ARCH}/numpy-1.22.0-cp38-none-any.whl \
         bacpypes \
         flask 
 
