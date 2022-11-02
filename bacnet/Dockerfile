@@ -10,8 +10,10 @@ RUN \
     nginx \
     gcompat \
     nmap \
+    gcc \
+    g++ \
+    zlib-dev \
     make \
-    build-base \
     python3 \
     py3-pip \
     python3-dev \
