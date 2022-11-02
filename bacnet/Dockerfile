@@ -22,8 +22,7 @@ RUN \
     flask \
 
   && pip install --no-cache-dir --only-binary \
-    Numpy \
-    mathplotlib 
+    Numpy 
 
 
 
