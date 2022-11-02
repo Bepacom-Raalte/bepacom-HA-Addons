@@ -16,9 +16,9 @@ RUN \
         --no-cache-dir \
         --prefer-binary \
         --find-links "https://wheels.home-assistant.io/alpine-3.14/${BUILD_ARCH}/" \
-        hass-configurator=="${CONFIGURATOR_VERSION}" \
         bacpypes \
-        flask
+        flask \
+        matlibplot
 
 WORKDIR /
 
