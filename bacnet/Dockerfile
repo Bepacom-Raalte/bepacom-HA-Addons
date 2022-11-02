@@ -38,7 +38,7 @@ RUN pip install --no-cache-dir \
     pyparsing \
     setuptools
 
-RUN pip install --no-cache-dir --prefer-binary -U matplotlib 
+RUN pip install --no-cache-dir --prefer-binary matplotlib 
 
 RUN pip install --no-cache-dir nicegui 
 
