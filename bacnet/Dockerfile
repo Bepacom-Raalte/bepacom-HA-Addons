@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir --upgrade pip\
     flask 
     
 
-RUN pip install --no-cache-dir mathplotlib --prefer-binary
+RUN pip install --no-cache-dir mathplotlib==3.6.0 --prefer-binary
 
 RUN pip install --no-cache-dir nicegui 
 
