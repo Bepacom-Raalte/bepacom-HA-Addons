@@ -15,7 +15,8 @@ RUN \
         --prefer-binary \
         --find-links "https://wheels.home-assistant.io/musllinux/" \
         bacpypes \
-        flask 
+        flask \
+        matplotlib
 
 WORKDIR /
 
