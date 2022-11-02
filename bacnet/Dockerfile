@@ -2,6 +2,10 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
+echo ""
+
+
+
 # Install requirements for add-on
 WORKDIR /usr/src
 RUN \
@@ -14,7 +18,9 @@ RUN \
     py3-pip \
     python3-dev \
     py3-setuptools \
-    py3-wheel 
+    py3-wheel \
+    py3-matplotlib \
+    py3-numpy 
 
 
 RUN pip install --no-cache-dir --upgrade pip\
@@ -33,7 +39,7 @@ RUN pip install --no-cache-dir \
     pyparsing \
     setuptools
 
-RUN pip install --no-cache-dir --prefer-binary -U matplotlib 
+RUN pip install --no-cache-dir --prefer-binary matplotlib 
 
 RUN pip install --no-cache-dir nicegui 
 
