@@ -17,21 +17,14 @@ RUN \
     setuptools \
     wheel \
 
-  && pip install --no-cache-dir --prefer-binary \
+  && pip install --no-cache-dir \
     bacpypes \
     flask \
-    contourpy \
-    cycler \
-    python-dateutil \
-    fontTools \
-    kiwisolver \
-    packaging \
-    Pillow \
-    pyparsing \
 
   && pip install --no-cache-dir --only-binary -U \
     Numpy \
     mathplotlib \
+
   && pip install --no-cache-dir nicegui 
 
 
