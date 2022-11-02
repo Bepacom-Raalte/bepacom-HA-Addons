@@ -18,8 +18,10 @@ RUN \
 
 RUN pip install --no-cache-dir --upgrade pip\
     bacpypes \
-    flask \
-    mathplotlib --prefer-binary
+    flask 
+    
+
+RUN pip install --no-cache-dir mathplotlib --prefer-binary
 
 RUN pip install --no-cache-dir nicegui 
 
