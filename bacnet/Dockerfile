@@ -21,11 +21,10 @@ RUN \
     bacpypes \
     flask \
 
-  && pip install --no-cache-dir --only-binary -U \
+  && pip install --no-cache-dir --only-binary \
     Numpy \
-    mathplotlib \
+    mathplotlib 
 
-  && pip install --no-cache-dir nicegui 
 
 
 
