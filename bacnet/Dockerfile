@@ -17,12 +17,25 @@ RUN \
     py3-wheel 
 
 
-RUN python3 pip install --no-cache-dir --upgrade pip\
+RUN pip install --no-cache-dir --upgrade pip\
     bacpypes \
     flask 
     
-RUN python3 pip install --no-cache-dir --only-binary :all: matplotlib 
+RUN pip install --no-cache-dir --prefer-binary \
+    contourpy \
+    cycler \
+    dateutil \
+    fontTools \
+    kiwisolver \
+    Numpy \
+    packaging \
+    Pillow \
+    pyparsing \
+    setuptools
 
+RUN pip install --no-cache-dir --prefer-binary -U matplotlib 
+
+RUN pip install --no-cache-dir nicegui 
 
 WORKDIR /
 
