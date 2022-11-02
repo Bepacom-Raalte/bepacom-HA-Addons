@@ -8,6 +8,7 @@ WORKDIR /usr/src
 RUN \
   apk add --no-cache \
     nginx \
+    gcompat \
     nmap \
     make \
     build-base \
