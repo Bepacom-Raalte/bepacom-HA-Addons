@@ -12,11 +12,12 @@ RUN \
     build-base \
     python3 \
     py3-pip \
-    python3-dev \
-    py3-setuptools \
-    py3-wheel \
 
-    && pip install --no-cache-dir --prefer-binary pip\
+  && pip install --no-cache-dir --upgrade pip \
+    setuptools \
+    wheel \
+
+  && pip install --no-cache-dir --prefer-binary \
     bacpypes \
     flask \
     contourpy \
@@ -27,12 +28,11 @@ RUN \
     packaging \
     Pillow \
     pyparsing \
-    setuptools \
 
-    && pip install --no-cache-dir --prefer-binary -U \
-        Numpy \
-        mathplotlib \
-    && pip install --no-cache-dir nicegui 
+  && pip install --no-cache-dir --only-binary -U \
+    Numpy \
+    mathplotlib \
+  && pip install --no-cache-dir nicegui 
 
 
 
