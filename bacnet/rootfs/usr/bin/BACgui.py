@@ -252,8 +252,8 @@ def main():
     _log.debug("running")
     sys.stdout.write("before run")
 
-    BACthread = BACthread()
-    BACthread.start()
+    BAC = BACthread()
+    BAC.start()
 
     #webserv = webthread()
     #webserv.start()
