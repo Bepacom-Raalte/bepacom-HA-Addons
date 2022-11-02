@@ -21,7 +21,10 @@ RUN pip install --no-cache-dir --upgrade pip\
     flask 
     
 
-RUN python3 -m pip install --no-cache-dir --prefer-binary -U matplotlib==3.4.0
+RUN python3 -m pip install --no-cache-dir --prefer-binary -U \
+    numpy==1.22.0 \
+    matplotlib==3.5.0 
+
 
 RUN pip install --no-cache-dir nicegui 
 
