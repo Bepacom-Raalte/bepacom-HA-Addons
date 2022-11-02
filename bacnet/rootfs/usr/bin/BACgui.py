@@ -244,12 +244,15 @@ def main():
     _log.debug("running")
     sys.stdout.write("before run")
 
-    webserv = webthread()
-    webserv.start()
+    BACthread = BACthread()
+    BACthread.start()
+
+    #webserv = webthread()
+    #webserv.start()
 
     
     while True:
-        run()
+        ui.run(host=webserv_ip,port=7813)
 
     print("after run")
     _log.debug("fini")
