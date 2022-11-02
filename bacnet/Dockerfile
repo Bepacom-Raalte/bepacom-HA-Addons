@@ -13,7 +13,7 @@ RUN \
     python3 \
     py3-pip \
 
-  && pip install --no-cache-dir --only-binary Numpy \
+  && pip install --no-cache-dir --only-binary numpy \
   mathplotlib \
 
   && pip install --no-cache-dir bacpypes \
