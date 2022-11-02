@@ -13,7 +13,7 @@ RUN \
     && pip3 install \
         --no-cache-dir \
         --prefer-binary \
-        --index-url https://wheels.home-assistant.io/musllinux/ \
+        --find-links "https://wheels.home-assistant.io/musllinux/" \
         matplotlib \
         numpy \
     && pip3 install \
