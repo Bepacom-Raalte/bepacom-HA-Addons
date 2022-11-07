@@ -870,39 +870,14 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
         print("AN I HAVE REQUEST?!!")
         print(apdu)
 
-#========================================
-#   Threads
-#========================================
-#   BACpypes thread
-class BACpypesThread(Thread):
-
-    def __init__(self):
-        Thread.__init__(self)
-        
-    def run(self):
-        _log.debug("running")
-
-        run()
-
-        _log.debug("fini")
-
-    def stop(self):
-        stop()
-        self.join()
 
 
 #========================================
-#   __main__
+#   Run this file
 #========================================
-def main():
+def start(args):
     global this_application
     global this_device
-
-    # parse the command line arguments
-    args = ConfigArgumentParser(description=__doc__).parse_args()
-
-    if _debug: _log.debug("initialization")
-    if _debug: _log.debug("    - args: %r", args)
 
     # make a device object
     this_device = LocalDeviceObject(
@@ -919,7 +894,6 @@ def main():
 
     # make a simple application
     this_application = Application(this_device, args.ini.address)
-    if _debug: _log.debug("    - this_application: %r", this_application)
 
     # Write address
     sys.stdout.write("Starting with address:")
@@ -928,7 +902,6 @@ def main():
 
     # make a console
     this_console = console()
-    if _debug: _log.debug("    - this_console: %r", this_console)
 
     # make the thread object and start it
     #bacpypes_thread = BACpypesThread()
@@ -938,6 +911,4 @@ def main():
         run()
         
 
-if __name__ == "__main__":
-    main()
 

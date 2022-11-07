@@ -12,45 +12,7 @@ from time import sleep
 from zeroconf import IPVersion, ServiceInfo, Zeroconf
 import webAPI as api
 import BacnetInterface as bac
-from bacpypes.debugging import bacpypes_debugging, ModuleLogger
 from bacpypes.consolelogging import ConfigArgumentParser, ConsoleLogHandler
-from bacpypes.consolecmd import ConsoleCmd
-from bacpypes.core import run, deferred, stop
-from bacpypes.iocb import IOCB
-from bacpypes.pdu import Address, GlobalBroadcast
-from bacpypes.apdu import (
-    ReadPropertyRequest, 
-    ReadPropertyACK, 
-    ReadPropertyMultipleRequest,
-    ReadPropertyMultipleACK,
-    ReadAccessSpecification,
-    WritePropertyRequest,
-    SimpleAckPDU,
-    AbortPDU,
-    RejectPDU,
-    WhoIsRequest, 
-    IAmRequest, 
-    IHaveRequest, 
-    WhoHasRequest, 
-    WhoHasObject, 
-    WhoHasLimits, 
-    SubscribeCOVRequest, 
-    SubscribeCOVPropertyRequest,
-    PropertyReference,
-    )
-from bacpypes.errors import DecodingError
-from bacpypes.primitivedata import Tag, ObjectIdentifier, Null, Atomic, Integer, Unsigned, Real, Boolean, CharacterString, BitString
-from bacpypes.constructeddata import ArrayOf, Array, Any, SequenceOf
-from bacpypes.app import BIPSimpleApplication
-from bacpypes.object import get_object_class, get_datatype
-from bacpypes.local.device import LocalDeviceObject
-from bacpypes.basetypes import PropertyReference, PropertyIdentifier, PropertyValue, RecipientProcess, Recipient, EventType, ServicesSupported
-
-#importing services
-from bacpypes.service.device import WhoHasIHaveServices, DeviceCommunicationControlServices
-from bacpypes.service.cov import ChangeOfValueServices
-from bacpypes.service.file import FileServices, FileServicesClient
-from bacpypes.service.object import ReadWritePropertyMultipleServices
 
 #===================================================
 # Global variables
@@ -67,20 +29,27 @@ rsvp = (True, None, None)
 #=================================================== 
 # Uvicorn thread
 class uviThread(Thread):
-    def run(self):
-        uvicorn.run(api.app, host=host, port=port, log_level="debug")
+    def run(self, args):
+        uvicorn.run(api.app, host=args.ini.webserv, port=port, log_level="debug")
 
 #===================================================
 # Main
 #=================================================== 
 def main():
+
+    #===================================================
+    # parse bacpypes.ini
+    #===================================================
+    args = ConfigArgumentParser(description=__doc__).parse_args()
+
+
     #===================================================
     # Zeroconf setup
     #===================================================
     info = ServiceInfo(
         "_bacnet._tcp.local.",
         "BACnet/IP Home Assistant Add-on._bacnet._tcp.local.",
-        addresses=[socket.inet_aton(host)],
+        addresses=[socket.inet_aton(args.ini.address)],
         port=port,
         server="bacnetinterface.local.",
     )
@@ -92,14 +61,14 @@ def main():
     #===================================================
     # Uvicorn server
     #===================================================
-    server = uviThread()
-    server.start()
+    server = uviThread(args=(args))
+    server.start(args)
 
 
     #===================================================
     # BACnet server
     #===================================================
-    bac.main()
+    bac.start()
 
 
 
