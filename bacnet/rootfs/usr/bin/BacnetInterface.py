@@ -3,7 +3,6 @@
 #========================================
 
 from glob import glob
-from msilib.schema import SelfReg
 from os import device_encoding
 from pickle import OBJ
 from re import I
