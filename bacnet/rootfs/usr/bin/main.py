@@ -40,7 +40,7 @@ class ssdpThread(Thread):
     def run(self):
         sys.stdout.write("Starting SSDP service...\n")
         server = SSDPServer("bacnet-interface", location="http://" + extIP + ":7813/apiv1")
-        server.server_forever()
+        server.serve_forever()
 
 #===================================================
 # Main
