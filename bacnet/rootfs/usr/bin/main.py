@@ -51,7 +51,7 @@ def main():
     info = ServiceInfo(
         "_bacnet._tcp.local.",
         "BACnet/IP Home Assistant Add-on._bacnet._tcp.local.",
-        addresses=[socket.inet_aton(args.ini.address)],
+        addresses=[socket.inet_aton("127.0.0.1")],
         port=port,
         server="bacnetinterface.local.",
     )
