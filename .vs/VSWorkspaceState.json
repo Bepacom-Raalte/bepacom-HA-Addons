@@ -4,13 +4,11 @@
     "\\bacnet",
     "\\bacnet\\rootfs",
     "\\bacnet\\rootfs\\etc",
-    "\\bacnet\\rootfs\\etc\\s6-overlay",
-    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d",
-    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\interface",
-    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user",
-    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user\\contents.d",
+    "\\bacnet\\rootfs\\etc\\apk",
+    "\\bacnet\\rootfs\\etc\\apk\\repositories",
     "\\bacnet\\rootfs\\usr",
-    "\\bacnet\\rootfs\\usr\\bin"
+    "\\bacnet\\rootfs\\usr\\bin",
+    "\\bacnet\\rootfs\\usr\\bin\\templates"
   ],
   "SelectedNode": "\\bacnet\\rootfs\\usr\\bin\\BAC.py",
   "PreviewInSolutionExplorer": false

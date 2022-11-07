@@ -25,7 +25,9 @@ from threading import Thread
 
 import time
 
-from flask import Flask
+
+
+
 
 # some debugging
 _debug = 1
@@ -36,17 +38,28 @@ this_device = None
 this_application = None
 flask_ip = str()
 
+device = []
+
+
+#=====================================================================
+#   Flask App
+#=====================================================================
+from flask import Flask, jsonify, render_template
+
 app = Flask(__name__)
 
 @app.route("/")
 def hello_world():
-    return "<p>Hello, World!</p>"
+    return render_template('index.html')
+
+@app.route("/add")
+def add_dev():
+    return render_template('add.html', variable=devices)
 
 
-
-#
+#=====================================================================
 #   WhoIsIAmApplication
-#
+#=====================================================================
 
 @bacpypes_debugging
 class WhoIsIAmApplication(BIPSimpleApplication):
@@ -93,6 +106,8 @@ class WhoIsIAmApplication(BIPSimpleApplication):
                 sys.stdout.write('segmentationSupported = ' + str(apdu.segmentationSupported) + '\n')
                 sys.stdout.write('vendorID = ' + str(apdu.vendorID) + '\n')
                 sys.stdout.flush()
+
+                device = apdu
 
         # forward it along
         BIPSimpleApplication.indication(self, apdu)

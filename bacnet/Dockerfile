@@ -13,11 +13,12 @@ RUN \
     py3-pip \
     py3-setuptools \
     py3-wheel \
-    py3-numpy \
-    py3-matplotlib \
-  && pip install --no-cache-dir --upgrade pip\
+  && pip3 install --no-cache-dir --upgrade pip\
     bacpypes \
-    remi
+    flask \
+    fastapi \
+    python-zeroconf \
+    uvicorn
 
 WORKDIR /
 
