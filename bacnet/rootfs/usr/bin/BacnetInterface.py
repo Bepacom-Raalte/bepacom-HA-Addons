@@ -934,7 +934,8 @@ def main():
     #bacpypes_thread = BACpypesThread()
     #bacpypes_thread.start()
 
-    run()
+    while True:
+        run()
         
 
 if __name__ == "__main__":
