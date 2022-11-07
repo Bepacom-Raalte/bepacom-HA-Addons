@@ -7,10 +7,12 @@
     "\\bacnet\\rootfs\\etc\\nginx",
     "\\bacnet\\rootfs\\etc\\s6-overlay",
     "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d",
-    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\interface",
+    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user",
+    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user\\contents.d",
     "\\bacnet\\rootfs\\usr",
-    "\\bacnet\\rootfs\\usr\\bin"
+    "\\bacnet\\rootfs\\usr\\bin",
+    "\\bacnet\\translations"
   ],
-  "SelectedNode": "\\bacnet\\rootfs\\usr\\bin\\BacnetInterface.py",
+  "SelectedNode": "\\bacnet\\rootfs\\etc\\nginx\\nginx.conf",
   "PreviewInSolutionExplorer": false
 }
