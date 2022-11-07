@@ -7,7 +7,7 @@ from flask import Flask, jsonify, escape, request, render_template
 #===================================================
 # Flask setup (WebUI)
 #===================================================
-flask_app = Flask("WebUI", template_folder='templates')
+flask_app = Flask("WebUI", template_folder='/usr/bin/templates')
 
 @flask_app.route("/")
 def flask_main():
