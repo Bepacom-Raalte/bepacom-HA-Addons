@@ -31,10 +31,10 @@ async def nicepage():
 app.mount("/webapp", WSGIMiddleware(flask_app))
 
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+#app.add_middleware(
+#    CORSMiddleware,
+#    allow_origins=["*"],
+#    allow_credentials=False,
+#    allow_methods=["*"],
+#    allow_headers=["*"],
+#)
