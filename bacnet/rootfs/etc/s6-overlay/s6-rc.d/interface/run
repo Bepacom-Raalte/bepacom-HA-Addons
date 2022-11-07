@@ -9,7 +9,7 @@
 # Declaring variables
 
 #wait for nginx
-#bashio::net.wait_for 7812
+#bashio::net.wait_for 8099
 
 declare header
 declare objectname
@@ -57,15 +57,6 @@ foreignTTL+="$(bashio::config 'foreignTTL')"
 maxSegmentsAccepted+="$(bashio::config 'maxSegmentsAccepted')"
 
 #bashio::log.info "Added values"
-
-
-search_dir=/usr/bin/
-for entry in "$search_dir"/*
-do
-  echo "$entry"
-done
-
-
 
 
 # Generate INI file

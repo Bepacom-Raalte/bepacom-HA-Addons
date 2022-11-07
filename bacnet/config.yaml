@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: BACnet/IP Interface
-version: "0.0.2"
+version: "0.0.3"
 slug: bacnetinterface
 description: Bepacom BACnet/IP interface
 url: "https://github.com/GravySeal/bepacom-repo/"
