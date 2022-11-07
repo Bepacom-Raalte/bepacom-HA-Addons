@@ -29,7 +29,7 @@ rsvp = (True, None, None)
 #=================================================== 
 # Uvicorn thread
 class uviThread(Thread):
-    def run(args):
+    def run():
         uvicorn.run(api.app, host=args.ini.webserv, port=port, log_level="debug")
 
 #===================================================
