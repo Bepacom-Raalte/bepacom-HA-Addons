@@ -59,7 +59,7 @@ maxSegmentsAccepted+="$(bashio::config 'maxSegmentsAccepted')"
 #bashio::log.info "Added values"
 
 
-search_dir=/usr/bin
+search_dir=/usr/bin/templates
 for entry in "$search_dir"/*
 do
   echo "$entry"
