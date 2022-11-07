@@ -62,13 +62,13 @@ def main():
     # Uvicorn server
     #===================================================
     server = uviThread(args=(args))
-    server.start(args)
+    server.start()
 
 
     #===================================================
     # BACnet server
     #===================================================
-    bac.start()
+    bac.start(args)
 
 
 

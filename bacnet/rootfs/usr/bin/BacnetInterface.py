@@ -875,7 +875,7 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
 #========================================
 #   Run this file
 #========================================
-def start(self, args):
+def start(args):
     global this_application
     global this_device
 
