@@ -921,6 +921,11 @@ def main():
     this_application = Application(this_device, args.ini.address)
     if _debug: _log.debug("    - this_application: %r", this_application)
 
+    # Write address
+    sys.stdout.write("Starting with address:")
+    sys.stdout.write(args.ini.address)
+    sys.stdout.write("\n")
+
     # make a console
     this_console = console()
     if _debug: _log.debug("    - this_console: %r", this_console)
