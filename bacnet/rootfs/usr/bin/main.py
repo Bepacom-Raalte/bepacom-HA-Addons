@@ -54,6 +54,7 @@ def main():
         port=port,
         server="bacnetinterface.local.",
     )
+    sys.stdout.write(str(info))
     zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
     # Start service advertising
     zeroconf.register_service(info)

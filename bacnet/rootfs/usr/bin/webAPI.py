@@ -19,11 +19,11 @@ def flask_main():
 #===================================================
 app = FastAPI()
 
-@app.get("/api")
+@app.get("/apiv1")
 async def root():
     return {"message": "Hello World"}
 
-@app.get("/api/nice")
+@app.get("/apiv1/nice")
 async def nicepage():
     return {"love": "u"}
 

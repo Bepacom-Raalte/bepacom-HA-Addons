@@ -4,7 +4,7 @@ configuration:
     description: The name of the interface in the BACnet network
   address:
     name: Interface IP
-    description: BACnet/IP address
+    description: BACnet/IP address. "host" for automatically detected IP
   objectIdentifier:
     name: Object ID
     description: The identifier of the interface
