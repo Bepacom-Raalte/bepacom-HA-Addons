@@ -17,7 +17,7 @@ RUN \
     bacpypes \
     flask \
     fastapi \
-    python-zeroconf \
+    zeroconf \
     uvicorn
 
 WORKDIR /
