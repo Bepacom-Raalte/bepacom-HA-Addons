@@ -17,7 +17,7 @@ from bacpypes.consolelogging import ConfigArgumentParser, ConsoleLogHandler
 #===================================================
 # Global variables
 #===================================================
-host = "127.0.0.1"
+webserv: str
 port = 7813
 
 this_application = None
@@ -29,8 +29,8 @@ rsvp = (True, None, None)
 #=================================================== 
 # Uvicorn thread
 class uviThread(Thread):
-    def run(args):
-        uvicorn.run(api.app, host=args.ini.webserv, port=port, log_level="debug")
+    def run():
+        uvicorn.run(api.app, host=webserv, port=port, log_level="debug")
 
 #===================================================
 # Main
@@ -41,7 +41,8 @@ def main():
     # parse bacpypes.ini
     #===================================================
     args = ConfigArgumentParser(description=__doc__).parse_args()
-
+    global webserv
+    webserv = args.ini.webserv
 
     #===================================================
     # Zeroconf setup
@@ -61,7 +62,7 @@ def main():
     #===================================================
     # Uvicorn server
     #===================================================
-    server = uviThread(args=[args])
+    server = uviThread()
     server.start()
 
 
