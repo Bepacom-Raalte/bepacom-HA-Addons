@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from fastapi.middleware.wsgi import WSGIMiddleware
+from fastapi.middleware.wsgi import WSGIMiddleware, CORSMiddleware
 from flask import Flask, jsonify, escape, request, render_template
 
 
@@ -18,13 +18,22 @@ def flask_main():
 #===================================================
 app = FastAPI()
 
-@app.get("/")
+@app.get("/api")
 async def root():
     return {"message": "Hello World"}
 
-@app.get("/nice")
+@app.get("/api/nice")
 async def nicepage():
-    return "<p>henlo</p>"
+    return {"love": "u"}
 
 # mounting flask into FastAPI
 app.mount("/webapp", WSGIMiddleware(flask_app))
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
