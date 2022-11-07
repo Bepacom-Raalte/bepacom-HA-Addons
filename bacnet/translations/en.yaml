@@ -29,3 +29,9 @@ configuration:
   maxsegmentsAccepted:
     name: Maximum Segments Accepted
     description: The maximum amount of segments accepted in a message
+network:
+  5353/udp: Used for MDNS discovery
+  7813/tcp: Used for ingress
+  7813/udp: Used for ingress
+  47808/tcp: Used for BACnet devices
+  47808/udp: Used for BACnet devices

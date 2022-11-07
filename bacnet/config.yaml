@@ -22,12 +22,11 @@ map:
   - share:rw
   - ssl:rw
 ports:
+  5353/udp: 5353
   7813/tcp: 7813
   7813/udp: 7813
   47808/tcp: 47808
   47808/udp: 47808
-  47809/tcp: 47809
-  47809/udp: 47809
 options:
   objectname: BigBoss
   address: host
