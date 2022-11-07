@@ -12,7 +12,7 @@ arch:
   - i386
 init: false
 ingress: true
-ingress_entry: /webapp 
+ingress_entry: webapp 
 panel_icon: mdi:router-wireless-settings
 map:
   - backup:rw
