@@ -9,7 +9,7 @@
 - BACnet device can be detected
 - WebUI can be loaded, it's just an example page now
 - API and web UI are split into different paths, /apiv1/ and /webapp/
-
+- Zeroconf added, unsure if functioning
 
 ## 0.0.2
 
