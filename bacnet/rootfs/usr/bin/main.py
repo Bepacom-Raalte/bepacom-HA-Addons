@@ -77,16 +77,16 @@ def main():
     #===================================================
     # Zeroconf setup
     #===================================================
-    info = ServiceInfo(
-        "_bacnet._tcp.local.",
-        "BACnet/IP Home Assistant Add-on._bacnet._tcp.local.",
-        addresses=[socket.inet_aton(host)],
-        port=port,
-        server="bacnetinterface.local.",
-    )
-    zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
-    # Start service advertising
-    zeroconf.register_service(info)
+    #info = ServiceInfo(
+    #    "_bacnet._tcp.local.",
+    #    "BACnet/IP Home Assistant Add-on._bacnet._tcp.local.",
+    #    addresses=[socket.inet_aton(host)],
+    #    port=port,
+    #    server="bacnetinterface.local.",
+    #)
+    #zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
+    ## Start service advertising
+    #zeroconf.register_service(info)
 
 
     #===================================================
