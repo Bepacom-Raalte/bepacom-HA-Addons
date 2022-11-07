@@ -38,6 +38,7 @@ class uviThread(Thread):
 # SSDP thread
 class ssdpThread(Thread):
     def run(self):
+        sys.stdout.write("Starting SSDP service...")
         server = SSDPServer("bacnet-interface", location="http://" + extIP + ":7813/apiv1")
         server.server_forever()
 
@@ -68,13 +69,20 @@ def main():
     zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
     # Start service advertising
     zeroconf.register_service(info)
-
+    
 
     #===================================================
     # Uvicorn server
     #===================================================
     server = uviThread()
     server.start()
+
+
+    #===================================================
+    # SSDP Server 
+    #===================================================
+    ssdp = ssdpThread()
+    ssdp.start()
 
 
     #===================================================
