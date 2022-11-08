@@ -59,8 +59,9 @@ maxSegmentsAccepted+="$(bashio::config 'maxSegmentsAccepted')"
 #bashio::log.info "Added values"
 
 
-printenv
+printf "$HOSTNAME"
 
+echo "$(hostname -I)"
 
 # Generate INI file
 printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$webServ" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
