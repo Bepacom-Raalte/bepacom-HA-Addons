@@ -38,11 +38,12 @@ from bacpypes.apdu import (
     SubscribeCOVRequest, 
     SubscribeCOVPropertyRequest,
     PropertyReference,
+    UnconfirmedRequestPDU, 
     )
 from bacpypes.errors import DecodingError
 from bacpypes.primitivedata import Tag, ObjectIdentifier, Null, Atomic, Integer, Unsigned, Real, Boolean, CharacterString, BitString
 from bacpypes.constructeddata import ArrayOf, Array, Any, SequenceOf
-from bacpypes.app import BIPSimpleApplication
+from bacpypes.app import BIPSimpleApplication, ApplicationIOController
 from bacpypes.object import get_object_class, get_datatype
 from bacpypes.local.device import LocalDeviceObject
 from bacpypes.basetypes import PropertyReference, PropertyIdentifier, PropertyValue, RecipientProcess, Recipient, EventType, ServicesSupported
@@ -425,6 +426,23 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
     #========================================
     #   Define custom calls...
     #========================================
+
+    def request(self, apdu):
+
+        if _debug: ApplicationIOController._debug("request %r", apdu)
+
+        # if this is not unconfirmed request, tell the application to use
+        # the IOCB interface
+        if not isinstance(apdu, UnconfirmedRequestPDU):
+            raise RuntimeError("use IOCB for confirmed requests")
+
+        sys.stdout.write("We've got a request!!\n")
+
+        # send it downstream
+        super(ApplicationIOController, self).request(apdu)
+
+
+
     def who_has(self, low_limits = None, high_limits = None, object = None):
         if _debug: WhoHasIHaveServices.debug("who_has")
 
@@ -459,6 +477,52 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
         
         #Sending unconfirmed request (use IOCB for confirmed)
         self.request(whoHas)
+
+
+
+    #========================================
+    def do_IHaveRequest(self, apdu):
+        print("AN I HAVE REQUEST?!!")
+        print(apdu)
+
+    #========================================
+    def do_WhoIsRequest(self, apdu):
+        """Respond to a Who-Is request."""
+
+        sys.stdout.write("Responding to Who Is Request from " + apdu.pduSource + "\n")
+
+        # ignore this if there's no local device
+        if not self.localDevice:
+            sys.stdout.write("Not local device\n")
+            return
+
+        # extract the parameters
+        low_limit = apdu.deviceInstanceRangeLowLimit
+        high_limit = apdu.deviceInstanceRangeHighLimit
+
+        # check for consistent parameters
+        if (low_limit is not None):
+            if (high_limit is None):
+                raise MissingRequiredParameter("deviceInstanceRangeHighLimit required")
+            if (low_limit < 0) or (low_limit > 4194303):
+                raise ParameterOutOfRange("deviceInstanceRangeLowLimit out of range")
+        if (high_limit is not None):
+            if (low_limit is None):
+                raise MissingRequiredParameter("deviceInstanceRangeLowLimit required")
+            if (high_limit < 0) or (high_limit > 4194303):
+                raise ParameterOutOfRange("deviceInstanceRangeHighLimit out of range")
+
+        # see we should respond
+        if (low_limit is not None):
+            if (self.localDevice.objectIdentifier[1] < low_limit):
+                return
+        if (high_limit is not None):
+            if (self.localDevice.objectIdentifier[1] > high_limit):
+                return
+
+        # generate an I-Am
+        self.i_am(address=apdu.pduSource)
+
 
 
     def i_am(self, address=None):
@@ -496,6 +560,7 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
     # Do this when receiving an I Am (helper function of app.indication... do_ + function on response. Can be compared to callback?)
     #========================================
     def do_IAmRequest(self, apdu):
+        '''On receiving I Am request'''
         try:
             #Make list for device
             device = list()
@@ -895,47 +960,7 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
         except Exception as error:
             console._exception("exception: %r", error)
 
-    #========================================
-    def do_IHaveRequest(self, apdu):
-        print("AN I HAVE REQUEST?!!")
-        print(apdu)
-
-    def do_WhoIsRequest(self, apdu):
-        """Respond to a Who-Is request."""
-
-        sys.stdout.write("Responding to Who Is Request from " + apdu.pduSource + "\n")
-
-        # ignore this if there's no local device
-        if not self.localDevice:
-            sys.stdout.write("Not local device\n")
-            return
-
-        # extract the parameters
-        low_limit = apdu.deviceInstanceRangeLowLimit
-        high_limit = apdu.deviceInstanceRangeHighLimit
-
-        # check for consistent parameters
-        if (low_limit is not None):
-            if (high_limit is None):
-                raise MissingRequiredParameter("deviceInstanceRangeHighLimit required")
-            if (low_limit < 0) or (low_limit > 4194303):
-                raise ParameterOutOfRange("deviceInstanceRangeLowLimit out of range")
-        if (high_limit is not None):
-            if (low_limit is None):
-                raise MissingRequiredParameter("deviceInstanceRangeLowLimit required")
-            if (high_limit < 0) or (high_limit > 4194303):
-                raise ParameterOutOfRange("deviceInstanceRangeHighLimit out of range")
-
-        # see we should respond
-        if (low_limit is not None):
-            if (self.localDevice.objectIdentifier[1] < low_limit):
-                return
-        if (high_limit is not None):
-            if (self.localDevice.objectIdentifier[1] > high_limit):
-                return
-
-        # generate an I-Am
-        self.i_am(address=apdu.pduSource)
+    
 
     
 #========================================
