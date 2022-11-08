@@ -459,6 +459,35 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
         #Sending unconfirmed request (use IOCB for confirmed)
         self.request(whoHas)
 
+
+    def i_am(self, address=None):
+        if _debug: console._debug("i_am")
+
+        # this requires a local device
+        if not self.localDevice:
+            if _debug: console._debug("    - no local device")
+            return
+
+        # create a I-Am "response" back to the source
+        iAm = IAmRequest(
+            iAmDeviceIdentifier=self.localDevice.objectIdentifier,
+            maxAPDULengthAccepted=self.localDevice.maxApduLengthAccepted,
+            segmentationSupported=self.localDevice.segmentationSupported,
+            vendorID=self.localDevice.vendorIdentifier,
+            )
+
+        # defaults to a global broadcast
+        if not address:
+            address = GlobalBroadcast()
+        iAm.pduDestination = address
+        if _debug: console._debug("    - iAm: %r", iAm)
+
+        sys.stdout.write("Sending I Am")
+
+        # away it goes
+        self.request(iAm)
+
+
     #
     #========================================
     # do_ callbacks
