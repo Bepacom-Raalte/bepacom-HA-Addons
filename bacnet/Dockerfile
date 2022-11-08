@@ -8,6 +8,7 @@ USER root
 WORKDIR /usr/src
 RUN \
   apk add --no-cache \
+    bridge \
     nginx \
     nmap \
     python3 \
@@ -22,5 +23,7 @@ RUN \
     uvicorn 
 
 WORKDIR /
+
+RUN brctl addif br0 enp2s0 hassio
 
 COPY rootfs /
