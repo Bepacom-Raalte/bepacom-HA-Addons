@@ -22,6 +22,6 @@ RUN \
 
 WORKDIR /
 
-RUN sysctl -w net.ipv4.icmp_echo_ignore_broadcasts=0
+RUN sudo sysctl -w net.ipv4.icmp_echo_ignore_broadcasts=0
 
 COPY rootfs /
