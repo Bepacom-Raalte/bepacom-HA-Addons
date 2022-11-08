@@ -42,7 +42,8 @@ printf '%s\n' "$dockerIP" "$extIP"
 # check IP forwarding (for UDP broadcasts)
 sysctl net.ipv4.ip_forward
 sysctl net.ipv4.icmp_echo_ignore_broadcasts
-sysctl net.ipv4.icmp_echo_ignore_broadcasts=0
+
+bridge link
 
 # Setting up routing
 #route add -net 172.30.32.0 netmask 255.255.255.0 dev enp2s0
