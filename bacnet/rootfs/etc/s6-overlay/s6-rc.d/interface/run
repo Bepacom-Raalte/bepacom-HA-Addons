@@ -43,6 +43,7 @@ printf '%s\n' "$dockerIP" "$extIP"
 sysctl net.ipv4.ip_forward
 sysctl net.ipv4.icmp_echo_ignore_broadcasts
 
+brctl addif br0 enp2s0 hassio
 
 # Setting up routing
 #route add -net 172.30.32.0 netmask 255.255.255.0 dev enp2s0
