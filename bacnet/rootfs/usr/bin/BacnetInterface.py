@@ -489,7 +489,7 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
     def do_WhoIsRequest(self, apdu):
         """Respond to a Who-Is request."""
 
-        sys.stdout.write("Responding to Who Is\n")
+        sys.stdout.write("Responding to Who Is" + str(apdu.pduSource) + "\n")
 
         # ignore this if there's no local device
         if not self.localDevice:
@@ -561,6 +561,7 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
     #========================================
     def do_IAmRequest(self, apdu):
         '''On receiving I Am request'''
+        sys.stdout.write("I see an I Am request from " + str(apdu.pduSource) + " :DDDD\n")
         try:
             #Make list for device
             device = list()
@@ -1058,7 +1059,7 @@ def start(args):
     sys.stdout.write("\n")
 
     # make a console
-    this_console = console()
+    #this_console = console()
 
     # make the thread object and start it
     #bacpypes_thread = BACpypesThread()
