@@ -39,7 +39,7 @@ dockerIP=$(hostname -i)
 sysctl -w net.ipv4.ip_forward=1
 
 # Setting up routing
-ip route $extIP via $dockerIP
+ip route enp2s0 via hassio
 
 
 #
