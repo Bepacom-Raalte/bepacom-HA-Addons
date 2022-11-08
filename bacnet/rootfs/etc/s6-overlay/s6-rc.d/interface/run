@@ -43,7 +43,7 @@ printf '%s\n' "$dockerIP" "$extIP"
 sysctl net.ipv4.ip_forward
 
 # Setting up routing
-route add -net $dockerIP netmask 255.255.255.0 dev enp2s0
+route add -net 172.30.32.0 netmask 255.255.255.0 dev enp2s0
 
 
 #
