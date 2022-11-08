@@ -26,9 +26,7 @@ declare maxSegmentsAccepted
 
 route
 
-brctl addbr br0
-brctl addif br0 enp2s0
-brctl addif br0 hassio
+iptables -S
 
 #
 # Getting true IP
@@ -48,6 +46,7 @@ printf '%s\n' "$dockerIP" "$extIP"
 # check IP forwarding (for UDP broadcasts)
 sysctl net.ipv4.ip_forward
 sysctl net.ipv4.icmp_echo_ignore_broadcasts
+sysctl net.ipv4.conf.all.proxy_arp
 
 # Setting up routing
 #route add -net 172.30.32.0 netmask 255.255.255.0 dev enp2s0
