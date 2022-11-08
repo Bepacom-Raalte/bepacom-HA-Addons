@@ -63,7 +63,7 @@ printf "$HOSTNAME"
 
 echo "$(hostname -i)"
 
-ifconfig wlan0 | enp2s0
+ifconfig enp2s0
 
 # Generate INI file
 printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$webServ" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
