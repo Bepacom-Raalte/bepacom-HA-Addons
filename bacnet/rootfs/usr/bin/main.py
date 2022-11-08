@@ -34,6 +34,11 @@ class uviThread(Thread):
     def run(self):
         uvicorn.run(api.app, host=webserv, port=port, log_level="debug", )
 
+# BACpypes tread
+class bacThread(Thread):
+    def run(self):
+        while True:
+            bac.run()
 
 #===================================================
 # Main
@@ -75,9 +80,27 @@ def main():
     #===================================================
     # BACnet server
     #===================================================
-    bac.start(args)
+    global this_application
+    global this_device
 
+    # make a device object
+    this_device = bac.LocalDeviceObject(
+        objectName=args.ini.objectname,
+        objectIdentifier=int(args.ini.objectidentifier),
+        maxApduLengthAccepted=int(args.ini.maxapdulengthaccepted),
+        segmentationSupported=args.ini.segmentationsupported,
+        vendorIdentifier=int(args.ini.vendoridentifier),
+        )
 
+    # provide max segments accepted if any kind of segmentation supported
+    if args.ini.segmentationsupported != 'noSegmentation':
+        this_device.maxSegmentsAccepted = int(args.ini.maxsegmentsaccepted)
+
+    # make a simple application
+    this_application = bac.Application(this_device, args.ini.address)
+
+    BACnet = bacThread()
+    BACnet.start()
 
 if __name__=="__main__":
     main()
