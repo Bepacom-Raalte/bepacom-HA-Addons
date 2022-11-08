@@ -1023,12 +1023,6 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
         # return the result
         self.response(resp)
 
-
-
-
-
-
-
     
 #========================================
 #   Run this file

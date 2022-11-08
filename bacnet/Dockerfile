@@ -18,8 +18,7 @@ RUN \
     flask \
     fastapi \
     zeroconf \
-    uvicorn \
-    ssdpy
+    uvicorn 
 
 WORKDIR /
 

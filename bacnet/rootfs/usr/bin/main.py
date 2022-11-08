@@ -14,7 +14,6 @@ from zeroconf import IPVersion, ServiceInfo, Zeroconf
 import webAPI as api
 import BacnetInterface as bac
 from bacpypes.consolelogging import ConfigArgumentParser, ConsoleLogHandler
-from ssdpy import SSDPServer
 
 #===================================================
 # Global variables
@@ -34,13 +33,7 @@ rsvp = (True, None, None)
 class uviThread(Thread):
     def run(self):
         uvicorn.run(api.app, host=webserv, port=port, log_level="debug", )
-        
-# SSDP thread
-class ssdpThread(Thread):
-    def run(self):
-        sys.stdout.write("Starting SSDP service...\n")
-        server = SSDPServer("bacnet-interface", location="http://" + extIP + ":7813/apiv1")
-        server.serve_forever()
+
 
 #===================================================
 # Main
@@ -77,13 +70,6 @@ def main():
     #===================================================
     server = uviThread()
     server.start()
-
-
-    #===================================================
-    # SSDP Server 
-    #===================================================
-    ssdp = ssdpThread()
-    ssdp.start()
 
 
     #===================================================
