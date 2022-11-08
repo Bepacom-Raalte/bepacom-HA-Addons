@@ -46,7 +46,7 @@ from bacpypes.app import BIPSimpleApplication
 from bacpypes.object import get_object_class, get_datatype
 from bacpypes.local.device import LocalDeviceObject
 from bacpypes.basetypes import PropertyReference, PropertyIdentifier, PropertyValue, RecipientProcess, Recipient, EventType, ServicesSupported
-from bacpypes.error import ExecutionError, InconsistentParameters, MissingRequiredParameter, ParameterOutOfRange
+from bacpypes.errors import ExecutionError, InconsistentParameters, MissingRequiredParameter, ParameterOutOfRange
 
 #importing services
 from bacpypes.service.device import WhoHasIHaveServices, DeviceCommunicationControlServices
