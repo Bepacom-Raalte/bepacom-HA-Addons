@@ -61,7 +61,9 @@ maxSegmentsAccepted+="$(bashio::config 'maxSegmentsAccepted')"
 
 printf "$HOSTNAME"
 
-echo "$(hostname -I)"
+echo "$(hostname -i)"
+
+ifconfig wlan0 | enp2s0
 
 # Generate INI file
 printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$webServ" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
