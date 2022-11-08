@@ -29,14 +29,14 @@ declare maxSegmentsAccepted
 # grep catches the line that includes the words between ''
 # cut cuts the line
 # awk splits and turns it into a var
-ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}'
+extIP=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
 
 #
 # Setting IP for INI file
 #
 if [ $(bashio::config 'address') = host ]
 then
-	IPvar="$1"
+	IPvar="$extIP"
 elif [ $(bashio::config 'address') = docker ]
 then
 	IPvar="$(hostname -i)"
