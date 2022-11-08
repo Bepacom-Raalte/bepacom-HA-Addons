@@ -8,7 +8,7 @@ USER root
 WORKDIR /usr/src
 RUN \
   apk add --no-cache \
-    bridge \
+    iproute2 \
     nginx \
     nmap \
     python3 \
