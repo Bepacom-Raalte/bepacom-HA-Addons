@@ -46,6 +46,7 @@ from bacpypes.app import BIPSimpleApplication
 from bacpypes.object import get_object_class, get_datatype
 from bacpypes.local.device import LocalDeviceObject
 from bacpypes.basetypes import PropertyReference, PropertyIdentifier, PropertyValue, RecipientProcess, Recipient, EventType, ServicesSupported
+from bacpypes.error import ExecutionError, InconsistentParameters, MissingRequiredParameter, ParameterOutOfRange
 
 #importing services
 from bacpypes.service.device import WhoHasIHaveServices, DeviceCommunicationControlServices
@@ -482,7 +483,7 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
         iAm.pduDestination = address
         if _debug: console._debug("    - iAm: %r", iAm)
 
-        sys.stdout.write("Sending I Am")
+        sys.stdout.write("Sending I Am\n")
 
         # away it goes
         self.request(iAm)
@@ -899,8 +900,44 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
         print("AN I HAVE REQUEST?!!")
         print(apdu)
 
+    def do_WhoIsRequest(self, apdu):
+        """Respond to a Who-Is request."""
 
+        sys.stdout.write("Responding to Who Is Request from " + apdu.pduSource + "\n")
 
+        # ignore this if there's no local device
+        if not self.localDevice:
+            sys.stdout.write("Not local device\n")
+            return
+
+        # extract the parameters
+        low_limit = apdu.deviceInstanceRangeLowLimit
+        high_limit = apdu.deviceInstanceRangeHighLimit
+
+        # check for consistent parameters
+        if (low_limit is not None):
+            if (high_limit is None):
+                raise MissingRequiredParameter("deviceInstanceRangeHighLimit required")
+            if (low_limit < 0) or (low_limit > 4194303):
+                raise ParameterOutOfRange("deviceInstanceRangeLowLimit out of range")
+        if (high_limit is not None):
+            if (low_limit is None):
+                raise MissingRequiredParameter("deviceInstanceRangeLowLimit required")
+            if (high_limit < 0) or (high_limit > 4194303):
+                raise ParameterOutOfRange("deviceInstanceRangeHighLimit out of range")
+
+        # see we should respond
+        if (low_limit is not None):
+            if (self.localDevice.objectIdentifier[1] < low_limit):
+                return
+        if (high_limit is not None):
+            if (self.localDevice.objectIdentifier[1] > high_limit):
+                return
+
+        # generate an I-Am
+        self.i_am(address=apdu.pduSource)
+
+    
 #========================================
 #   Run this file
 #========================================
