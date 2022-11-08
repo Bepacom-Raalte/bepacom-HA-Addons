@@ -2,6 +2,7 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
+USER root 
 
 # Install requirements for add-on
 WORKDIR /usr/src
@@ -22,6 +23,6 @@ RUN \
 
 WORKDIR /
 
-RUN sudo sysctl -w net.ipv4.icmp_echo_ignore_broadcasts=0
+RUN sysctl -w net.ipv4.icmp_echo_ignore_broadcasts=0
 
 COPY rootfs /
