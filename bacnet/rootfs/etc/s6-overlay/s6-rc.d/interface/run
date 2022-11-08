@@ -22,6 +22,8 @@ declare foreignBBMD
 declare foreignTTL
 declare maxSegmentsAccepted
 
+route
+
 #
 # Getting true IP
 #
@@ -35,11 +37,13 @@ extIP=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
 #
 dockerIP=$(hostname -i)
 
+echo"$dockerIP, $extIP"
+
 # check IP forwarding (for UDP broadcasts)
 sysctl net.ipv4.ip_forward
 
 # Setting up routing
-ip route add $extIP via $dockerIP
+route add -net $dockerIP netmask 255.255.255.0 dev enp2s0
 
 
 #
@@ -72,8 +76,6 @@ maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted'
 
 
 #bashio::log.info "Added values"
-
-route
 
 #
 # Generate INI file
