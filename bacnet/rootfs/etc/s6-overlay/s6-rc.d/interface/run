@@ -37,7 +37,7 @@ extIP=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
 #
 dockerIP=$(hostname -i)
 
-echo"$dockerIP, $extIP"
+printf '%s\n' "$dockerIP" "$extIP"
 
 # check IP forwarding (for UDP broadcasts)
 sysctl net.ipv4.ip_forward
