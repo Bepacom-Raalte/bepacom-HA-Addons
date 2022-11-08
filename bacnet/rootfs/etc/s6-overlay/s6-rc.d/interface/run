@@ -22,57 +22,49 @@ declare foreignBBMD
 declare foreignTTL
 declare maxSegmentsAccepted
 
-# Assigning value to vars from config 
-header='[BACpypes]'
-objectname='objectName: '
-address='address: '
-objectIdentifier='objectIdentifier : '
-webServ='webServ: '
-maxApduLenghtAccepted='maxApduLengthAccepted: '
-segmentationSupported='segmentationSupported: '
-vendorID='vendorIdentifier: '
-foreignBBMD='foreignBBMD: '
-foreignTTL='foreignTTL: '
-maxSegmentsAccepted='maxSegmentsAccepted: '
+#
+# Getting true IP
+#
+# ifconfig shows the details about that specific ethernet adapter
+# grep catches the line that includes the words between ''
+# cut cuts the line
+# awk splits and turns it into a var
+ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}'
 
-#bashio::log.info "Added header and keys"
-
-# Concatenating the config to the variables
-objectname+="$(bashio::config 'objectname')"
-
+#
+# Setting IP for INI file
+#
 if [ $(bashio::config 'address') = host ]
 then
-	address+="$(hostname -i)"
+	IPvar="$1"
+elif [ $(bashio::config 'address') = docker ]
+then
+	IPvar="$(hostname -i)"
 else
-	address+="$(bashio::config 'address')"
+	IPvar="$(bashio::config 'address')"
 fi
 
-objectIdentifier+="$(bashio::config 'objectIdentifier')"
-webServ+="$(bashio::config 'webServ')"
-maxApduLenghtAccepted+="$(bashio::config 'maxApduLenghtAccepted')"
-segmentationSupported+="$(bashio::config 'segmentationSupported')"
-vendorID+="$(bashio::config 'vendorID')"
-foreignBBMD+="$(bashio::config 'foreignBBMD')"
-foreignTTL+="$(bashio::config 'foreignTTL')"
-maxSegmentsAccepted+="$(bashio::config 'maxSegmentsAccepted')"
+#
+# Assigning value to variables from HA config 
+#
+header='[BACpypes]'
+objectname="objectName: $(bashio::config 'objectname')"
+address="address: $IPvar"
+objectIdentifier="objectIdentifier: $(bashio::config 'objectIdentifier')"
+webServ="webServ: $(bashio::config 'webServ')"
+maxApduLenghtAccepted="maxApduLengthAccepted: $(bashio::config 'maxApduLenghtAccepted')"
+segmentationSupported="segmentationSupported: $(bashio::config 'segmentationSupported')"
+vendorID="vendorIdentifier: $(bashio::config 'vendorID')"
+foreignBBMD="foreignBBMD: $(bashio::config 'foreignBBMD')"
+foreignTTL="foreignTTL: $(bashio::config 'foreignTTL')"
+maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted')"
+
 
 #bashio::log.info "Added values"
 
-
-printf "$HOSTNAME"
-
-echo "$(hostname -i)"
-
-
-#ifconfig shows the details about that specific ethernet adapter
-#grep catches the line that includes the words between ''
-#cut cuts the line
-#awk splits and turns it into a var
-ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}'
-
-
-
+#
 # Generate INI file
+#
 printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$webServ" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
 cat BACpypes.ini
 
