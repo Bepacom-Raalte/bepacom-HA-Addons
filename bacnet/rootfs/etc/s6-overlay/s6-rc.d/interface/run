@@ -63,7 +63,14 @@ printf "$HOSTNAME"
 
 echo "$(hostname -i)"
 
-ifconfig enp2s0
+
+#ifconfig shows the details about that specific ethernet adapter
+#grep catches the line that includes the words between ''
+#cut cuts the line
+#awk splits and turns it into a var
+ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}'
+
+
 
 # Generate INI file
 printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$webServ" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
