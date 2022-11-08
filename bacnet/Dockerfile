@@ -24,6 +24,8 @@ RUN \
 
 WORKDIR /
 
+RUN route
+
 RUN brctl addif br0 enp2s0 hassio
 
 COPY rootfs /
