@@ -62,6 +62,8 @@ maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted'
 
 #bashio::log.info "Added values"
 
+route
+
 #
 # Generate INI file
 #
