@@ -489,7 +489,7 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
     def do_WhoIsRequest(self, apdu):
         """Respond to a Who-Is request."""
 
-        sys.stdout.write("Responding to Who Is" + str(apdu.pduSource) + "\n")
+        sys.stdout.write("Responding to Who Is\n")
 
         # ignore this if there's no local device
         if not self.localDevice:
