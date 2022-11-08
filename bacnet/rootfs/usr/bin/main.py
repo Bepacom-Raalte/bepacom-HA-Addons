@@ -33,7 +33,7 @@ rsvp = (True, None, None)
 # Uvicorn thread
 class uviThread(Thread):
     def run(self):
-        uvicorn.run(api.app, host=webserv, port=port, log_level="debug")
+        uvicorn.run(api.app, host=webserv, port=port, log_level="debug", )
         
 # SSDP thread
 class ssdpThread(Thread):
@@ -76,7 +76,7 @@ def main():
     # Uvicorn server
     #===================================================
     server = uviThread()
-    server.start()
+    #server.start()
 
 
     #===================================================
