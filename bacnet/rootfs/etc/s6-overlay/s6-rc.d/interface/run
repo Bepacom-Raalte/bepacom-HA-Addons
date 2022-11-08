@@ -35,8 +35,8 @@ extIP=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
 #
 dockerIP=$(hostname -i)
 
-# Enable IP forwarding (for UDP broadcasts)
-sysctl -a | grep net.ipv4.ip_forward
+# check IP forwarding (for UDP broadcasts)
+sysctl net.ipv4.ip_forward
 
 # Setting up routing
 ip route enp2s0 via hassio
