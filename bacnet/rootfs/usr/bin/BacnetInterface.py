@@ -42,9 +42,9 @@ from bacpypes.apdu import (
     )
 from bacpypes.errors import DecodingError
 from bacpypes.primitivedata import Tag, ObjectIdentifier, Null, Atomic, Integer, Unsigned, Real, Boolean, CharacterString, BitString
-from bacpypes.constructeddata import ArrayOf, Array, Any, SequenceOf
+from bacpypes.constructeddata import ArrayOf, Array, Any, SequenceOf, List
 from bacpypes.app import BIPSimpleApplication, ApplicationIOController
-from bacpypes.object import get_object_class, get_datatype
+from bacpypes.object import get_object_class, get_datatype, PropertyError
 from bacpypes.local.device import LocalDeviceObject
 from bacpypes.basetypes import PropertyReference, PropertyIdentifier, PropertyValue, RecipientProcess, Recipient, EventType, ServicesSupported
 from bacpypes.errors import ExecutionError, InconsistentParameters, MissingRequiredParameter, ParameterOutOfRange
@@ -961,6 +961,72 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
             console._exception("exception: %r", error)
 
     
+    #========================================
+    def do_ReadPropertyRequest(self, apdu):
+        """Return the value of some property of one of our objects."""
+
+        sys.stdout.write("Getting a read request...\n")
+
+        # extract the object identifier
+        objId = apdu.objectIdentifier
+
+        # check for wildcard
+        if (objId == ('device', 4194303)) and self.localDevice is not None:
+            objId = self.localDevice.objectIdentifier
+
+        # get the object
+        obj = self.get_object_id(objId)
+
+        if not obj:
+            raise ExecutionError(errorClass='object', errorCode='unknownObject')
+
+        try:
+            # get the datatype
+            datatype = obj.get_datatype(apdu.propertyIdentifier)
+
+            # get the value
+            value = obj.ReadProperty(apdu.propertyIdentifier, apdu.propertyArrayIndex)
+            if value is None:
+                raise PropertyError(apdu.propertyIdentifier)
+
+            # change atomic values into something encodeable
+            if issubclass(datatype, Atomic) or (issubclass(datatype, (Array, List)) and isinstance(value, list)):
+                value = datatype(value)
+            elif issubclass(datatype, Array) and (apdu.propertyArrayIndex is not None):
+                if apdu.propertyArrayIndex == 0:
+                    value = Unsigned(value)
+                elif issubclass(datatype.subtype, Atomic):
+                    value = datatype.subtype(value)
+                elif not isinstance(value, datatype.subtype):
+                    raise TypeError("invalid result datatype, expecting {0} and got {1}" \
+                        .format(datatype.subtype.__name__, type(value).__name__))
+            elif issubclass(datatype, List):
+                value = datatype(value)
+            elif not isinstance(value, datatype):
+                raise TypeError("invalid result datatype, expecting {0} and got {1}" \
+                    .format(datatype.__name__, type(value).__name__))
+
+            # this is a ReadProperty ack
+            resp = ReadPropertyACK(context=apdu)
+            resp.objectIdentifier = objId
+            resp.propertyIdentifier = apdu.propertyIdentifier
+            resp.propertyArrayIndex = apdu.propertyArrayIndex
+
+            # save the result in the property value
+            resp.propertyValue = Any()
+            resp.propertyValue.cast_in(value)
+
+        except PropertyError:
+            raise ExecutionError(errorClass='property', errorCode='unknownProperty')
+
+        # return the result
+        self.response(resp)
+
+
+
+
+
+
 
     
 #========================================
