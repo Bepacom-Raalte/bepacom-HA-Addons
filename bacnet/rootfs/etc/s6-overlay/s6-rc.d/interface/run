@@ -21,6 +21,7 @@ declare vendorID
 declare foreignBBMD
 declare foreignTTL
 declare maxSegmentsAccepted
+declare extIP
 
 
 
