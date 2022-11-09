@@ -132,26 +132,8 @@ def main():
     #===================================================
     # BACnet server
     #===================================================
-    global this_application
-    global this_device
 
-    # make a device object
-    this_device = LocalDeviceObject(
-        objectName=args.ini.objectname,
-        objectIdentifier=int(args.ini.objectidentifier),
-        maxApduLengthAccepted=int(args.ini.maxapdulengthaccepted),
-        segmentationSupported=args.ini.segmentationsupported,
-        vendorIdentifier=int(args.ini.vendoridentifier),
-        )
-
-    # provide max segments accepted if any kind of segmentation supported
-    if args.ini.segmentationsupported != 'noSegmentation':
-        this_device.maxSegmentsAccepted = int(args.ini.maxsegmentsaccepted)
-
-    # make a simple application
-    this_application = bac.Application(this_device, args.ini.address)
-
-    bac.start()
+    bac.run(args)
 
 if __name__=="__main__":
     main()
