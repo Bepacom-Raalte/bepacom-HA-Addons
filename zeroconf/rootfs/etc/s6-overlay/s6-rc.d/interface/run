@@ -8,14 +8,9 @@
 
 # Declaring variables
 
-#wait for nginx
-#bashio::net.wait_for 8099
-
-
 route
 
-
-bashio::log.info "Running interface"
+bashio::log.info "Running zeroconf scan..."
 
 exec python3 /usr/bin/zero.py
 
