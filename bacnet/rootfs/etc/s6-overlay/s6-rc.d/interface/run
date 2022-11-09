@@ -87,8 +87,29 @@ maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted'
 printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$webServ" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
 cat BACpypes.ini
 
+
+
+
+
 # Send out discovery information to Home Assistant
-etc/s6-overlay/s6-rc.d/interface/discovery &
+declare ha_config
+
+# Prepare discovery payload
+ha_config=$(\
+    bashio::var.json \
+        host "$(hostname)" \
+        port "^7813" \
+)
+
+if bashio::discovery "detailed_hello_world_push" "${ha_config}" > /dev/null; then
+    bashio::log.info "Successfully send discovery information to Home Assistant."
+else
+    bashio::log.error "Discovery message to Home Assistant failed!"
+fi
+
+
+
+
 
 bashio::log.info "Running interface"
 
