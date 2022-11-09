@@ -21,7 +21,6 @@ declare vendorID
 declare foreignBBMD
 declare foreignTTL
 declare maxSegmentsAccepted
-declare extIP
 
 
 
@@ -34,22 +33,13 @@ route
 # grep catches the line that includes the words between ''
 # cut cuts the line
 # awk splits and turns it into a var
-# extIP=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
+#extIP=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
 #
 # Getting Docker IP
 #
 dockerIP=$(hostname -i)
 
-
-#Check if extIP has been set
-if [ -z ${extIP+x} ]
-then
-	printf '%s\n' "$dockerIP" "$extIP"
-else
-	printf '%s\n' "$dockerIP"
-fi
-
-
+#printf '%s\n' "$dockerIP" "$extIP"
 
 # check IP forwarding (for UDP broadcasts)
 sysctl net.ipv4.ip_forward
@@ -65,12 +55,7 @@ sysctl net.ipv4.conf.all.proxy_arp
 #
 if [ $(bashio::config 'address') = host ]
 then
-	if [ -z ${extIP+x} ]
-	then
-		IPvar="$extIP"
-	else
-		IPvar="dockerIP"
-	fi
+	IPvar="$extIP"
 elif [ $(bashio::config 'address') = docker ]
 then
 	IPvar="$dockerIP"
