@@ -39,7 +39,16 @@ route
 #
 dockerIP=$(hostname -i)
 
-printf '%s\n' "$dockerIP" "$extIP"
+
+#Check if extIP has been set
+if [ -z ${extIP+x} ]
+then
+	printf '%s\n' "$dockerIP" "$extIP"
+else
+	printf '%s\n' "$dockerIP"
+fi
+
+
 
 # check IP forwarding (for UDP broadcasts)
 sysctl net.ipv4.ip_forward
@@ -55,7 +64,12 @@ sysctl net.ipv4.conf.all.proxy_arp
 #
 if [ $(bashio::config 'address') = host ]
 then
-	IPvar="$extIP"
+	if [ -z ${extIP+x} ]
+	then
+		IPvar="$extIP"
+	else
+		IPvar="dockerIP"
+	fi
 elif [ $(bashio::config 'address') = docker ]
 then
 	IPvar="$dockerIP"
