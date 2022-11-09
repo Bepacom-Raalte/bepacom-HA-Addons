@@ -1058,7 +1058,9 @@ def start(args):
     # make the thread object and start it
     #bacpypes_thread = BACpypesThread()
     #bacpypes_thread.start()
-
+    
+    while True:
+        run()
     
         
 
