@@ -19,3 +19,6 @@ map:
   - media:rw
   - share:rw
   - ssl:rw
+ports:
+  5353/tcp: 5353
+  5353/udp: 5353
