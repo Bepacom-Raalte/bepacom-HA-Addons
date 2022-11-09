@@ -1,0 +1,48 @@
+# https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
+name: Zeroconf Test
+version: "0.0.1"
+slug: zeroconf
+description: Zeroconf
+url: "https://github.com/GravySeal/bepacom-repo/"
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+init: false
+host_network: true
+panel_icon: mdi:router-wireless-settings
+map:
+  - backup:rw
+  - config:rw
+  - media:rw
+  - share:rw
+  - ssl:rw
+ports:
+  7813/tcp: 7813
+  7813/udp: 7813
+  47808/tcp: 47808
+  47808/udp: 47808
+options:
+  objectname: BigBoss
+  address: docker
+  objectIdentifier: 420
+  webServ: 127.0.0.1
+  maxApduLenghtAccepted: 1024
+  segmentationSupported: segmentedBoth
+  vendorID: 15
+  foreignBBMD: 128.253.109.254
+  foreignTTL: 30
+  maxSegmentsAccepted: 16
+schema:
+  objectname: str
+  address: str
+  objectIdentifier: int
+  webServ: str
+  maxApduLenghtAccepted: int?
+  segmentationSupported: str?
+  vendorID: int?
+  foreignBBMD: str?
+  foreignTTL: int?
+  maxSegmentsAccepted: int?

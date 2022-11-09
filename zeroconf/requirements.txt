@@ -1,0 +1,6 @@
+#BACpypes library
+bacpypes == 0.18.6
+
+# Flask Framework
+Flask == 2.2.2
+
