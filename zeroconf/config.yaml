@@ -19,6 +19,8 @@ map:
   - media:rw
   - share:rw
   - ssl:rw
+discovery:
+  - detailed_hello_world_push
 ports:
   5353/tcp: 5353
   5353/udp: 5353
