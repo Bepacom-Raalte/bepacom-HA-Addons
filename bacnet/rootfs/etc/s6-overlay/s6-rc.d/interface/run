@@ -87,6 +87,9 @@ maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted'
 printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$webServ" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
 cat BACpypes.ini
 
+# Send out discovery information to Home Assistant
+./discovery &
+
 bashio::log.info "Running interface"
 
 exec python3 /usr/bin/main.py
