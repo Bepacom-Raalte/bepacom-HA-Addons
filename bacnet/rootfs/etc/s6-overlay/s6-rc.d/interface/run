@@ -26,10 +26,6 @@ declare maxSegmentsAccepted
 
 route
 
-ip link add name br0 type bridge
-ip link set dev br0 up
-bridge link
-
 #
 # Getting true IP
 #
