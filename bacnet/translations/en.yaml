@@ -4,7 +4,7 @@ configuration:
     description: The name of the interface in the BACnet network
   address:
     name: Interface IP
-    description: BACnet/IP address. "host" for automatically detected IP
+    description: BACnet/IP address. "host" for automatically detected IP if using the host network. "docker" for the docker address. Any other IP to try with that IP.
   objectIdentifier:
     name: Object ID
     description: The identifier of the interface
@@ -24,13 +24,12 @@ configuration:
     name: BACnet/IP Broadcast Banagement Device
     description: IP address of the BBMD
   foreignTTL: 
-    name: Foreignt TTL
+    name: Foreign TTL
     description: no clue what it is
   maxsegmentsAccepted:
     name: Maximum Segments Accepted
     description: The maximum amount of segments accepted in a message
 network:
-  5353/udp: Used for MDNS discovery
   7813/tcp: Used for ingress
   7813/udp: Used for ingress
   47808/tcp: Used for BACnet devices

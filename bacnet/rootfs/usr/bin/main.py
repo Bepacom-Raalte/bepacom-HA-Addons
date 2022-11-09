@@ -86,11 +86,6 @@ class uviThread(Thread):
     def run(self):
         uvicorn.run(api.app, host=webserv, port=port, log_level="debug", )
 
-# BACpypes tread
-class bacThread(Thread):
-    def run(self):
-        while True:
-            bac.run()
 
 #===================================================
 # Main
@@ -112,7 +107,7 @@ def main():
     info = ServiceInfo(
         "_bacnet._tcp.local.",
         "BACnet/IP Home Assistant Add-on "+str(args.ini.objectname)+"._bacnet._tcp.local.",
-        addresses=[socket.inet_aton(extIP), socket.inet_aton('127.0.0.1') ],
+        addresses=[socket.inet_aton(extIP), socket.inet_aton('127.0.0.1'), socket.inet_aton('224.0.0.251') ],
         port=port,
         server="homeassistant.local.",
     )
@@ -133,7 +128,7 @@ def main():
     # BACnet server
     #===================================================
 
-    bac.run(args)
+    bac.start(args)
 
 if __name__=="__main__":
     main()

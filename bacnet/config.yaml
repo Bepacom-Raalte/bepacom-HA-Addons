@@ -28,7 +28,7 @@ ports:
   47808/udp: 47808
 options:
   objectname: BigBoss
-  address: host
+  address: docker
   objectIdentifier: 420
   webServ: 127.0.0.1
   maxApduLenghtAccepted: 1024
