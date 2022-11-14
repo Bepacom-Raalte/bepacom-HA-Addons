@@ -15,8 +15,6 @@ ingress: true
 ingress_entry: webapp/
 host_network: false
 panel_icon: mdi:router-wireless-settings
-discovery:
-  - expose_service_async
 map:
   - backup:rw
   - config:rw
