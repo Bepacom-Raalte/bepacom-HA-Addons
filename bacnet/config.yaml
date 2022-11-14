@@ -16,7 +16,7 @@ ingress_entry: webapp/
 host_network: false
 panel_icon: mdi:router-wireless-settings
 discovery:
-  - detailed_hello_world_push
+  - expose_service_async
 map:
   - backup:rw
   - config:rw
