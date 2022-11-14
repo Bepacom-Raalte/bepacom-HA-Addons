@@ -102,22 +102,6 @@ def main():
     extIP = args.ini.address
 
     #===================================================
-    # Zeroconf setup
-    #===================================================
-    info = ServiceInfo(
-        "_bacnet._tcp.local.",
-        "BACnet/IP Home Assistant Add-on "+str(args.ini.objectname)+"._bacnet._tcp.local.",
-        addresses=[socket.inet_aton(extIP)],
-        port=port,
-        server="homeassistant.local.",
-    )
-    sys.stdout.write(str(info)+"\n")
-    zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
-    # Start service advertising
-    zeroconf.register_service(info)
-    
-
-    #===================================================
     # Uvicorn server
     #===================================================
     server = uviThread()
