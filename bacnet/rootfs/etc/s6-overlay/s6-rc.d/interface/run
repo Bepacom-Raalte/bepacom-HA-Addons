@@ -101,7 +101,7 @@ ha_config=$(\
         port "^7813" \
 )
 
-if bashio::discovery "expose_service_async" "${ha_config}" > /dev/null; then
+if bashio::discovery "demo" "${ha_config}" > /dev/null; then
     bashio::log.info "Successfully sent discovery information to Home Assistant."
 else
     bashio::log.error "Discovery message to Home Assistant failed!"
