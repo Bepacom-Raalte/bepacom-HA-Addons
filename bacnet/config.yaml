@@ -10,6 +10,8 @@ arch:
   - aarch64
   - amd64
   - i386
+discovery:
+  - demo
 init: false
 ingress: true
 ingress_entry: webapp/
