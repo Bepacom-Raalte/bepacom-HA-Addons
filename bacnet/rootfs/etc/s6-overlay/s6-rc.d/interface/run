@@ -39,6 +39,8 @@ route
 #
 dockerIP=$(hostname -i)
 
+hostname
+
 #printf '%s\n' "$dockerIP" "$extIP"
 
 # check IP forwarding (for UDP broadcasts)
@@ -86,29 +88,6 @@ maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted'
 #
 printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$webServ" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
 cat BACpypes.ini
-
-
-
-
-
-# Send out discovery information to Home Assistant
-declare ha_config
-
-# Prepare discovery payload
-ha_config=$(\
-    bashio::var.json \
-        host "$(hostname)" \
-        port "^7813" \
-)
-
-if bashio::discovery "demo" "${ha_config}" > /dev/null; then
-    bashio::log.info "Successfully sent discovery information to Home Assistant."
-else
-    bashio::log.error "Discovery message to Home Assistant failed!"
-fi
-
-
-
 
 
 bashio::log.info "Running interface"

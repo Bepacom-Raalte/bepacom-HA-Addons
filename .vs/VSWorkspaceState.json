@@ -10,6 +10,6 @@
     "\\bacnet\\rootfs\\usr",
     "\\bacnet\\rootfs\\usr\\bin"
   ],
-  "SelectedNode": "\\bacnet\\rootfs\\usr\\bin\\main.py",
+  "SelectedNode": "\\bacnet\\config.yaml",
   "PreviewInSolutionExplorer": false
 }
