@@ -1,4 +1,6 @@
+devicelist = [("device",0),("device",1),("device",2)]
 objectlist = [("analogValue",0), ("analogValue",1),("binaryValue",0)]
+devices = dict()
 
 BACnet_object = {
     "object_identifier": None,
@@ -37,8 +39,19 @@ device = {
     }
 
 
-for object in objectlist:
-    print(str(object[0]))
-    device["objectlist"].update({str(object[0])+ ":" +str(object[1]): BACnet_object})
+for entry in devicelist:
+    devices.update({str(entry[0])+":"+str(entry[1]): device})
 
-print(device)
+#print(devices)
+
+for x,y in devices.items():
+    for object in objectlist:
+        y["objectlist"].update({str(object[0])+ ":" +str(object[1]): BACnet_object})
+    print(x,y)
+
+
+#for object in objectlist:
+#    device["objectlist"].update({str(object[0])+ ":" +str(object[1]): BACnet_object})
+
+#print(device)
+
