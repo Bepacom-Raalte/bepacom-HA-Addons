@@ -1,0 +1,201 @@
+Een structuur van JSON voor een device. 
+
+#key van dictionary formatten als BACnet
+dictionary = dict()
+objects = [1,2,3,4,5]
+
+for object in objects:
+    dictionary.update({"object:{}".format(object): "nice"})
+
+print(dictionary)
+
+Per device:
+{
+  "object_identifier": ,
+  "object_name": ,
+  "object_type": ,
+  "system_status": ,
+  "vendor_name": ,
+  "vendor_identifier": ,
+  "model_name": ,
+  "firmware revision": ,
+  "application_software_version": ,
+  "protocol_version": ,
+  "protocol_revision": ,
+  "protocol_services_supported": ,
+  "protocol_object_types_supported": ,
+  "objectlist":{
+    "analoginput:0": {
+      "object_identifier": ,
+      "object_name": ,
+      "object_type": ,
+      "present_value": ,
+      "description": ,
+      "reliability": ,
+      "units": ,
+      "notification_class": 
+    },
+    "analogoutput:0": {
+      "object_identifier": ,
+      "object_name": ,
+      "object_type": ,
+      "present_value": ,
+      "description": ,
+      "reliability": ,
+      "units": ,
+      "notification_class": 
+    },
+    "analogvalue:0": {
+      "object_identifier": ,
+      "object_name": ,
+      "object_type": ,
+      "present_value": ,
+      "description": ,
+      "reliability": ,
+      "units": ,
+      "notification_class": 
+    },
+    "binaryinput:0": {
+      "object_identifier": ,
+      "object_name": ,
+      "object_type": ,
+      "present_value": ,
+      "description": ,
+      "reliability": ,
+      "units": ,
+      "notification_class": 
+    },
+    "binaryoutput:0": {
+      "object_identifier": ,
+      "object_name": ,
+      "object_type": ,
+      "present_value": ,
+      "description": ,
+      "reliability": ,
+      "units": ,
+      "notification_class": 
+    },
+    "binaryvalue:0": {
+      "object_identifier": ,
+      "object_name": ,
+      "object_type": ,
+      "present_value": ,
+      "description": ,
+      "reliability": ,
+      "units": ,
+      "notification_class": 
+    },
+    "notificationclass:0": {
+      "object_identifier": ,
+      "object_name": ,
+      "object_type": ,
+      "description": ,
+      "notification_class": ,
+      "priority": ,
+      "ack_required": ,
+    }
+  },
+  "max_apdu_length_accepted": ,
+  "segmentation_supported": ,
+  "apdu_segment_timeout": ,
+  "apdu_timeout": ,
+  "number_of_apdu_retries": ,
+  "device_address_binding": ,
+  "database_revision": ,
+}
+
+Notification class object is overbodig denk ik...
+Wanneer die weggelaten wordt, is de structuur per BACnet object ook hetzelfde
+
+> Met device
+"device:{}": {
+    "object_identifier": ,
+    "object_name": ,
+    "object_type": ,
+    "system_status": ,
+    "vendor_name": ,
+    "vendor_identifier": ,
+    "model_name": ,
+    "firmware revision": ,
+    "application_software_version": ,
+    "protocol_version": ,
+    "protocol_revision": ,
+    "protocol_services_supported": ,
+    "protocol_object_types_supported": ,
+    "objectlist":{
+      "analoginput:{}": {
+        "object_identifier": ,
+        "object_name": ,
+        "object_type": ,
+        "present_value": ,
+        "description": ,
+        "reliability": ,
+        "out_of_service": ,
+        "units": ,
+        "notification_class": 
+      },
+      "analogoutput:{}": {
+        "object_identifier": ,
+        "object_name": ,
+        "object_type": ,
+        "present_value": ,
+        "description": ,
+        "reliability": ,
+        "out_of_service": ,
+        "units": ,
+        "notification_class": 
+      },
+      "analogvalue:{}": {
+        "object_identifier": ,
+        "object_name": ,
+        "object_type": ,
+        "present_value": ,
+        "description": ,
+        "reliability": ,
+        "out_of_service": ,
+        "units": ,
+        "notification_class": 
+      },
+      "binaryinput:{}": {
+        "object_identifier": ,
+        "object_name": ,
+        "object_type": ,
+        "present_value": ,
+        "description": ,
+        "reliability": ,
+        "out_of_service": ,
+        "units": ,
+        "notification_class": 
+      },
+      "binaryoutput:{}": {
+        "object_identifier": ,
+        "object_name": ,
+        "object_type": ,
+        "present_value": ,
+        "description": ,
+        "reliability": ,
+        "out_of_service": ,
+        "units": ,
+        "notification_class": 
+      },
+      "binaryvalue:{}": {
+        "object_identifier": ,
+        "object_name": ,
+        "object_type": ,
+        "present_value": ,
+        "description": ,
+        "reliability": ,
+        "out_of_service": ,
+        "units": ,
+        "notification_class": 
+      }
+    },
+    "max_apdu_length_accepted": ,
+    "segmentation_supported": ,
+    "apdu_segment_timeout": ,
+    "apdu_timeout": ,
+    "number_of_apdu_retries": ,
+    "device_address_binding": ,
+    "database_revision": ,
+  }
+}
