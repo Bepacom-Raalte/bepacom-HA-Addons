@@ -109,6 +109,12 @@ else
 fi
 
 
+if bashio::discovery "vlc_telnet" "${ha_config}" > /dev/null; then
+    bashio::log.info "Successfully send discovery information to Home Assistant."
+else
+    bashio::log.error "Discovery message to Home Assistant failed!"
+fi
+
 bashio::log.info "Running interface"
 
 exec python3 /usr/bin/main.py
