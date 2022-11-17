@@ -49,3 +49,5 @@ schema:
   foreignTTL: int?
   maxSegmentsAccepted: int?
 startup: services
+services:
+  - bacnet:provide
