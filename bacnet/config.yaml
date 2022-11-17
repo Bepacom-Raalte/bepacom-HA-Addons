@@ -11,8 +11,6 @@ arch:
   - amd64
   - i386
 init: false
-discovery:
-  - bacnet
 ingress: true
 ingress_entry: webapp/
 host_network: false

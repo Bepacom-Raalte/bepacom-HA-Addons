@@ -40,6 +40,9 @@ route
 dockerIP=$(hostname -i)
 
 hostname
+hostname -i
+hostname -d
+hostname -f
 
 #printf '%s\n' "$dockerIP" "$extIP"
 
