@@ -9,6 +9,7 @@
     "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\interface",
     "\\bacnet\\rootfs\\usr",
     "\\bacnet\\rootfs\\usr\\bin",
+    "\\bacnet\\rootfs\\usr\\bin\\templates",
     "\\bacnet\\translations"
   ],
   "SelectedNode": "\\bacnet\\rootfs\\usr\\bin\\webAPI.py",

@@ -84,15 +84,6 @@ Per device:
       "reliability": ,
       "units": ,
       "notification_class": 
-    },
-    "notificationclass:0": {
-      "object_identifier": ,
-      "object_name": ,
-      "object_type": ,
-      "description": ,
-      "notification_class": ,
-      "priority": ,
-      "ack_required": ,
     }
   },
   "max_apdu_length_accepted": ,
@@ -199,3 +190,37 @@ Wanneer die weggelaten wordt, is de structuur per BACnet object ook hetzelfde
     "database_revision": ,
   }
 }
+
+
+Dit is een stuk discovery info...
+Probleem is dat mijn addon niet native is. Daarom kan er geen discovery uitgevoerd worden...
+
+
+
+declare ha_config
+
+# Prepare discovery payload
+ha_config=$(\
+    bashio::var.json \
+        host "$(hostname)" \
+        port "^7813" 
+)
+
+if bashio::discovery "bacnet" "${ha_config}" > /dev/null; then
+    bashio::log.info "Successfully send discovery information to Home Assistant."
+else
+    bashio::log.error "Discovery message to Home Assistant failed!"
+fi
+
+
+if bashio::discovery "vlc_telnet" "${ha_config}" > /dev/null; then
+    bashio::log.info "Successfully send discovery information to Home Assistant."
+else
+    bashio::log.error "Discovery message to Home Assistant failed!"
+fi
+
+Stukje log:
+[09:59:23] ERROR: Got unexpected response from the API: Service bacnet not found for dictionary value @ data['service']. Got 'bacnet'
+[09:59:23] INFO: Successfully send discovery information to Home Assistant.
+[09:59:23] ERROR: Got unexpected response from the API: Can't use discovery!
+[09:59:23] INFO: Successfully send discovery information to Home Assistant.
