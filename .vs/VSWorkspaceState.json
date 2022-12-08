@@ -11,6 +11,6 @@
     "\\bacnet\\rootfs\\usr",
     "\\bacnet\\rootfs\\usr\\bin"
   ],
-  "SelectedNode": "\\bacnet\\rootfs\\etc\\nginx\\nginx.conf",
+  "SelectedNode": "\\bacnet\\config.yaml",
   "PreviewInSolutionExplorer": false
 }
