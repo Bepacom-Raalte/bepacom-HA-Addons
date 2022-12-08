@@ -22,6 +22,7 @@ map:
   - share:rw
   - ssl:rw
 ports:
+  80/tcp: 80
   7813/tcp: 7813
   7813/udp: 7813
   47808/tcp: 47808
