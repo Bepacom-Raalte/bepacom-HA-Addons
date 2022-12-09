@@ -4,10 +4,11 @@
     "\\bacnet",
     "\\bacnet\\rootfs",
     "\\bacnet\\rootfs\\etc",
+    "\\bacnet\\rootfs\\etc\\nginx",
     "\\bacnet\\rootfs\\etc\\s6-overlay",
     "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d",
-    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user",
-    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user\\contents.d",
+    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\interface",
+    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\nginx",
     "\\bacnet\\rootfs\\usr",
     "\\bacnet\\rootfs\\usr\\bin"
   ],
