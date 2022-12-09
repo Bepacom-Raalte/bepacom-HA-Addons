@@ -92,7 +92,7 @@ async def websocket_endpoint(websocket: WebSocket):
     updateEvent = asyncio.Event()
     write_task = asyncio.create_task(writer(websocket, updateEvent))
     websocket_helper_tasks.add(write_task)
-    read_task = asyncio.create_task(reader(websocket))
+    read_task = asyncio.create_task(reader(websocket, updateEvent))
     websocket_helper_tasks.add(read_task)
     update_monitor_task = asyncio.create_task(on_changed(updateEvent))
     websocket_helper_tasks.add(update_monitor_task)
