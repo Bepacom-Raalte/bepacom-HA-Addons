@@ -332,10 +332,6 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
                         else:
                             value = propertyValue.cast_out(datatype)
                         
-
-                        # Convert services into something readable
-                        if prop_id == 'protocolServicesSupported':
-                            value = ServicesSupported(value)
                         propertyList.append(value)
                         
 
