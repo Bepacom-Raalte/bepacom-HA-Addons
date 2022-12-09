@@ -109,7 +109,10 @@ async def writer(websocket: WebSocket, updateEvent: asyncio.Event):
     while True:
         try:
             await updateEvent.wait()
-            await websocket.send_json(BACnetDeviceList)
+            sys.stdout.write("Update Event awaited\n")
+            
+            await websocket.send({"type": "websocket.send", "text": str(BACnetDeviceList)})
+            sys.stdout.write("Sent it, Chief...\n")
             updateEvent.clear()
 
         except (RuntimeError, asyncio.CancelledError) as error:
@@ -132,6 +135,7 @@ async def reader(websocket: WebSocket, updateEvent: asyncio.Event):
                 sys.stdout.write("Disconnected...\n")
                 return
             if data['text'] == 'update':
+                sys.stdout.write("Update Event set\n")
                 updateEvent.set()
 
 
@@ -149,7 +153,7 @@ async def on_changed(updateEvent: asyncio.Event):
     while True:
         while OldValue == BACnetDeviceList:
             await asyncio.sleep(0.1)
-        sys.stdout.write("updoot\n")
+        sys.stdout.write("Value Changed..." + str(BACnetDeviceList) + "\n")
         updateEvent.set()
         OldValue = BACnetDeviceList
 
