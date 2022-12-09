@@ -119,7 +119,7 @@ async def writer(websocket: WebSocket, updateEvent: asyncio.Event):
             sys.stdout.write("Exception Disconnect for writer")
             return
 
-async def reader(websocket: WebSocket):
+async def reader(websocket: WebSocket, updateEvent: asyncio.Event):
     while True:
         try:
             data = await websocket.receive()
@@ -131,6 +131,9 @@ async def reader(websocket: WebSocket):
                 websocket_helper_tasks.clear()
                 sys.stdout.write("Disconnected...\n")
                 return
+            if data['text'] == 'update':
+                updateEvent.set()
+
 
         except (RuntimeError, asyncio.CancelledError) as error:
             sys.stdout.write(str(error))
