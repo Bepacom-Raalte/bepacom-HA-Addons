@@ -20,7 +20,8 @@ RUN \
     flask \
     fastapi \
     zeroconf \
-    uvicorn 
+    uvicorn[standard] \
+    websockets
 
 WORKDIR /
 
