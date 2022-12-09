@@ -336,13 +336,13 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
                         propertyList.append(value)
                         
 
-            # Append the propertylist to the device
-            for device in devices:
-                if device[1] == apdu.pduSource:
-                    device[0] = propertyList[0]
-                    propertyList.pop(0)
-                    propertyList[1].pop(0) #remove device info from objectlist
-                    device.extend(propertyList)
+            ## Append the propertylist to the device
+            #for device in devices:
+            #    if device[1] == apdu.pduSource:
+            #        device[0] = propertyList[0]
+            #        propertyList.pop(0)
+            #        propertyList[1].pop(0) #remove device info from objectlist
+            #        device.extend(propertyList)
 
 
         # do something with nothing?
