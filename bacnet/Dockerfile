@@ -19,8 +19,7 @@ RUN \
     bacpypes \
     flask \
     fastapi \
-    zeroconf \
-    uvicorn[standard] \
+    uvicorn \
     websockets
 
 WORKDIR /
