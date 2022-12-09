@@ -336,14 +336,7 @@ class Application(BIPS):        #This is the engine of the program. It'll run al
                         # Convert services into something readable
                         if prop_id == 'protocolServicesSupported':
                             value = ServicesSupported(value)
-                            services = []
-                            #x = key, y = value... Easy way to check for the value and append the key
-                            for x,y in value.bitNames.items():
-                                if value.value[y] == 1:
-                                    services.append(x)
-                            propertyList.append(services)
-                        else:
-                            propertyList.append(value)
+                        propertyList.append(value)
                         
 
             # Append the propertylist to the device
