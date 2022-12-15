@@ -61,7 +61,7 @@ def get_diff(localjson : dict, receivedjson : dict) -> dict:
 # Flask setup (WebUI)
 #===================================================
 
-flask_app = Flask("WebUI", template_folder='usr/bin/templates')
+flask_app = Flask("WebUI", template_folder='/usr/bin/templates')
 
 @flask_app.route("/")
 def flask_main():
