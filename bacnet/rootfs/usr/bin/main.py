@@ -5,6 +5,7 @@
 from threading import Thread
 import uvicorn
 import webAPI as api
+import time
 import sys
 from bacpypes.debugging import bacpypes_debugging, ModuleLogger
 from bacpypes.consolelogging import ConfigArgumentParser, ConsoleLogHandler
@@ -36,6 +37,20 @@ _log = ModuleLogger(globals())
 class uviThread(Thread):
     def run(self):
         uvicorn.run(api.app, host=webserv, port=port, log_level="debug")
+
+
+# BACpypes thread
+class BACpypesThread(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+
+    def run(self):
+        run()
+
+    def stop(self):
+        stop()
+        self.join()
+
         
 #===================================================
 # Main
@@ -49,6 +64,12 @@ def main():
     global extIP
     webserv = args.ini.webserv
     extIP = args.ini.address
+    
+    #===================================================
+    # Uvicorn server
+    #===================================================
+    server = uviThread()
+    server.start()
 
     #===================================================
     # BACnet server
@@ -63,6 +84,7 @@ def main():
         maxApduLengthAccepted=int(args.ini.maxapdulengthaccepted),
         segmentationSupported=args.ini.segmentationsupported,
         vendorIdentifier=int(args.ini.vendoridentifier),
+        description="BACnet Add-on for Home Assistant"
         )
 
     # provide max segments accepted if any kind of segmentation supported
@@ -73,19 +95,17 @@ def main():
     this_application = BACnetIOHandler(this_device, args.ini.address)
     sys.stdout.write("Starting BACnet device on " + args.ini.address + "\n")
 
-        #===================================================
-    # Uvicorn server
-    #===================================================
-    server = uviThread()
-    server.start()
-
     # Coupling of FastAPI and BACnetIOHandler
     api.BACnetDeviceDict = this_application.BACnetDeviceDict
     api.threadingUpdateEvent = this_application.updateEvent
-    this_application.who_is()
+
+    bacpypes_thread = BACpypesThread()
+    bacpypes_thread.start()
+
 
     while True:
-        run()
+        time.sleep(2)
+
 
 if __name__=="__main__":
     main()
