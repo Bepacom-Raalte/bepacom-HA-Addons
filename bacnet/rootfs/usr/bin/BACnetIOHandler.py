@@ -71,7 +71,7 @@ from bacpypes.object import get_datatype
 
 from bacpypes.constructeddata import Array
 
-from bacpypes.pdu import GlobalBroadcast, RemoteBroadcast, LocalBroadcast, Address
+from bacpypes.pdu import GlobalBroadcast, RemoteBroadcast, LocalBroadcast
 
 from bacpypes.apdu import (
     ReadPropertyRequest, 
@@ -149,48 +149,6 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
         self._request = None
         self.i_am()
         self.who_is()
-
-
-
-
-    def who_is(self, low_limit=None, high_limit=None, address='192.168.1.255'):
-
-        # build a request
-        whoIs = WhoIsRequest()
-
-        # defaults to a global broadcast
-        if not address:
-            address = GlobalBroadcast()
-
-        # set the destination
-        whoIs.pduDestination = Address(address)
-
-        # check for consistent parameters
-        if (low_limit is not None):
-            if (high_limit is None):
-                raise MissingRequiredParameter("high_limit required")
-            if (low_limit < 0) or (low_limit > 4194303):
-                raise ParameterOutOfRange("low_limit out of range")
-
-            # low limit is fine
-            whoIs.deviceInstanceRangeLowLimit = low_limit
-
-        if (high_limit is not None):
-            if (low_limit is None):
-                raise MissingRequiredParameter("low_limit required")
-            if (high_limit < 0) or (high_limit > 4194303):
-                raise ParameterOutOfRange("high_limit out of range")
-
-            # high limit is fine
-            whoIs.deviceInstanceRangeHighLimit = high_limit
-
-        ### put the parameters someplace where they can be matched when the
-        ### appropriate I-Am comes in
-
-        sys.stdout.write("Who IS ACTUALLY SENT!\n")
-
-        # away it goes
-        self.request(whoIs)
 
 # ==================================================================================
 # Helper functions
