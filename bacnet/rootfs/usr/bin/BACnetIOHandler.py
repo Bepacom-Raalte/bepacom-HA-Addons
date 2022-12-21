@@ -160,7 +160,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
 
         # defaults to a global broadcast
         if not address:
-            address = RemoteBroadcast(net=255)
+            address = GlobalBroadcast()
 
         # set the destination
         whoIs.pduDestination = address
