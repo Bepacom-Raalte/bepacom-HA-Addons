@@ -71,7 +71,7 @@ from bacpypes.object import get_datatype
 
 from bacpypes.constructeddata import Array
 
-from bacpypes.pdu import GlobalBroadcast
+from bacpypes.pdu import GlobalBroadcast, RemoteBroadcast, LocalBroadcast
 
 from bacpypes.apdu import (
     ReadPropertyRequest, 
@@ -160,7 +160,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
 
         # defaults to a global broadcast
         if not address:
-            address = GlobalBroadcast()
+            address = RemoteBroadcast()
 
         # set the destination
         whoIs.pduDestination = address
