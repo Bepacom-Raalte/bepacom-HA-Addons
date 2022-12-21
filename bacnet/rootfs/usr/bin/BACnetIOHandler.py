@@ -153,7 +153,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
 
 
 
-    def who_is(self, low_limit=None, high_limit=None, address=None):
+    def who_is(self, low_limit=None, high_limit=None, address='192.168.1.255'):
 
         # build a request
         whoIs = WhoIsRequest()
