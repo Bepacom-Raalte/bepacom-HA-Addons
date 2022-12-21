@@ -35,6 +35,7 @@ options:
   maxApduLenghtAccepted: 1024
   segmentationSupported: segmentedBoth
   vendorID: 15
+  maxSegmentsAccepted: 16
 
 schema:
   objectname: str
