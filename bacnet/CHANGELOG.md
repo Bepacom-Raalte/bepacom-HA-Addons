@@ -12,7 +12,7 @@
 - API can do get request on /apiv1/json
 - Can connect to websocket on ws://ip:port/ws
 - Websocket will automatically push updates on Change Of Value
-
+- Changed icon to Bepacom logo
 
 
 ## 0.0.3
