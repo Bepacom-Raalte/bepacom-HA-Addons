@@ -32,6 +32,10 @@ options:
   address: docker
   objectIdentifier: 420
   webServ: 127.0.0.1
+  maxApduLenghtAccepted: 1024
+  segmentationSupported: segmentedBoth
+  vendorID: 15
+
 schema:
   objectname: str
   address: str
@@ -43,3 +47,4 @@ schema:
   foreignBBMD: str?
   foreignTTL: int?
   maxSegmentsAccepted: int?
+
