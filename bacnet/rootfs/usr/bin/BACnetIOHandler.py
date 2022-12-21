@@ -59,7 +59,6 @@ IOHandler includes these functions as well
 # Importing libraries
 import sys
 import threading
-import orjson
 
 #importing services
 from bacpypes.service.cov import ChangeOfValueServices
