@@ -82,6 +82,7 @@ def main():
     # Coupling of FastAPI and BACnetIOHandler
     api.BACnetDeviceDict = this_application.BACnetDeviceDict
     api.threadingUpdateEvent = this_application.updateEvent
+    this_application.who_is()
 
     while True:
         run()
