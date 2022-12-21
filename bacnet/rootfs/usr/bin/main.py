@@ -49,12 +49,6 @@ def main():
     global extIP
     webserv = args.ini.webserv
     extIP = args.ini.address
-    
-    #===================================================
-    # Uvicorn server
-    #===================================================
-    server = uviThread()
-    server.start()
 
     #===================================================
     # BACnet server
@@ -78,6 +72,12 @@ def main():
     # make a simple application
     this_application = BACnetIOHandler(this_device, args.ini.address)
     sys.stdout.write("Starting BACnet device on " + args.ini.address + "\n")
+
+        #===================================================
+    # Uvicorn server
+    #===================================================
+    server = uviThread()
+    server.start()
 
     # Coupling of FastAPI and BACnetIOHandler
     api.BACnetDeviceDict = this_application.BACnetDeviceDict
