@@ -116,7 +116,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
 
     BACnetDeviceDict = {}
     objectFilter = [
-        'acucumulator',
+        'accumulator',
         'analogInput',
         'analogOutput', 
         'analogValue',

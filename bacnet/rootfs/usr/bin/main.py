@@ -5,7 +5,6 @@
 from threading import Thread
 import uvicorn
 import webAPI as api
-import time
 import sys
 from bacpypes.debugging import bacpypes_debugging, ModuleLogger
 from bacpypes.consolelogging import ConfigArgumentParser, ConsoleLogHandler
@@ -37,20 +36,6 @@ _log = ModuleLogger(globals())
 class uviThread(Thread):
     def run(self):
         uvicorn.run(api.app, host=webserv, port=port, log_level="debug")
-
-
-# BACpypes thread
-class BACpypesThread(Thread):
-    def __init__(self):
-        Thread.__init__(self)
-
-    def run(self):
-        run()
-
-    def stop(self):
-        stop()
-        self.join()
-
         
 #===================================================
 # Main
@@ -99,13 +84,15 @@ def main():
     api.BACnetDeviceDict = this_application.BACnetDeviceDict
     api.threadingUpdateEvent = this_application.updateEvent
 
-    bacpypes_thread = BACpypesThread()
-    bacpypes_thread.start()
-
+    whoisbool: bool = False
 
     while True:
-        time.sleep(2)
-
+        if whoisbool == False:
+            this_application.who_is()
+            whoisbool = True
+            sys.stdout.write("Who Is sent...\n")
+        run()
+        
 
 if __name__=="__main__":
     main()
