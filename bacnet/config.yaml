@@ -1,8 +1,8 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: BACnet/IP Interface
-version: "0.0.3"
+version: "0.0.4"
 slug: bacnetinterface
-description: Bepacom BACnet/IP interface
+description: Bepacom BACnet/IP interface for the Bepacom EcoPanel
 url: "https://github.com/GravySeal/bepacom-repo/"
 arch:
   - armhf
@@ -32,12 +32,6 @@ options:
   address: docker
   objectIdentifier: 420
   webServ: 127.0.0.1
-  maxApduLenghtAccepted: 1024
-  segmentationSupported: segmentedBoth
-  vendorID: 15
-  foreignBBMD: 128.253.109.254
-  foreignTTL: 30
-  maxSegmentsAccepted: 16
 schema:
   objectname: str
   address: str

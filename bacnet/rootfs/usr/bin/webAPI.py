@@ -1,7 +1,7 @@
-from typing import Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.wsgi import WSGIMiddleware
-from flask import Flask, jsonify, escape, request, render_template
+from flask import Flask, render_template
+import threading
 import asyncio
 import json
 import sys
@@ -9,10 +9,10 @@ import sys
 #===================================================
 # Global variables
 #===================================================
-background_tasks = set()
-BACnetDeviceList = dict()
-updateEvent = asyncio.Event()
+
+BACnetDeviceDict = dict()
 websocket_helper_tasks = set()
+threadingUpdateEvent = threading.Event()
 
 #===================================================
 # BACnet functions
@@ -20,8 +20,7 @@ websocket_helper_tasks = set()
 
 async def get_bacnet_dict():
     """ Returns BACnetDeviceList dictionary"""
-    return BACnetDeviceList()
-
+    return BACnetDeviceDict()
 
 #===================================================
 # Helperfunctions
@@ -37,26 +36,57 @@ def is_json(string: str) -> bool:
         sys.stdout.write("It's not JSON\n")
         return False
 
-def get_diff(localjson : dict, receivedjson : dict) -> dict:
-    """Get the difference of 2 dictionaries, returns a dictionary of the difference"""
-    #Remove any entries that are not in the local BACnet data (it should never add anything else to the dictionary)
-    listToPop = []
-    for key in receivedjson.keys():
-        if key not in localjson.keys():
-            listToPop.append(key)
-    sys.stdout.write("List of trash: " + str(listToPop) + "\n")
+def BACnetToDict(BACnetDict):
+    """Convert the BACnet dict to something that can be converted to JSON"""
+    #### DeviceID: ObjectID : ObjectName : Waarde
+    #### Van iedere object willen we het volgende:
+    ####    ObjectID
+    ####    ObjectName
+    ####    ObjectType
+    ####    Description
+    ####    PresentValue
+    ####    OutOfService
+    ####    Reliability
+    ####    StatusFlags
+    ####    Units
+    propertyFilter = (
+        'objectIdentifier', 
+        'objectName', 
+        'objectType',
+        'description',
+        'presentValue',
+        'outOfService',
+        'reliability',
+        'statusFlags',
+        'units'
+        )
+    devicesDict = {}
 
-    for key in listToPop:
-        receivedjson.pop(key)
+    for deviceID in BACnetDict.keys():
+        deviceDict = {}
+        deviceIDstr = ':'.join(map(str,deviceID))
 
-    #Compare 2 sets
-    localset = set(localjson.items())
-    receivedset = set(receivedjson.items())
-    difference = dict(localset ^ receivedset)
+        for objectID in BACnetDict[deviceID].keys():
+            objectDict = {}
+            if objectID in ('address', 'deviceIdentifier'):
+                continue
+            objectIDstr = ':'.join(map(str,objectID))
 
-    return difference
+            for propertyID,value in BACnetDict[deviceID][objectID].items():
+                if propertyID in propertyFilter:
+                    if isinstance(value, (int, float, bool, str)):
+                        objectDict.update({propertyID: value})
+                    else:
+                        objectDict.update({propertyID: str(value)})
 
+            deviceDict.update({objectIDstr: objectDict})
+        devicesDict.update({deviceIDstr: deviceDict})
+    return devicesDict         
 
+async def on_start():
+    # Startup delay so BACnetIOHandler can subscribe safely to everything
+    await asyncio.sleep(5)
+    
 #===================================================
 # Flask setup (WebUI)
 #===================================================
@@ -67,28 +97,22 @@ flask_app = Flask("WebUI", template_folder='/usr/bin/templates')
 def flask_main():
     return render_template("index.html")
 
-
 #===================================================
 # FastAPI setup
 #===================================================
-app = FastAPI()
+app = FastAPI(on_startup=[on_start])
 
-@app.get("/apiv1")
-async def root():
-    global BACnetDeviceList
-    return json.dumps(BACnetDeviceList)
-
-@app.get("/apiv1/nice")
+@app.get("/apiv1/json")
 async def nicepage():
-    global BACnetDeviceList
-    return {"fugg": "u"}
+    global BACnetDeviceDict
+    return BACnetToDict(BACnetDeviceDict)
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     # This function will be called whenever a new client connects to the server
+    updateEvent = asyncio.Event()
     await websocket.accept()
     # Start a task to write data to the websocket
-    updateEvent = asyncio.Event()
     write_task = asyncio.create_task(writer(websocket, updateEvent))
     websocket_helper_tasks.add(write_task)
     read_task = asyncio.create_task(reader(websocket, updateEvent))
@@ -98,20 +122,17 @@ async def websocket_endpoint(websocket: WebSocket):
 
     while True:
         try:
-            await asyncio.sleep(0)
+            await asyncio.sleep(1)
         except WebSocketDisconnect:
             sys.stdout.write("Exception")
 
 
 async def writer(websocket: WebSocket, updateEvent: asyncio.Event):
-    global BACnetDeviceList
+    global BACnetDeviceDict
     while True:
         try:
             await updateEvent.wait()
-            sys.stdout.write("Update Event awaited\n")
-            
-            await websocket.send({"type": "websocket.send", "text": str(BACnetDeviceList)})
-            sys.stdout.write("Sent it, Chief...\n")
+            await websocket.send_json(BACnetToDict(BACnetDeviceDict))
             updateEvent.clear()
 
         except (RuntimeError, asyncio.CancelledError) as error:
@@ -133,7 +154,7 @@ async def reader(websocket: WebSocket, updateEvent: asyncio.Event):
                 websocket_helper_tasks.clear()
                 sys.stdout.write("Disconnected...\n")
                 return
-            if data['text'] == 'update':
+            if data['text'].lower() == 'update':
                 sys.stdout.write("Update Event set\n")
                 updateEvent.set()
 
@@ -147,44 +168,18 @@ async def reader(websocket: WebSocket, updateEvent: asyncio.Event):
 
 
 async def on_changed(updateEvent: asyncio.Event):
-    OldValue: dict = {}
-    global BACnetDeviceList
-    while True:
-        while OldValue == BACnetDeviceList:
-            await asyncio.sleep(0.1)
-        sys.stdout.write("Value Changed..." + str(BACnetDeviceList) + "\n")
-        updateEvent.set()
-        OldValue = BACnetDeviceList
-
-
-#@app.websocket("/ws")
-#async def websocket_endpoint(websocket: WebSocket):
-#    await websocket.accept()
-#    while True:
-#        #if no new data to send:
-#        data = await websocket.receive()
-#        sys.stdout.write("Received data: " + str(data) + "\n")
-#        if data['type'] == "websocket.receive":
-#            if is_json(data['text']):
-#                #This is JSON
-#                #Compare BACnet data to JSON
-#                difference = get_diff({"keyA": "valA", "keyB": "valB"},{"keyA": "valC", "keyB": "valD", "Bullshitkey": "Bullshitvalue"})
-#                sys.stdout.write(str(difference) + "\n")
-
-#                #Maybe can signal data is available. Make it a global variable and make it settable from the main.
-
-#                pass
-#            else:
-#                #This isn't JSON
-#                #Respond to commands
-#                if data['text'] == "henlo":
-#                    sys.stdout.write("henlo\n")
-#                    pass
-
-#        if data['type'] == "websocket.disconnect":
-#            sys.stdout.write("Disconnected...\n")
-#            return
-
+    global BACnetDeviceDict
+    try:
+        while True:
+            if not threadingUpdateEvent.is_set():
+                await asyncio.sleep(1)
+            else:
+                threadingUpdateEvent.clear()
+                updateEvent.set()
+                sys.stdout.write("Update set...\n")
+    except:
+        sys.stdout.write("Exited on_change\n")
+        
 
 # mounting flask into FastAPI
 app.mount("/webapp", WSGIMiddleware(flask_app))

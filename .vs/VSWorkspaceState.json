@@ -4,12 +4,12 @@
     "\\bacnet",
     "\\bacnet\\rootfs",
     "\\bacnet\\rootfs\\etc",
-    "\\bacnet\\rootfs\\etc\\nginx",
     "\\bacnet\\rootfs\\etc\\s6-overlay",
     "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d",
     "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\nginx",
     "\\bacnet\\rootfs\\usr",
-    "\\bacnet\\rootfs\\usr\\bin"
+    "\\bacnet\\rootfs\\usr\\bin",
+    "\\bacnet\\rootfs\\usr\\bin\\templates"
   ],
   "SelectedNode": "\\bacnet\\rootfs\\usr\\bin\\webAPI.py",
   "PreviewInSolutionExplorer": false

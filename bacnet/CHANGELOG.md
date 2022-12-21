@@ -1,5 +1,20 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+
+## 0.0.4
+
+21/12/2022
+- Zeroconf removed, not functional for add-on. If this was a core add-on, would be using DHCP.
+- FastAPI running on a separate thread
+- Created BACnetIOHandler class to serve as BACnet application
+- BACnet devices will automatically be subscribed to
+- FastAPI program converts the BACnet dictionary it gets from BACnetIOHandler to a bite sized dictionary containing only the essentials for Home Assistant
+- API can do get request on /apiv1/json
+- Can connect to websocket on ws://ip:port/ws
+- Websocket will automatically push updates on Change Of Value
+
+
+
 ## 0.0.3
 
 07/11/2022
