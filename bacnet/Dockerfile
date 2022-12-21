@@ -10,6 +10,7 @@ RUN \
   apk add --no-cache \
     iproute2 \
     nginx \
+    nginx-mod-stream \
     nmap \
     python3 \
     py3-pip \
