@@ -71,7 +71,7 @@ from bacpypes.object import get_datatype
 
 from bacpypes.constructeddata import Array
 
-from bacpypes.pdu import GlobalBroadcast, RemoteBroadcast, LocalBroadcast
+from bacpypes.pdu import GlobalBroadcast, RemoteBroadcast, LocalBroadcast, Address
 
 from bacpypes.apdu import (
     ReadPropertyRequest, 
@@ -163,7 +163,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
             address = GlobalBroadcast()
 
         # set the destination
-        whoIs.pduDestination = address
+        whoIs.pduDestination = Address(address)
 
         # check for consistent parameters
         if (low_limit is not None):
