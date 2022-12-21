@@ -75,8 +75,6 @@ def main():
     if args.ini.segmentationsupported != 'noSegmentation':
         this_device.maxSegmentsAccepted = int(args.ini.maxsegmentsaccepted)
 
-    enable_sleeping()
-
     # make a simple application
     this_application = BACnetIOHandler(this_device, args.ini.address)
     sys.stdout.write("Starting BACnet device on " + args.ini.address + "\n")
