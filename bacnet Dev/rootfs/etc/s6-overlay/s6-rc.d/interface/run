@@ -1,0 +1,111 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Start the example service
+# s6-overlay docs: https://github.com/just-containers/s6-overlay
+# ==============================================================================
+
+# Add your code here
+
+# Declaring variables
+
+#wait for nginx
+#bashio::net.wait_for 8099
+
+declare header
+declare objectname
+declare address
+declare objectIdentifier
+declare maxApduLenghtAccepted
+declare segmentationSupported
+declare vendorID
+declare foreignBBMD
+declare foreignTTL
+declare maxSegmentsAccepted
+
+
+route
+
+#
+# Getting true IP
+#
+# ifconfig shows the details about that specific ethernet adapter
+# grep catches the line that includes the words between ''
+# cut cuts the line
+# awk splits and turns it into a var
+extIP=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
+#
+# Getting Docker IP
+#
+
+ifconfig -a
+
+dockerIP=$(hostname -i)
+
+hostname
+hostname -i
+hostname -d
+hostname -f
+
+
+ipv4="$(bashio::network.ipv4_address 'enp2s0')"
+printf '%s\n' "$ipv4"
+
+ipv4gw="$(bashio::network.ipv4_gateway)"
+printf '%s\n' "$ipv4gw"
+
+
+#printf '%s\n' "$dockerIP" "$extIP"
+
+# check IP forwarding (for UDP broadcasts)
+sysctl net.ipv4.ip_forward
+sysctl net.ipv4.icmp_echo_ignore_broadcasts
+sysctl net.ipv4.conf.all.proxy_arp
+
+# Setting up routing
+#route add -net 172.30.32.0 netmask 255.255.255.0 dev enp2s0
+
+
+#
+# Setting IP for INI file
+#
+if [ $(bashio::config 'address') = host ]
+then
+	IPvar="$extIP"
+elif [ $(bashio::config 'address') = docker ]
+then
+	IPvar="$dockerIP"
+else
+	IPvar="$(bashio::config 'address')"
+fi
+
+#
+# Assigning value to variables from HA config 
+#
+header='[BACpypes]'
+objectname="objectName: $(bashio::config 'objectname')"
+address="address: $IPvar"
+objectIdentifier="objectIdentifier: $(bashio::config 'objectIdentifier')"
+webServ="webServ: $(bashio::config 'webServ')"
+maxApduLenghtAccepted="maxApduLengthAccepted: $(bashio::config 'maxApduLenghtAccepted')"
+segmentationSupported="segmentationSupported: $(bashio::config 'segmentationSupported')"
+vendorID="vendorIdentifier: $(bashio::config 'vendorID')"
+foreignBBMD="foreignBBMD: $(bashio::config 'foreignBBMD')"
+foreignTTL="foreignTTL: $(bashio::config 'foreignTTL')"
+maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted')"
+
+
+#bashio::log.info "Added values"
+
+#
+# Generate INI file
+#
+printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$webServ" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
+cat BACpypes.ini
+
+
+
+bashio::log.info "Running interface"
+
+exec python3 /usr/bin/main.py
+
+bashio::log.info "After exec python"

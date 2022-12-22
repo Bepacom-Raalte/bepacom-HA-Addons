@@ -1,7 +1,7 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
-name: BACnet/IP Interface
+name: BACnet/IP Interface developer version
 version: "0.0.4"
-slug: bacnetinterface
+slug: bacnetinterfacedev
 description: Bepacom BACnet/IP interface for the Bepacom EcoPanel
 url: "https://github.com/GravySeal/bepacom-repo/"
 arch:
@@ -13,7 +13,7 @@ arch:
 init: false
 ingress: true
 ingress_entry: webapp/
-host_network: false
+host_network: true
 panel_icon: mdi:router-wireless-settings
 map:
   - backup:rw

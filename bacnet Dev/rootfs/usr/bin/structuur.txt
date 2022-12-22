@@ -1,0 +1,226 @@
+Een structuur van JSON voor een device. 
+
+#key van dictionary formatten als BACnet
+dictionary = dict()
+objects = [1,2,3,4,5]
+
+for object in objects:
+    dictionary.update({"object:{}".format(object): "nice"})
+
+print(dictionary)
+
+Per device:
+{
+  "object_identifier": ,
+  "object_name": ,
+  "object_type": ,
+  "system_status": ,
+  "vendor_name": ,
+  "vendor_identifier": ,
+  "model_name": ,
+  "firmware revision": ,
+  "application_software_version": ,
+  "protocol_version": ,
+  "protocol_revision": ,
+  "protocol_services_supported": ,
+  "protocol_object_types_supported": ,
+  "objectlist":{
+    "analoginput:0": {
+      "object_identifier": ,
+      "object_name": ,
+      "object_type": ,
+      "present_value": ,
+      "description": ,
+      "reliability": ,
+      "units": ,
+      "notification_class": 
+    },
+    "analogoutput:0": {
+      "object_identifier": ,
+      "object_name": ,
+      "object_type": ,
+      "present_value": ,
+      "description": ,
+      "reliability": ,
+      "units": ,
+      "notification_class": 
+    },
+    "analogvalue:0": {
+      "object_identifier": ,
+      "object_name": ,
+      "object_type": ,
+      "present_value": ,
+      "description": ,
+      "reliability": ,
+      "units": ,
+      "notification_class": 
+    },
+    "binaryinput:0": {
+      "object_identifier": ,
+      "object_name": ,
+      "object_type": ,
+      "present_value": ,
+      "description": ,
+      "reliability": ,
+      "units": ,
+      "notification_class": 
+    },
+    "binaryoutput:0": {
+      "object_identifier": ,
+      "object_name": ,
+      "object_type": ,
+      "present_value": ,
+      "description": ,
+      "reliability": ,
+      "units": ,
+      "notification_class": 
+    },
+    "binaryvalue:0": {
+      "object_identifier": ,
+      "object_name": ,
+      "object_type": ,
+      "present_value": ,
+      "description": ,
+      "reliability": ,
+      "units": ,
+      "notification_class": 
+    }
+  },
+  "max_apdu_length_accepted": ,
+  "segmentation_supported": ,
+  "apdu_segment_timeout": ,
+  "apdu_timeout": ,
+  "number_of_apdu_retries": ,
+  "device_address_binding": ,
+  "database_revision": ,
+}
+
+Notification class object is overbodig denk ik...
+Wanneer die weggelaten wordt, is de structuur per BACnet object ook hetzelfde
+
+> Met device
+"device:{}": {
+    "object_identifier": ,
+    "object_name": ,
+    "object_type": ,
+    "system_status": ,
+    "vendor_name": ,
+    "vendor_identifier": ,
+    "model_name": ,
+    "firmware revision": ,
+    "application_software_version": ,
+    "protocol_version": ,
+    "protocol_revision": ,
+    "protocol_services_supported": ,
+    "protocol_object_types_supported": ,
+    "objectlist":{
+      "analoginput:{}": {
+        "object_identifier": ,
+        "object_name": ,
+        "object_type": ,
+        "present_value": ,
+        "description": ,
+        "reliability": ,
+        "out_of_service": ,
+        "units": ,
+        "notification_class": 
+      },
+      "analogoutput:{}": {
+        "object_identifier": ,
+        "object_name": ,
+        "object_type": ,
+        "present_value": ,
+        "description": ,
+        "reliability": ,
+        "out_of_service": ,
+        "units": ,
+        "notification_class": 
+      },
+      "analogvalue:{}": {
+        "object_identifier": ,
+        "object_name": ,
+        "object_type": ,
+        "present_value": ,
+        "description": ,
+        "reliability": ,
+        "out_of_service": ,
+        "units": ,
+        "notification_class": 
+      },
+      "binaryinput:{}": {
+        "object_identifier": ,
+        "object_name": ,
+        "object_type": ,
+        "present_value": ,
+        "description": ,
+        "reliability": ,
+        "out_of_service": ,
+        "units": ,
+        "notification_class": 
+      },
+      "binaryoutput:{}": {
+        "object_identifier": ,
+        "object_name": ,
+        "object_type": ,
+        "present_value": ,
+        "description": ,
+        "reliability": ,
+        "out_of_service": ,
+        "units": ,
+        "notification_class": 
+      },
+      "binaryvalue:{}": {
+        "object_identifier": ,
+        "object_name": ,
+        "object_type": ,
+        "present_value": ,
+        "description": ,
+        "reliability": ,
+        "out_of_service": ,
+        "units": ,
+        "notification_class": 
+      }
+    },
+    "max_apdu_length_accepted": ,
+    "segmentation_supported": ,
+    "apdu_segment_timeout": ,
+    "apdu_timeout": ,
+    "number_of_apdu_retries": ,
+    "device_address_binding": ,
+    "database_revision": ,
+  }
+}
+
+
+Dit is een stuk discovery info...
+Probleem is dat mijn addon niet native is. Daarom kan er geen discovery uitgevoerd worden...
+
+
+
+declare ha_config
+
+# Prepare discovery payload
+ha_config=$(\
+    bashio::var.json \
+        host "$(hostname)" \
+        port "^7813" 
+)
+
+if bashio::discovery "bacnet" "${ha_config}" > /dev/null; then
+    bashio::log.info "Successfully send discovery information to Home Assistant."
+else
+    bashio::log.error "Discovery message to Home Assistant failed!"
+fi
+
+
+if bashio::discovery "vlc_telnet" "${ha_config}" > /dev/null; then
+    bashio::log.info "Successfully send discovery information to Home Assistant."
+else
+    bashio::log.error "Discovery message to Home Assistant failed!"
+fi
+
+Stukje log:
+[09:59:23] ERROR: Got unexpected response from the API: Service bacnet not found for dictionary value @ data['service']. Got 'bacnet'
+[09:59:23] INFO: Successfully send discovery information to Home Assistant.
+[09:59:23] ERROR: Got unexpected response from the API: Can't use discovery!
+[09:59:23] INFO: Successfully send discovery information to Home Assistant.
