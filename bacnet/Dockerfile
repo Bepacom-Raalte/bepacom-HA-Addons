@@ -12,6 +12,7 @@ RUN \
     nginx \
     nginx-mod-stream \
     nmap \
+    tshark \
     python3 \
     py3-pip \
     py3-setuptools \

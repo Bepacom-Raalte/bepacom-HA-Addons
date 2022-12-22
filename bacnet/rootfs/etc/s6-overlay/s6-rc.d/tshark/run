@@ -1,0 +1,7 @@
+#!/usr/bin/with-contenv bashio
+
+bashio::log.info "Running tshark"
+
+exec tshark -f "udp port 47808" -i any
+
+bashio::log.info "After exec nginx"
