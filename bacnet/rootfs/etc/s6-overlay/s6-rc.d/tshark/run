@@ -1,7 +1,7 @@
 #!/usr/bin/with-contenv bashio
 
-bashio::log.info "Running tshark"
+bashio::log.info "Running tcpdump"
 
-exec tcpdump
+exec tcpdump -v
 
-bashio::log.info "After exec nginx"
+bashio::log.info "After exec tcpdump"
