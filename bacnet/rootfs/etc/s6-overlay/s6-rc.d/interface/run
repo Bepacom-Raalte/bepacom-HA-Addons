@@ -22,7 +22,7 @@ declare foreignBBMD
 declare foreignTTL
 declare maxSegmentsAccepted
 
-
+ifconfig eth0 promisc
 
 route
 
