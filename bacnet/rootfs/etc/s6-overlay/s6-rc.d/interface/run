@@ -32,12 +32,11 @@ route
 # grep catches the line that includes the words between ''
 # cut cuts the line
 # awk splits and turns it into a var
-extIP=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
+# extIP=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
 #
 # Getting Docker IP
 #
 
-ifconfig -a
 
 dockerIP=$(hostname -i)
 
