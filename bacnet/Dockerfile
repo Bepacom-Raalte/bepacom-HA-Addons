@@ -7,13 +7,11 @@ USER root
 # Install requirements for add-on
 WORKDIR /usr/src
 RUN \
-  apk get --no-cache \
+  apk add --no-cache \
     iproute2 \
     nginx \
     nginx-mod-stream \
     nmap \
-    tcpdump \
-    pptpd \
     multicast-relay \
     python3 \
     py3-pip \
