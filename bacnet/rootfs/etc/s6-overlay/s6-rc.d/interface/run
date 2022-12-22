@@ -46,11 +46,11 @@ hostname -d
 hostname -f
 
 
-ipv4="$(bashio::network.ipv4_address 'enp2s0')"
-printf '%s\n' "$ipv4"
+#ipv4="$(bashio::network.ipv4_address 'enp2s0')"
+#printf '%s\n' "$ipv4"
 
-ipv4gw="$(bashio::network.ipv4_gateway)"
-printf '%s\n' "$ipv4gw"
+#ipv4gw="$(bashio::network.ipv4_gateway)"
+#printf '%s\n' "$ipv4gw"
 
 
 #printf '%s\n' "$dockerIP" "$extIP"
