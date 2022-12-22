@@ -12,7 +12,6 @@ RUN \
     nginx \
     nginx-mod-stream \
     nmap \
-    multicast-relay \
     python3 \
     py3-pip \
     py3-setuptools \
