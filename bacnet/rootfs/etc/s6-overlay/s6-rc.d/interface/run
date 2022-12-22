@@ -25,6 +25,19 @@ declare maxSegmentsAccepted
 
 route
 
+#
+# Getting true IP
+#
+# ifconfig shows the details about that specific ethernet adapter
+# grep catches the line that includes the words between ''
+# cut cuts the line
+# awk splits and turns it into a var
+# extIP=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
+#
+# Getting Docker IP
+#
+
+
 dockerIP=$(hostname -i)
 
 hostname
@@ -33,8 +46,15 @@ hostname -d
 hostname -f
 
 ifconfig eth0 promisc
-ifconfig eth0 -arp
-ifconfig eth0
+
+#ipv4="$(bashio::network.ipv4_address 'enp2s0')"
+#printf '%s\n' "$ipv4"
+
+#ipv4gw="$(bashio::network.ipv4_gateway)"
+#printf '%s\n' "$ipv4gw"
+
+
+#printf '%s\n' "$dockerIP" "$extIP"
 
 # check IP forwarding (for UDP broadcasts)
 sysctl net.ipv4.ip_forward
@@ -72,6 +92,9 @@ vendorID="vendorIdentifier: $(bashio::config 'vendorID')"
 foreignBBMD="foreignBBMD: $(bashio::config 'foreignBBMD')"
 foreignTTL="foreignTTL: $(bashio::config 'foreignTTL')"
 maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted')"
+
+
+#bashio::log.info "Added values"
 
 #
 # Generate INI file
