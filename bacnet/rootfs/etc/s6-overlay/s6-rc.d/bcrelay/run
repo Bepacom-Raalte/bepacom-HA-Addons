@@ -2,6 +2,6 @@
 
 bashio::log.info "Running tcpdump"
 
-exec bcrelay -i enp2s0 -s hassio
+exec python3 /usr/bin/multicast-relay.py --interfaces enp2s0 hassio
 
 bashio::log.info "After exec tcpdump"

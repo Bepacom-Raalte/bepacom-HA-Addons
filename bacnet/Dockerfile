@@ -7,13 +7,14 @@ USER root
 # Install requirements for add-on
 WORKDIR /usr/src
 RUN \
-  apt get --no-cache \
+  apk get --no-cache \
     iproute2 \
     nginx \
     nginx-mod-stream \
     nmap \
     tcpdump \
     pptpd \
+    multicast-relay \
     python3 \
     py3-pip \
     py3-setuptools \
@@ -23,7 +24,8 @@ RUN \
     flask \
     fastapi \
     uvicorn \
-    websockets
+    websockets \
+    netifaces
 
 WORKDIR /
 
