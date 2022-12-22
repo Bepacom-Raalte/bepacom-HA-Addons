@@ -13,6 +13,7 @@ import sys
 BACnetDeviceDict = dict()
 websocket_helper_tasks = set()
 threadingUpdateEvent = threading.Event()
+threadingWhoIsEvent = threading.Event()
 
 #===================================================
 # BACnet functions
@@ -106,6 +107,11 @@ app = FastAPI(on_startup=[on_start])
 async def nicepage():
     global BACnetDeviceDict
     return BACnetToDict(BACnetDeviceDict)
+
+@app.get("/apiv1/command/whois")
+async def whoiscommand():
+    threadingWhoIsEvent.set()
+    return
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

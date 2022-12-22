@@ -2,7 +2,7 @@
 # Importing from libraries
 #=================================================== 
 
-from threading import Thread
+from threading import Thread, Event
 import uvicorn
 import webAPI as api
 import sys
@@ -11,6 +11,7 @@ from bacpypes.consolelogging import ConfigArgumentParser, ConsoleLogHandler
 from bacpypes.core import run, deferred, stop, enable_sleeping
 from bacpypes.local.device import LocalDeviceObject
 from bacpypes.basetypes import PropertyReference, PropertyIdentifier, PropertyValue, RecipientProcess, Recipient, EventType, ServicesSupported
+from bacpypes.task import RecurringTask
 from BACnetIOHandler import BACnetIOHandler
 
 
@@ -36,6 +37,21 @@ _log = ModuleLogger(globals())
 class uviThread(Thread):
     def run(self):
         uvicorn.run(api.app, host=webserv, port=port, log_level="debug")
+
+
+
+class WhoIsTask(RecurringTask):
+
+    def __init__(self, event: Event(), interval):
+        RecurringTask.__init__(self, interval)
+        self.event = event
+
+        # install it
+        self.install_task()
+    def process_task(self):
+        if self.event.is_set():
+            this_application.who_is()
+            self.event.clear()
         
 #===================================================
 # Main
@@ -83,14 +99,10 @@ def main():
     # Coupling of FastAPI and BACnetIOHandler
     api.BACnetDeviceDict = this_application.BACnetDeviceDict
     api.threadingUpdateEvent = this_application.updateEvent
+    who_is_watcher = WhoIsTask(api.threadingWhoIsEvent, 2000)
 
-    whoisbool: bool = False
 
     while True:
-        if whoisbool == False:
-            this_application.who_is()
-            whoisbool = True
-            sys.stdout.write("Who Is sent...\n")
         run()
         
 
