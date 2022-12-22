@@ -36,6 +36,9 @@ route
 #
 # Getting Docker IP
 #
+
+ifconfig -a
+
 dockerIP=$(hostname -i)
 
 hostname

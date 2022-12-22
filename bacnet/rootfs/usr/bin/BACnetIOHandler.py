@@ -148,7 +148,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
         # keep track of requests to line up responses
         self._request = None
         self.i_am()
-        for ip in ('192.168.1.255','172.30.32.0', '172.30.32.255', '172.30.33.255', '172.30.33.0', '255.255.255.255', 'home-assistant.local.hass.io'):
+        for ip in ('192.168.1.255','172.30.32.0', '172.30.32.255', '172.30.33.255', '172.30.33.0', '255.255.255.255'):
             self.who_is(address=Address(ip))
 
 # ==================================================================================
