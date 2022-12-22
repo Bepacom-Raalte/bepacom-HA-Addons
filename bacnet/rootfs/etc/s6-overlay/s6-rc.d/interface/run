@@ -45,6 +45,7 @@ hostname -i
 hostname -d
 hostname -f
 
+ifconfig eth0 promisc
 
 #ipv4="$(bashio::network.ipv4_address 'enp2s0')"
 #printf '%s\n' "$ipv4"

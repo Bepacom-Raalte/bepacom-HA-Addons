@@ -14,6 +14,7 @@ init: false
 ingress: true
 ingress_entry: webapp/
 host_network: false
+privileged: NET_ADMIN
 panel_icon: mdi:router-wireless-settings
 map:
   - backup:rw
