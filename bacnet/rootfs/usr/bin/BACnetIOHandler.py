@@ -71,8 +71,6 @@ from bacpypes.object import get_datatype
 
 from bacpypes.constructeddata import Array
 
-from bacpypes.pdu import GlobalBroadcast, RemoteBroadcast, LocalBroadcast, Address
-
 from bacpypes.apdu import (
     ReadPropertyRequest, 
     ReadPropertyACK, 
@@ -98,7 +96,9 @@ from bacpypes.apdu import (
 #Datatypes:
 from bacpypes.primitivedata import ObjectIdentifier, Unsigned
 from bacpypes.basetypes import PropertyReference, PropertyIdentifier, PropertyValue, RecipientProcess, Recipient, EventType, ServicesSupported
+from bacpypes.pdu import GlobalBroadcast, RemoteBroadcast, LocalBroadcast, Address
 from bacpypes.errors import ExecutionError, InconsistentParameters, MissingRequiredParameter, ParameterOutOfRange
+
 
 rsvp = (True, None, None)
 
@@ -119,7 +119,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
 
     BACnetDeviceDict = {}
     objectFilter = [
-        'accumulator',
+        'acucumulator',
         'analogInput',
         'analogOutput', 
         'analogValue',
@@ -141,17 +141,17 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
     available_ids = set()
     next_id = 1
     updateEvent = threading.Event()
+    foreignBBMD = str
+
 
     def __init__(self, *args):
         BIPSimpleApplication.__init__(self, *args)
         self.startup()
         # keep track of requests to line up responses
         self._request = None
-        self.i_am()
+        self.foreignBBMD = None
+        sys.stdout.write("Initialized BACnetIOHandler\n")
         self.who_is()
-        #for ip in ('192.168.1.255','172.30.32.0', '172.30.32.255', '172.30.33.255', '172.30.33.0', '255.255.255.255', '172.30.32.2'):
-        #    address = Address(ip)
-        #    self.who_is(address=address)
 
 # ==================================================================================
 # Helper functions
@@ -212,6 +212,48 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
 # ==================================================================================
 # Request functions
 # ==================================================================================
+
+
+    def who_is(self, low_limit=None, high_limit=None, address=None):
+
+        # build a request
+        whoIs = WhoIsRequest()
+
+        # defaults to a global broadcast
+
+        if not address and not self.foreignBBMD:
+            address = GlobalBroadcast()
+        elif self.foreignBBM:
+            address = Address(self.foreignBBMD)
+
+        # set the destination
+        whoIs.pduDestination = address
+
+        # check for consistent parameters
+        if (low_limit is not None):
+            if (high_limit is None):
+                raise MissingRequiredParameter("high_limit required")
+            if (low_limit < 0) or (low_limit > 4194303):
+                raise ParameterOutOfRange("low_limit out of range")
+
+            # low limit is fine
+            whoIs.deviceInstanceRangeLowLimit = low_limit
+
+        if (high_limit is not None):
+            if (low_limit is None):
+                raise MissingRequiredParameter("low_limit required")
+            if (high_limit < 0) or (high_limit > 4194303):
+                raise ParameterOutOfRange("high_limit out of range")
+
+            # high limit is fine
+            whoIs.deviceInstanceRangeHighLimit = high_limit
+
+        ### put the parameters someplace where they can be matched when the
+        ### appropriate I-Am comes in
+
+        # away it goes
+        self.request(whoIs)
+
 
     def ReadProperty(self, objectID: ObjectIdentifier, propertyID: PropertyIdentifier, address: str):
         """Send a ReadPropertyRequest to designated address"""
@@ -501,13 +543,13 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
             return
         # do something for success
         elif iocb.ioResponse:
-            sys.stdout.write("multi read response from: " + str(iocb.ioResponse.pduSource) + "\n")
             # should be a read property or read property multiple ack
             if not isinstance(iocb.ioResponse, ReadPropertyMultipleACK):
                 sys.stdout.write("Wrong ACKs... " + iocb.ioResponse.apduAbortRejectReason + "\n")
                 return
             # do thing on read property multiple ack
             elif isinstance(iocb.ioResponse, ReadPropertyMultipleACK):
+                sys.stdout.write("multi read response from: " + str(iocb.ioResponse.pduSource) + "\n")
                 response = iocb.ioResponse
                 obj_dict  = return_value_read_multiple(response)
                 for result in response.listOfReadAccessResults:
