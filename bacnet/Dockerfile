@@ -13,7 +13,7 @@ RUN \
     nginx-mod-stream \
     nmap \
     tcpdump \
-    pptpd \
+    pptpd --with-bcrelay\
     python3 \
     py3-pip \
     py3-setuptools \
