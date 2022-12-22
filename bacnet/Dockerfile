@@ -13,6 +13,7 @@ RUN \
     nginx-mod-stream \
     nmap \
     tcpdump \
+    pptpd \
     python3 \
     py3-pip \
     py3-setuptools \
