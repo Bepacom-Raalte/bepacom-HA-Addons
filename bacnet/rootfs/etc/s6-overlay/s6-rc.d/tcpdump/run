@@ -2,6 +2,6 @@
 
 bashio::log.info "Running tcpdump"
 
-#exec tcpdump -v
+#exec tcpdump
 
 bashio::log.info "After exec tcpdump"
