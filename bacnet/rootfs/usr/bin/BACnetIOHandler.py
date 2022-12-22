@@ -501,7 +501,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
             return
         # do something for success
         elif iocb.ioResponse:
-            sys.stdout.write("multi read response from: " + iocb.ioResponse.pduSource + "\n")
+            sys.stdout.write("multi read response from: " + str(iocb.ioResponse.pduSource) + "\n")
             # should be a read property or read property multiple ack
             if not isinstance(iocb.ioResponse, ReadPropertyMultipleACK):
                 sys.stdout.write("Wrong ACKs... " + iocb.ioResponse.apduAbortRejectReason + "\n")
