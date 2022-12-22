@@ -64,6 +64,10 @@ sysctl net.ipv4.conf.all.bc_forwarding
 sysctl net.ipv4.conf.eth0.bc_forwarding
 
 sysctl -w net.ipv4.conf.all.bc_forwarding=1
+sysctl -w net.ipv4.conf.eth0.bc_forwarding=1
+
+sysctl net.ipv4.conf.all.bc_forwarding
+sysctl net.ipv4.conf.eth0.bc_forwarding
 
 # Setting up routing
 #route add -net 172.30.32.0 netmask 255.255.255.0 dev enp2s0
