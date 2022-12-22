@@ -141,7 +141,6 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
     available_ids = set()
     next_id = 1
     updateEvent = threading.Event()
-    foreignBBMD = str
 
 
     def __init__(self, *args):
@@ -149,7 +148,6 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
         self.startup()
         # keep track of requests to line up responses
         self._request = None
-        self.foreignBBMD = None
         sys.stdout.write("Initialized BACnetIOHandler\n")
         self.who_is()
 
@@ -212,48 +210,6 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
 # ==================================================================================
 # Request functions
 # ==================================================================================
-
-
-    def who_is(self, low_limit=None, high_limit=None, address=None):
-
-        # build a request
-        whoIs = WhoIsRequest()
-
-        # defaults to a global broadcast
-
-        if not address and not self.foreignBBMD:
-            address = GlobalBroadcast()
-        elif self.foreignBBMD:
-            address = Address(self.foreignBBMD)
-
-        # set the destination
-        whoIs.pduDestination = address
-
-        # check for consistent parameters
-        if (low_limit is not None):
-            if (high_limit is None):
-                raise MissingRequiredParameter("high_limit required")
-            if (low_limit < 0) or (low_limit > 4194303):
-                raise ParameterOutOfRange("low_limit out of range")
-
-            # low limit is fine
-            whoIs.deviceInstanceRangeLowLimit = low_limit
-
-        if (high_limit is not None):
-            if (low_limit is None):
-                raise MissingRequiredParameter("low_limit required")
-            if (high_limit < 0) or (high_limit > 4194303):
-                raise ParameterOutOfRange("high_limit out of range")
-
-            # high limit is fine
-            whoIs.deviceInstanceRangeHighLimit = high_limit
-
-        ### put the parameters someplace where they can be matched when the
-        ### appropriate I-Am comes in
-
-        # away it goes
-        self.request(whoIs)
-
 
     def ReadProperty(self, objectID: ObjectIdentifier, propertyID: PropertyIdentifier, address: str):
         """Send a ReadPropertyRequest to designated address"""
