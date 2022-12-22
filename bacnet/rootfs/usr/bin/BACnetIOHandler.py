@@ -223,7 +223,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
 
         if not address and not self.foreignBBMD:
             address = GlobalBroadcast()
-        elif self.foreignBBM:
+        elif self.foreignBBMD:
             address = Address(self.foreignBBMD)
 
         # set the destination
