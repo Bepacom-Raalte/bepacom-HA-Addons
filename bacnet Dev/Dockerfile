@@ -7,7 +7,7 @@ USER root
 # Install requirements for add-on
 WORKDIR /usr/src
 RUN \
-  apt get --no-cache \
+  apt get \
     iproute2 \
     nginx \
     nginx-mod-stream \
@@ -18,7 +18,7 @@ RUN \
     py3-pip \
     py3-setuptools \
     py3-wheel \
-  && pip3 install --no-cache-dir --upgrade pip\
+  && pip3 install --upgrade pip\
     bacpypes \
     flask \
     fastapi \
