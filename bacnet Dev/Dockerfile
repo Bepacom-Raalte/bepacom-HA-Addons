@@ -7,7 +7,7 @@ USER root
 # Install requirements for add-on
 WORKDIR /usr/src
 RUN \
-  apt get \
+  apt-get update && apt-get install -y \
     iproute2 \
     nginx \
     nginx-mod-stream \
