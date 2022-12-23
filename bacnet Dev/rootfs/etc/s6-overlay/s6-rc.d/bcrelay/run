@@ -1,7 +1,7 @@
 #!/usr/bin/with-contenv bashio
 
-bashio::log.info "Running tcpdump"
+bashio::log.info "Running bcrelay"
 
 exec bcrelay -i enp2s0 -o docker0
 
-bashio::log.info "After exec tcpdump"
+bashio::log.info "After exec bcrelay"
