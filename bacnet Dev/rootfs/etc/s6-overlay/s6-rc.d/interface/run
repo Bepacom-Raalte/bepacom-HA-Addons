@@ -28,6 +28,7 @@ hostname -i
 hostname -d
 hostname -f
 
+ip link
 
 #
 # Getting Docker IP
