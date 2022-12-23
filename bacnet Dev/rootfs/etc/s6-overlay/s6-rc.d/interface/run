@@ -29,23 +29,6 @@ hostname -d
 hostname -f
 
 
-# check IP forwarding (for UDP broadcasts)
-sysctl net.ipv4.ip_forward
-sysctl net.ipv4.icmp_echo_ignore_broadcasts
-sysctl net.ipv4.conf.all.proxy_arp
-sysctl -w net.ipv4.conf.all.bc_forwarding=1
-
-# Apply the changes from the sysctl.conf file
-sysctl -p
-
-sysctl net.ipv4.conf.all.bc_forwarding
-sysctl net.ipv4.conf.eth0.bc_forwarding
-
-sysctl
-
-
-
-
 #
 # Getting Docker IP
 #
