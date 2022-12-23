@@ -23,18 +23,13 @@ declare foreignTTL
 declare maxSegmentsAccepted
 
 
-#
-# Getting true IP
-#
-# ifconfig shows the details about that specific ethernet adapter
-# grep catches the line that includes the words between ''
-# cut cuts the line
-# awk splits and turns it into a var
-# extIP=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
+route
+
 #
 # Getting Docker IP
 #
 
+dockerIP=$(hostname -i)
 
 
 #
