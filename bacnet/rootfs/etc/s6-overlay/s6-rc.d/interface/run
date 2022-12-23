@@ -63,6 +63,7 @@ sysctl net.ipv4.conf.all.proxy_arp
 sysctl net.ipv4.conf.all.bc_forwarding
 sysctl net.ipv4.conf.eth0.bc_forwarding
 
+echo 1 > /proc/sys/net/ipv4/conf/eth/bc_forwarding
 
 # Check if the line net.ipv4.conf.eth0.bc_forwarding is present in the sysctl.conf file
 if grep -q "^net.ipv4.conf.eth0.bc_forwarding" /etc/sysctl.conf; then

@@ -11,6 +11,7 @@ RUN \
     iproute2 \
     nginx \
     nginx-mod-stream \
+    build-base \
     nmap \
     tcpdump \
     python3 \
