@@ -28,7 +28,7 @@ hostname -i
 hostname -d
 hostname -f
 
-ip link
+ifconfig
 
 #
 # Getting Docker IP
