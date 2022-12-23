@@ -99,7 +99,7 @@ def main():
     # Coupling of FastAPI and BACnetIOHandler
     api.BACnetDeviceDict = this_application.BACnetDeviceDict
     api.threadingUpdateEvent = this_application.updateEvent
-    who_is_watcher = WhoIsTask(api.threadingWhoIsEvent, 2000)
+    who_is_watcher = WhoIsTask(api.threadingWhoIsEvent, 1000)
 
 
     while True:

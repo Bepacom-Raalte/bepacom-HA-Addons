@@ -71,8 +71,6 @@ from bacpypes.object import get_datatype
 
 from bacpypes.constructeddata import Array
 
-from bacpypes.pdu import GlobalBroadcast, RemoteBroadcast, LocalBroadcast, Address
-
 from bacpypes.apdu import (
     ReadPropertyRequest, 
     ReadPropertyACK, 
@@ -98,7 +96,9 @@ from bacpypes.apdu import (
 #Datatypes:
 from bacpypes.primitivedata import ObjectIdentifier, Unsigned
 from bacpypes.basetypes import PropertyReference, PropertyIdentifier, PropertyValue, RecipientProcess, Recipient, EventType, ServicesSupported
+from bacpypes.pdu import GlobalBroadcast, RemoteBroadcast, LocalBroadcast, Address
 from bacpypes.errors import ExecutionError, InconsistentParameters, MissingRequiredParameter, ParameterOutOfRange
+
 
 rsvp = (True, None, None)
 
@@ -119,7 +119,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
 
     BACnetDeviceDict = {}
     objectFilter = [
-        'accumulator',
+        'acucumulator',
         'analogInput',
         'analogOutput', 
         'analogValue',
@@ -142,16 +142,14 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
     next_id = 1
     updateEvent = threading.Event()
 
+
     def __init__(self, *args):
         BIPSimpleApplication.__init__(self, *args)
         self.startup()
         # keep track of requests to line up responses
         self._request = None
-        self.i_am()
+        sys.stdout.write("Initialized BACnetIOHandler\n")
         self.who_is()
-        #for ip in ('192.168.1.255','172.30.32.0', '172.30.32.255', '172.30.33.255', '172.30.33.0', '255.255.255.255', '172.30.32.2'):
-        #    address = Address(ip)
-        #    self.who_is(address=address)
 
 # ==================================================================================
 # Helper functions
@@ -501,13 +499,13 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
             return
         # do something for success
         elif iocb.ioResponse:
-            sys.stdout.write("multi read response from: " + str(iocb.ioResponse.pduSource) + "\n")
             # should be a read property or read property multiple ack
             if not isinstance(iocb.ioResponse, ReadPropertyMultipleACK):
                 sys.stdout.write("Wrong ACKs... " + iocb.ioResponse.apduAbortRejectReason + "\n")
                 return
             # do thing on read property multiple ack
             elif isinstance(iocb.ioResponse, ReadPropertyMultipleACK):
+                sys.stdout.write("multi read response from: " + str(iocb.ioResponse.pduSource) + "\n")
                 response = iocb.ioResponse
                 obj_dict  = return_value_read_multiple(response)
                 for result in response.listOfReadAccessResults:
