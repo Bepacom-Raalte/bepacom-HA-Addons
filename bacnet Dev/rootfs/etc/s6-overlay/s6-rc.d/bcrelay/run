@@ -2,6 +2,6 @@
 
 bashio::log.info "Running bcrelay"
 
-exec bcrelay -o enp2s0 -i hassio
+exec bcrelay -i hassio -o enp2s0
 
 bashio::log.info "After exec bcrelay"
