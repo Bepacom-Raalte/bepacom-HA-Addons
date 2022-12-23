@@ -7,18 +7,17 @@ USER root
 # Install requirements for add-on
 WORKDIR /usr/src
 RUN \
-  apt-get update && apt-get install -y \
+    apt-get update && apt-get install -y \
     iproute2 \
     nginx \
-    nginx-mod-stream \
     nmap \
     pptpd \
     tcpdump \
     python3 \
-    py3-pip \
-    py3-setuptools \
-    py3-wheel \
-  && pip3 install --upgrade pip\
+    python3-pip 
+
+RUN \
+    pip install --upgrade pip\
     bacpypes \
     flask \
     fastapi \
