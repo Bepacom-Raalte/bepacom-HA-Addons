@@ -12,6 +12,7 @@ RUN \
     nginx \
     nmap \
     pptpd \
+    net-tools \
     tcpdump \
     python3 \
     python3-pip 
