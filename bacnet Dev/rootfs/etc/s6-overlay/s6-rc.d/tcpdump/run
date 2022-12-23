@@ -2,6 +2,6 @@
 
 bashio::log.info "Running tcpdump"
 
-exec bcrelay -i enp2s0 -s docker0
+exec bcrelay -i enp2s0 -o hassio
 
 bashio::log.info "After exec tcpdump"
