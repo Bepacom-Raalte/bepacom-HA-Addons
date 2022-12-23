@@ -81,6 +81,8 @@ sysctl -p
 sysctl net.ipv4.conf.all.bc_forwarding
 sysctl net.ipv4.conf.eth0.bc_forwarding
 
+sysctl
+
 # Setting up routing
 #route add -net 172.30.32.0 netmask 255.255.255.0 dev enp2s0
 
