@@ -23,10 +23,6 @@ declare foreignTTL
 declare maxSegmentsAccepted
 
 
-
-
-route
-
 hostname
 hostname -i
 hostname -d
