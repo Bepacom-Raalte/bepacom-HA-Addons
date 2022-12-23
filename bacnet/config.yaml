@@ -46,7 +46,6 @@ options:
   segmentationSupported: segmentedBoth
   vendorID: 15
   maxSegmentsAccepted: 16
-
 schema:
   objectname: str
   address: str
@@ -58,4 +57,5 @@ schema:
   foreignBBMD: str?
   foreignTTL: int?
   maxSegmentsAccepted: int?
+
 

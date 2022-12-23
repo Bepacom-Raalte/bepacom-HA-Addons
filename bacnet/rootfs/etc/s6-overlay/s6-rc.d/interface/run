@@ -23,7 +23,43 @@ declare foreignTTL
 declare maxSegmentsAccepted
 
 
+
+
 route
+
+hostname
+hostname -i
+hostname -d
+hostname -f
+
+ifconfig eth0 promisc
+
+# check IP forwarding (for UDP broadcasts)
+sysctl net.ipv4.ip_forward
+sysctl net.ipv4.icmp_echo_ignore_broadcasts
+sysctl net.ipv4.conf.all.proxy_arp
+sysctl net.ipv4.conf.all.bc_forwarding
+sysctl net.ipv4.conf.eth0.bc_forwarding
+
+# Check if the line net.ipv4.conf.eth0.bc_forwarding is present in the sysctl.conf file
+if grep -q "^net.ipv4.conf.eth0.bc_forwarding" /etc/sysctl.conf; then
+  # Replace the line with net.ipv4.conf.eth0.bc_forwarding = 1
+  sed -i 's/^net.ipv4.conf.eth0.bc_forwarding.*/net.ipv4.conf.eth0.bc_forwarding = 1/' /etc/sysctl.conf
+else
+  # Add the line net.ipv4.conf.eth0.bc_forwarding = 1 to the end of the sysctl.conf file
+  echo "net.ipv4.conf.eth0.bc_forwarding = 1" >> /etc/sysctl.conf
+fi
+
+# Apply the changes from the sysctl.conf file
+sysctl -p
+
+sysctl net.ipv4.conf.all.bc_forwarding
+sysctl net.ipv4.conf.eth0.bc_forwarding
+
+sysctl
+
+
+
 
 #
 # Getting Docker IP
