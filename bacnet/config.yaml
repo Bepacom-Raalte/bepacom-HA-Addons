@@ -17,7 +17,7 @@ host_network: false
 privileged: 
   - NET_ADMIN
   - SYS_ADMIN
-full_access: true
+full_access: false
 panel_icon: mdi:router-wireless-settings
 map:
   - backup:rw

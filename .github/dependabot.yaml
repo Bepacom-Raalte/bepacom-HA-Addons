@@ -5,3 +5,5 @@ updates:
     schedule:
       interval: weekly
       time: "06:00"
+
+
