@@ -5,15 +5,13 @@
 # ==============================================================================
 
 
+#!/usr/bin/with-contenv bashio
 
-
-declare APP_EXIT_CODE=${1}
-
-if [[ "${APP_EXIT_CODE}" -ne 0 ]] && [[ "${APP_EXIT_CODE}" -ne 256 ]]; then
-  bashio::log.warning "Halt add-on with exit code ${APP_EXIT_CODE}"
-  echo "${APP_EXIT_CODE}" > /run/s6-linux-init-container-results/exitcode
-  exec /run/s6/basedir/bin/halt
+if test "$1" -eq 256 ; then
+  e=$((128 + $2))
+else
+  e="$1"
 fi
 
-
-bashio::log.info "Interface restart after closing with "${APP_EXIT_CODE}""
+echo "$e" > /run/s6-linux-init-container-results/exitcode
+bashio::log.info "$e"

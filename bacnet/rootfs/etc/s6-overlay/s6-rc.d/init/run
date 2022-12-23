@@ -8,6 +8,9 @@ bashio::log.info "Running init oneshot"
 
 route
 
+mount -o remount rw /proc/sys
+sysctl -w net.ipv4.conf.eth0.bc_forwarding=1
+
 dockerIP=$(hostname -i)
 
 hostname
