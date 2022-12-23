@@ -4,6 +4,7 @@
 # s6-overlay docs: https://github.com/just-containers/s6-overlay
 # ==============================================================================
 
+bashio::log.info "Running init oneshot"
 
 route
 
