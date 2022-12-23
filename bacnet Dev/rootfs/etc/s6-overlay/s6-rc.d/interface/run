@@ -28,7 +28,6 @@ hostname -i
 hostname -d
 hostname -f
 
-ifconfig eth0 promisc
 
 # check IP forwarding (for UDP broadcasts)
 sysctl net.ipv4.ip_forward
