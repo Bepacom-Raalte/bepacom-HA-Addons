@@ -1,7 +1,0 @@
-#!/usr/bin/with-contenv bashio
-
-bashio::log.info "Running tcpdump"
-
-exec tcpdump 
-
-bashio::log.info "After exec tcpdump"

@@ -2,18 +2,16 @@
   "ExpandedNodes": [
     "",
     "\\bacnet",
-    "\\bacnet Dev\\rootfs",
-    "\\bacnet Dev\\rootfs\\usr",
-    "\\bacnet Dev\\rootfs\\usr\\bin",
-    "\\bacnet Dev\\translations",
     "\\bacnet\\rootfs",
     "\\bacnet\\rootfs\\etc",
-    "\\bacnet\\rootfs\\etc\\apk",
     "\\bacnet\\rootfs\\etc\\s6-overlay",
     "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d",
-    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user",
-    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user\\contents.d"
+    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\tcpdump",
+    "\\bacnet\\rootfs\\usr",
+    "\\bacnet\\rootfs\\usr\\bin",
+    "\\bacnet\\rootfs\\usr\\share",
+    "\\bacnet\\translations"
   ],
-  "SelectedNode": "\\bacnet\\rootfs\\usr\\bin\\BACnetIOHandler.py",
+  "SelectedNode": "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\tcpdump\\run",
   "PreviewInSolutionExplorer": false
 }

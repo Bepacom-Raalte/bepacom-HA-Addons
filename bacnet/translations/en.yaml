@@ -32,5 +32,4 @@ configuration:
 network:
   7813/tcp: Used for ingress
   7813/udp: Used for ingress
-  47808/tcp: Used for BACnet devices
   47808/udp: Used for BACnet devices
