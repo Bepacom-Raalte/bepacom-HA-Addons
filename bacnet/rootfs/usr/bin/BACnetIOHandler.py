@@ -351,30 +351,31 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
     def do_IAmRequest(self, apdu):
         """"Callback on detecting I Am response from other devices"""
 
+        if self.localDevice.objectIdentifier == apdu.iAmDeviceIdentifier or apdu.iAmDeviceIdentifier in self.BACnetDeviceDict:
+            return
+
         BACnetDevice = {
             "address": apdu.pduSource,
             "deviceIdentifier": apdu.iAmDeviceIdentifier,
             }
+        
+        self.BACnetDeviceDict.update({apdu.iAmDeviceIdentifier: BACnetDevice})
 
-        if apdu.iAmDeviceIdentifier not in self.BACnetDeviceDict:
+        # PropertyReference(propertyIdentifier=PropertyIdentifier('all').value), for all, doesn't work on every BACnet device
 
-            self.BACnetDeviceDict.update({apdu.iAmDeviceIdentifier: BACnetDevice})
-
-            # PropertyReference(propertyIdentifier=PropertyIdentifier('all').value), for all, doesn't work on every BACnet device
-
-            self.ReadPropertyMultiple(objectList=[BACnetDevice['deviceIdentifier']],
-                                      propertyList=[
-                                          PropertyReference(propertyIdentifier=PropertyIdentifier('objectIdentifier').value),
-                                          PropertyReference(propertyIdentifier=PropertyIdentifier('objectType').value),
-                                          PropertyReference(propertyIdentifier=PropertyIdentifier('objectName').value),
-                                          PropertyReference(propertyIdentifier=PropertyIdentifier('systemStatus').value),
-                                          PropertyReference(propertyIdentifier=PropertyIdentifier('vendorName').value),
-                                          PropertyReference(propertyIdentifier=PropertyIdentifier('vendorIdentifier').value),
-                                          PropertyReference(propertyIdentifier=PropertyIdentifier('objectList').value),
-                                          PropertyReference(propertyIdentifier=PropertyIdentifier('description').value),
-                                          PropertyReference(propertyIdentifier=PropertyIdentifier('modelName').value)
-                                                    ],
-                                      address=BACnetDevice["address"])
+        self.ReadPropertyMultiple(objectList=[BACnetDevice['deviceIdentifier']],
+                                    propertyList=[
+                                        PropertyReference(propertyIdentifier=PropertyIdentifier('objectIdentifier').value),
+                                        PropertyReference(propertyIdentifier=PropertyIdentifier('objectType').value),
+                                        PropertyReference(propertyIdentifier=PropertyIdentifier('objectName').value),
+                                        PropertyReference(propertyIdentifier=PropertyIdentifier('systemStatus').value),
+                                        PropertyReference(propertyIdentifier=PropertyIdentifier('vendorName').value),
+                                        PropertyReference(propertyIdentifier=PropertyIdentifier('vendorIdentifier').value),
+                                        PropertyReference(propertyIdentifier=PropertyIdentifier('objectList').value),
+                                        PropertyReference(propertyIdentifier=PropertyIdentifier('description').value),
+                                        PropertyReference(propertyIdentifier=PropertyIdentifier('modelName').value)
+                                                ],
+                                    address=BACnetDevice["address"])
 
     def do_ConfirmedCOVNotificationRequest(self, apdu):
         """Callback on receiving Unconfirmed COV Notification"""
