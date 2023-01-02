@@ -59,6 +59,8 @@ IOHandler includes these functions as well
 # Importing libraries
 import sys
 import threading
+import pickle
+from typing import Any
 
 #importing services
 from bacpypes.service.cov import ChangeOfValueServices
@@ -69,7 +71,10 @@ from bacpypes.iocb import IOCB
 
 from bacpypes.object import get_datatype
 
-from bacpypes.constructeddata import Array
+from bacpypes.constructeddata import Array, AnyAtomic
+import bacpypes.constructeddata
+
+from bacpypes.primitivedata import Null, Atomic, Boolean, Unsigned, Integer, Real, Double, OctetString, CharacterString, BitString, Date, Time, ObjectIdentifier
 
 from bacpypes.apdu import (
     ReadPropertyRequest, 
@@ -98,6 +103,11 @@ from bacpypes.primitivedata import ObjectIdentifier, Unsigned
 from bacpypes.basetypes import PropertyReference, PropertyIdentifier, PropertyValue, RecipientProcess, Recipient, EventType, ServicesSupported
 from bacpypes.pdu import GlobalBroadcast, RemoteBroadcast, LocalBroadcast, Address
 from bacpypes.errors import ExecutionError, InconsistentParameters, MissingRequiredParameter, ParameterOutOfRange
+#Datatypes:
+from bacpypes.primitivedata import ObjectIdentifier, Unsigned
+from bacpypes.basetypes import PropertyReference, PropertyIdentifier, PropertyValue, RecipientProcess, Recipient, EventType, ServicesSupported
+from bacpypes.pdu import GlobalBroadcast, RemoteBroadcast, LocalBroadcast, Address
+from bacpypes.errors import ExecutionError, InconsistentParameters, MissingRequiredParameter, ParameterOutOfRange
 
 rsvp = (True, None, None)
 
@@ -116,7 +126,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
 
     BACnetDeviceDict = {}
     objectFilter = [
-        'acucumulator',
+        'accumulator',
         'analogInput',
         'analogOutput', 
         'analogValue',
@@ -280,32 +290,58 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
     def WriteProperty(self, objectID, propertyID, value, address):
         """Send a WritePropertyRequest to designated address"""
 
-        try:
-            # make the request
-            request = WritePropertyRequest(
-                objectIdentifier = objectID,
-                propertyIdentifier = propertyID,
-                propertyArrayIndex = None,
-                propertyValue = value,
-                priority = None
-                )
 
-            # Set destination address
-            request.pduDestination = address
+        # make the request
+        request = WritePropertyRequest(
+            objectIdentifier = objectID,
+            propertyIdentifier = propertyID,
+            propertyArrayIndex = None,
+            propertyValue = None,
+            priority = None
+            )
 
-            # make an IOCB
-            iocb = IOCB(request)
+        datatype = get_datatype(objectID[0], propertyID)
 
-            # let us know when its complete
-            iocb.add_callback(self.on_ReadResult)
+        if issubclass(datatype, AnyAtomic):
+            dtype, dvalue = value.split(':', 1)
+            datatype = {
+                'b': Boolean,
+                'u': lambda x: Unsigned(int(x)),
+                'i': lambda x: Integer(int(x)),
+                'r': lambda x: Real(float(x)),
+                'd': lambda x: Double(float(x)),
+                'o': OctetString,
+                'c': CharacterString,
+                'bs': BitString,
+                'date': Date,
+                'time': Time,
+                'id': ObjectIdentifier,
+                }[dtype]
+            value = datatype(dvalue)
 
-            # Send the request through
-            self.request_io(iocb)
+        elif issubclass(datatype, Atomic):
+            if datatype is Integer:
+                value = int(value)
+            elif datatype is Real:
+                value = float(value)
+            elif datatype is Unsigned:
+                value = int(value)
+            value = datatype(value)
 
-        except Exception:
-            pass
-        else:
-            sys.stdout.write("Successful WritePropertyRequest sent!\n")
+        request.propertyValue = bacpypes.constructeddata.Any()
+        request.propertyValue.cast_in(value)
+
+        # Set destination address
+        request.pduDestination = address
+
+        # make an IOCB
+        iocb = IOCB(request)
+
+        # let us know when its complete
+        iocb.add_callback(self.on_WriteResult)
+
+        # Send the request through
+        self.request_io(iocb)
 
 
     def COVSubscribe(self, objectID, confirmationType, address):
@@ -570,14 +606,27 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
                                 address=self.BACnetDeviceDict[response.objectIdentifier]['address']
                                 )
                         else:
-                            self.update_object(response.objectIdentifier,self.addr_to_dev_id(response.pduSource),val_dict[response.objectIdentifier])
+                            self.update_object(response.objectIdentifier,self.addr_to_dev_id(response.pduSource),val_dict)
                     else:
-                        self.update_object(response.objectIdentifier,self.addr_to_dev_id(response.pduSource),val_dict[response.objectIdentifier])
+                        self.update_object(response.objectIdentifier,self.addr_to_dev_id(response.pduSource),val_dict)
 
                         if (response.objectIdentifier,self.addr_to_dev_id(response.pduSource)) not in self.object_to_id and response.objectIdentifier[0] in self.objectFilter:
                             self.COVSubscribe(response.objectIdentifier, True, response.pduSource)
                 except Exception:
                     pass
+
+    def on_WriteResult(self, iocb):
+        if iocb.ioError:
+            sys.stdout.write("Something went horribly wrong... " + str(iocb.ioError) + "\n")
+            return
+        if iocb.ioResponse:
+            # should be a read property or read property multiple ack
+            if not isinstance(iocb.ioResponse, SimpleAckPDU):
+                sys.stdout.write("Wrong ACKs... " + iocb.ioResponse.apduAbortRejectReason + "\n")
+                return
+            sys.stdout.write("Write Ack from: " + str(iocb.ioResponse.pduSource) + "\n")
+            # Another read to update the dictionary value... CoV doesn't update every single thing.
+            self.ReadProperty(iocb.args[0].objectIdentifier, iocb.args[0].propertyIdentifier, iocb.args[0].pduDestination)
 
     def on_Subscribed(self, iocb):
         """Callback on whether subscribing was successful"""

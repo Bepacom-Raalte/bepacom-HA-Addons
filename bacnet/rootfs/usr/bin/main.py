@@ -6,6 +6,7 @@ from threading import Thread, Event
 import uvicorn
 import webAPI as api
 import sys
+import pickle
 from bacpypes.debugging import bacpypes_debugging, ModuleLogger
 from bacpypes.consolelogging import ConfigArgumentParser, ConsoleLogHandler
 from bacpypes.core import run, deferred, stop, enable_sleeping
@@ -13,7 +14,7 @@ from bacpypes.local.device import LocalDeviceObject
 from bacpypes.basetypes import PropertyReference, PropertyIdentifier, PropertyValue, RecipientProcess, Recipient, EventType, ServicesSupported
 from bacpypes.task import RecurringTask
 from BACnetIOHandler import BACnetIOHandler
-
+from bacpypes.pdu import GlobalBroadcast, RemoteBroadcast, LocalBroadcast, Address
 
 #===================================================
 # Global variables
@@ -52,6 +53,25 @@ class WhoIsTask(RecurringTask):
         if self.event.is_set():
             this_application.who_is()
             self.event.clear()
+        check_queue()
+
+
+def check_queue():
+    if api.writeQueue.empty():
+            return
+    dict_to_write = api.writeQueue.get()
+        
+    deviceID = get_key(dict_to_write)
+    for object in dict_to_write[deviceID]:
+        for property in dict_to_write[deviceID][object]:
+            prop_value = dict_to_write[deviceID][object].get(property)
+            this_application.WriteProperty(object, property, prop_value, this_application.dev_id_to_addr(deviceID))
+
+
+def get_key(dictionary: dict) -> str:
+    for key, value in dictionary.items():
+        return key
+
         
 #===================================================
 # Main
@@ -96,12 +116,12 @@ def main():
     this_application = BACnetIOHandler(this_device, args.ini.address)
     sys.stdout.write("Starting BACnet device on " + args.ini.address + "\n")
 
+
     # Coupling of FastAPI and BACnetIOHandler
     api.BACnetDeviceDict = this_application.BACnetDeviceDict
     api.threadingUpdateEvent = this_application.updateEvent
     who_is_watcher = WhoIsTask(api.threadingWhoIsEvent, 1000)
-
-
+    
     while True:
         run()
         
