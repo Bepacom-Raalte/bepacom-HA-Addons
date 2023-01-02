@@ -290,58 +290,61 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
     def WriteProperty(self, objectID, propertyID, value, address):
         """Send a WritePropertyRequest to designated address"""
 
+        try:
+            # make the request
+            request = WritePropertyRequest(
+                objectIdentifier = objectID,
+                propertyIdentifier = propertyID,
+                propertyArrayIndex = None,
+                propertyValue = None,
+                priority = None
+                )
 
-        # make the request
-        request = WritePropertyRequest(
-            objectIdentifier = objectID,
-            propertyIdentifier = propertyID,
-            propertyArrayIndex = None,
-            propertyValue = None,
-            priority = None
-            )
+            datatype = get_datatype(objectID[0], propertyID)
 
-        datatype = get_datatype(objectID[0], propertyID)
+            if issubclass(datatype, AnyAtomic):
+                dtype, dvalue = value.split(':', 1)
+                datatype = {
+                    'b': Boolean,
+                    'u': lambda x: Unsigned(int(x)),
+                    'i': lambda x: Integer(int(x)),
+                    'r': lambda x: Real(float(x)),
+                    'd': lambda x: Double(float(x)),
+                    'o': OctetString,
+                    'c': CharacterString,
+                    'bs': BitString,
+                    'date': Date,
+                    'time': Time,
+                    'id': ObjectIdentifier,
+                    }[dtype]
+                value = datatype(dvalue)
 
-        if issubclass(datatype, AnyAtomic):
-            dtype, dvalue = value.split(':', 1)
-            datatype = {
-                'b': Boolean,
-                'u': lambda x: Unsigned(int(x)),
-                'i': lambda x: Integer(int(x)),
-                'r': lambda x: Real(float(x)),
-                'd': lambda x: Double(float(x)),
-                'o': OctetString,
-                'c': CharacterString,
-                'bs': BitString,
-                'date': Date,
-                'time': Time,
-                'id': ObjectIdentifier,
-                }[dtype]
-            value = datatype(dvalue)
+            elif issubclass(datatype, Atomic):
+                if datatype is Integer:
+                    value = int(value)
+                elif datatype is Real:
+                    value = float(value)
+                elif datatype is Unsigned:
+                    value = int(value)
+                value = datatype(value)
 
-        elif issubclass(datatype, Atomic):
-            if datatype is Integer:
-                value = int(value)
-            elif datatype is Real:
-                value = float(value)
-            elif datatype is Unsigned:
-                value = int(value)
-            value = datatype(value)
+            request.propertyValue = bacpypes.constructeddata.Any()
+            request.propertyValue.cast_in(value)
 
-        request.propertyValue = bacpypes.constructeddata.Any()
-        request.propertyValue.cast_in(value)
+            # Set destination address
+            request.pduDestination = address
 
-        # Set destination address
-        request.pduDestination = address
+            # make an IOCB
+            iocb = IOCB(request)
 
-        # make an IOCB
-        iocb = IOCB(request)
+            # let us know when its complete
+            iocb.add_callback(self.on_WriteResult)
 
-        # let us know when its complete
-        iocb.add_callback(self.on_WriteResult)
+            # Send the request through
+            self.request_io(iocb)
 
-        # Send the request through
-        self.request_io(iocb)
+        except Exception as e:
+            sys.stdout.write("Error while writing... " + str(e) + "\n")
 
 
     def COVSubscribe(self, objectID, confirmationType, address):
