@@ -1,6 +1,15 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
 
+## 0.0.5
+02/01/2023
+-Added write functionality through API
+-Added multiple API points. You can find them through going to /docs
+-Who Is and I Am can be received and sent through host network. This is possible through Home Assistant Supervised
+-Add-on is now matching requirements for this project. Error handling etc. will be improved later, as will code optimisations.
+
+
+
 ## 0.0.4
 
 21/12/2022

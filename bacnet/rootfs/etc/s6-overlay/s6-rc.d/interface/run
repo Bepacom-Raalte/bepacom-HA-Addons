@@ -54,7 +54,6 @@ printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$webServ" 
 cat BACpypes.ini
 
 
-
 bashio::log.info "Running interface"
 
 exec python3 /usr/bin/main.py

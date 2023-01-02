@@ -57,6 +57,7 @@ def BACnetToDict(BACnetDict):
         'description',
         'presentValue',
         'outOfService',
+        'eventState',
         'reliability',
         'statusFlags',
         'units'

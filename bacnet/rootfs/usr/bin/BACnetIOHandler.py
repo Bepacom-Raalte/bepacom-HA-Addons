@@ -99,10 +99,7 @@ from bacpypes.basetypes import PropertyReference, PropertyIdentifier, PropertyVa
 from bacpypes.pdu import GlobalBroadcast, RemoteBroadcast, LocalBroadcast, Address
 from bacpypes.errors import ExecutionError, InconsistentParameters, MissingRequiredParameter, ParameterOutOfRange
 
-
 rsvp = (True, None, None)
-
-
 
 class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, ChangeOfValueServices):
     """The class to handle BACnet communication
@@ -134,6 +131,17 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
         'integerValue',
         'positiveIntegerValue',
         'lightingOutput'
+        ]
+    propertyList = [
+        PropertyReference(propertyIdentifier=PropertyIdentifier('objectIdentifier').value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier('objectName').value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier('description').value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier('presentValue').value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier('statusFlags').value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier('outOfService').value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier('units').value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier('eventState').value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier('reliability').value)
         ]
 
     id_to_object = {}
@@ -363,6 +371,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
 
         # PropertyReference(propertyIdentifier=PropertyIdentifier('all').value), for all, doesn't work on every BACnet device
 
+        # Get device info
         self.ReadPropertyMultiple(objectList=[BACnetDevice['deviceIdentifier']],
                                     propertyList=[
                                         PropertyReference(propertyIdentifier=PropertyIdentifier('objectIdentifier').value),
@@ -467,17 +476,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
                 #self.ReadProperty(iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier,PropertyIdentifier('objectList'),iocb.ioError.pduSource)
                 self.ReadPropertyMultiple(
                                 objectList=[iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier],
-                                propertyList=[
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('objectIdentifier').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('objectType').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('objectName').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('systemStatus').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('vendorName').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('vendorIdentifier').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('objectList').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('description').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('modelName').value)
-                                    ],
+                                propertyList=self.propertyList,
                                 address=iocb.ioError.pduSource)
             else:
                 objectList = []
@@ -486,16 +485,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
 
                 self.ReadPropertyMultiple(
                                 objectList=objectList,
-                                propertyList=[
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('objectIdentifier').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('objectName').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('description').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('presentValue').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('statusFlags').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('outOfService').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('units').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('reliability').value)
-                                    ],
+                                propertyList=self.propertyList,
                                 address=iocb.ioError.pduSource)
             return
         # do something for success
@@ -576,16 +566,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
                                 objectList.append(object)
                             self.ReadPropertyMultiple(
                                 objectList=objectList,
-                                propertyList=[
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('objectIdentifier').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('objectName').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('description').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('presentValue').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('statusFlags').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('outOfService').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('units').value),
-                                    PropertyReference(propertyIdentifier=PropertyIdentifier('reliability').value)
-                                    ],
+                                propertyList=self.propertyList,
                                 address=self.BACnetDeviceDict[response.objectIdentifier]['address']
                                 )
                         else:

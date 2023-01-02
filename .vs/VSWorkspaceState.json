@@ -5,13 +5,11 @@
     "\\bacnet\\rootfs",
     "\\bacnet\\rootfs\\etc",
     "\\bacnet\\rootfs\\etc\\s6-overlay",
-    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d",
-    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\tcpdump",
     "\\bacnet\\rootfs\\usr",
     "\\bacnet\\rootfs\\usr\\bin",
     "\\bacnet\\rootfs\\usr\\share",
     "\\bacnet\\translations"
   ],
-  "SelectedNode": "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d\\tcpdump\\run",
+  "SelectedNode": "\\bacnet\\rootfs\\usr\\bin\\BACnetIOHandler.py",
   "PreviewInSolutionExplorer": false
 }
