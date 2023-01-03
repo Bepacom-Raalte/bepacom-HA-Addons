@@ -4,10 +4,10 @@ configuration:
     description: The name of the interface in the BACnet network
   address:
     name: Interface IP
-    description: BACnet/IP address. "host" for automatically detected IP if using the host network. "docker" for the docker address. Any other IP to try with that IP.
+    description: BACnet/IP host address. Standard should be 0.0.0.0
   objectIdentifier:
     name: Object ID
-    description: The identifier of the interface
+    description: The identifier (number) of the interface
   webServ:
     name: Webserver IP
     description: IP of web server (webUI)
@@ -25,7 +25,7 @@ configuration:
     description: IP address of the BBMD
   foreignTTL: 
     name: Foreign TTL
-    description: no clue what it is
+    description: Time To Live of the packets sent for BBMD
   maxsegmentsAccepted:
     name: Maximum Segments Accepted
     description: The maximum amount of segments accepted in a message

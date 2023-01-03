@@ -10,7 +10,6 @@ Add-on documentation: <https://developers.home-assistant.io/docs/add-ons>
 
 This repository contains the following add-ons
 
-### [Example add-on](./example)
 ### [BACnet Interface](./bacnetinterface)
 
 ![Supports aarch64 Architecture][aarch64-shield]
