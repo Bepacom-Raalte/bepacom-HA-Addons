@@ -151,7 +151,8 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
         PropertyReference(propertyIdentifier=PropertyIdentifier('outOfService').value),
         PropertyReference(propertyIdentifier=PropertyIdentifier('units').value),
         PropertyReference(propertyIdentifier=PropertyIdentifier('eventState').value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier('reliability').value)
+        PropertyReference(propertyIdentifier=PropertyIdentifier('reliability').value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier('covIncrement').value),
         ]
 
     id_to_object = {}
@@ -251,7 +252,6 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
         except Exception:
             return False
         else:
-            sys.stdout.write("Successful ReadPropertyRequest sent!\n")
             return True
 
 
@@ -283,8 +283,6 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
         except Exception:
             sys.stdout.write("Unsuccessful ReadPropertyMultipleRequest\n")
             pass
-        else:
-            sys.stdout.write("Successful ReadPropertyMultipleRequest sent!\n")
 
 
     def WriteProperty(self, objectID, propertyID, value, address):
@@ -367,6 +365,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
         except Exception:
             sys.stdout.write("Trouble sending subscribe request\n")
 
+
     def COVUnsubscribe(self, objectID, confirmationType, address):
         """Send a SubscribeCOVRequest to designated address with time 1 to stop notifications"""
         try:
@@ -388,8 +387,10 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
             iocb.add_callback(self.on_Subscribed)
             self.request_io(iocb)
 
-        except Exception:
+        except Exception as e:
+            sys.stdout.write ("Error COVUnsubscribe: " + str(e) + "\n")
             pass
+
 
 # ==================================================================================
 # Response functions
@@ -535,7 +536,6 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
                 return
             # do thing on read property multiple ack
             elif isinstance(iocb.ioResponse, ReadPropertyMultipleACK):
-                sys.stdout.write("multi read response from: " + str(iocb.ioResponse.pduSource) + "\n")
                 response = iocb.ioResponse
                 obj_dict  = return_value_read_multiple(response)
                 for result in response.listOfReadAccessResults:
@@ -627,7 +627,6 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
             if not isinstance(iocb.ioResponse, SimpleAckPDU):
                 sys.stdout.write("Wrong ACKs... " + iocb.ioResponse.apduAbortRejectReason + "\n")
                 return
-            sys.stdout.write("Write Ack from: " + str(iocb.ioResponse.pduSource) + "\n")
             # Another read to update the dictionary value... CoV doesn't update every single thing.
             self.ReadProperty(iocb.args[0].objectIdentifier, iocb.args[0].propertyIdentifier, iocb.args[0].pduDestination)
 

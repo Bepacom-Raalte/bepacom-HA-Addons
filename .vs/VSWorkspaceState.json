@@ -4,12 +4,13 @@
     "\\bacnet",
     "\\bacnet\\rootfs",
     "\\bacnet\\rootfs\\etc",
+    "\\bacnet\\rootfs\\etc\\apk",
+    "\\bacnet\\rootfs\\etc\\nginx",
     "\\bacnet\\rootfs\\etc\\s6-overlay",
+    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d",
     "\\bacnet\\rootfs\\usr",
-    "\\bacnet\\rootfs\\usr\\bin",
-    "\\bacnet\\rootfs\\usr\\share",
-    "\\bacnet\\translations"
+    "\\bacnet\\rootfs\\usr\\bin"
   ],
-  "SelectedNode": "\\bacnet\\rootfs\\usr\\bin\\BACnetIOHandler.py",
+  "SelectedNode": "\\bacnet\\rootfs\\usr\\bin\\webAPI.py",
   "PreviewInSolutionExplorer": false
 }

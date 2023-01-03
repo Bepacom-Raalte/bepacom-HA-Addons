@@ -1,8 +1,10 @@
 #===================================================
 # Importing from libraries
 #=================================================== 
-
 from threading import Thread, Event
+from collections.abc import Callable
+from typing import Any
+from queue import Queue
 import uvicorn
 import webAPI as api
 import sys
@@ -33,40 +35,65 @@ _log = ModuleLogger(globals())
 #===================================================
 # Threads
 #=================================================== 
-
 # Uvicorn thread
 class uviThread(Thread):
     def run(self):
-        uvicorn.run(api.app, host=webserv, port=port, log_level="debug")
+        uvicorn.run(api.app, host=webserv, port=port)
 
-
-
-class WhoIsTask(RecurringTask):
-
-    def __init__(self, event: Event(), interval):
+class EventWatcherTask(RecurringTask):
+    """Checks if event is true. When it is, do callback"""
+    def __init__(self, event: Event(), callback: Callable, interval):
         RecurringTask.__init__(self, interval)
         self.event = event
+        self.callback = callback
 
         # install it
         self.install_task()
     def process_task(self):
         if self.event.is_set():
-            this_application.who_is()
+            self.callback()
             self.event.clear()
-        check_queue()
 
+class QueueWatcherTask(RecurringTask):
+    """Checks if queue has items. When it has, do callback"""
+    def __init__(self, queue: Queue(), callback: Callable, interval):
+        RecurringTask.__init__(self, interval)
+        self.queue = queue
+        self.callback = callback
 
-def check_queue():
-    if api.writeQueue.empty():
+        # install it
+        self.install_task()
+    def process_task(self):
+        if self.queue.empty():
             return
-    dict_to_write = api.writeQueue.get()
-        
+        queue_item = self.queue.get()
+        self.callback(queue_item)
+
+class RefreshDict(RecurringTask):
+    """Checks if queue has items. When it has, do callback"""
+    def __init__(self, interval):
+        RecurringTask.__init__(self, interval)
+
+        # install it
+        self.install_task()
+    def process_task(self):
+        for device, devicedata in this_application.BACnetDeviceDict.items():
+            objectlist = []
+            for object, objectdata in devicedata.items():
+                if isinstance(objectdata, dict):
+                    objectlist.append(object)
+            this_application.ReadPropertyMultiple(
+                objectList=objectlist,
+                propertyList=this_application.propertyList,
+                address=this_application.dev_id_to_addr(device)
+                )
+
+def write_from_dict(dict_to_write: dict):
     deviceID = get_key(dict_to_write)
     for object in dict_to_write[deviceID]:
         for property in dict_to_write[deviceID][object]:
             prop_value = dict_to_write[deviceID][object].get(property)
             this_application.WriteProperty(object, property, prop_value, this_application.dev_id_to_addr(deviceID))
-
 
 def get_key(dictionary: dict) -> str:
     for key, value in dictionary.items():
@@ -116,15 +143,16 @@ def main():
     this_application = BACnetIOHandler(this_device, args.ini.address)
     sys.stdout.write("Starting BACnet device on " + args.ini.address + "\n")
 
-
     # Coupling of FastAPI and BACnetIOHandler
     api.BACnetDeviceDict = this_application.BACnetDeviceDict
     api.threadingUpdateEvent = this_application.updateEvent
-    who_is_watcher = WhoIsTask(api.threadingWhoIsEvent, 1000)
+    who_is_watcher = EventWatcherTask(api.threadingWhoIsEvent, this_application.who_is, 2000)
+    i_am_watcher = EventWatcherTask(api.threadingIAmEvent,this_application.i_am, 2000)
+    write_queue_watcher = QueueWatcherTask(api.writeQueue, write_from_dict, 1000)
+    dict_refresher = RefreshDict(60000)
     
     while True:
         run()
-        
 
 if __name__=="__main__":
     main()

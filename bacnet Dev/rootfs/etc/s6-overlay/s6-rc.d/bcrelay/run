@@ -1,7 +1,0 @@
-#!/usr/bin/with-contenv bashio
-
-bashio::log.info "Running bcrelay"
-
-exec bcrelay
-
-bashio::log.info "After exec bcrelay"
