@@ -44,6 +44,36 @@ The same applies to **Object Identifiers**. The object name will be camelCase. A
 Fortunately, you only need to write the value for writing properties.
 
 
+## Configuration
+
+**Note**: _Remember to restart the add-on when the configuration is changed._
+
+Example add-on configuration:
+
+```yaml
+log_level: info
+seconds_between_quotes: 5
+```
+
+### Option: `Object Name`
+
+### Option: `Interface IP`
+
+### Option: `Object ID`
+
+### Option: `Maximum APDU Length Accepted`
+
+### Option: `Segmentation Supported`
+
+### Option: `Vendor Identifier`
+
+### Option: `BACnet/IP Broadcast Management Device`
+
+### Option: `Max Segments Accepted`
+
+
+
+
 ## Credits
 
 **Bepacom B.V. Raalte**

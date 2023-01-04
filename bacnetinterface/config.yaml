@@ -28,7 +28,7 @@ ports:
   7813/udp: 7813
   47808/udp: 47808
 options:
-  objectname: EcoPanel
+  objectName: EcoPanel
   address: 0.0.0.0
   objectIdentifier: 420
   maxApduLenghtAccepted: 1024

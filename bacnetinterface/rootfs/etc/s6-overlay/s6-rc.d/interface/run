@@ -20,21 +20,12 @@ declare foreignTTL
 declare maxSegmentsAccepted
 
 
-dockerIP=$(hostname -i)
-
-if [ $(bashio::config 'address') = host ]
-then
-	IPvar="$dockerIP"
-else
-	IPvar="$(bashio::config 'address')"
-fi
-
 #
 # Assigning value to variables from HA config 
 #
 header='[BACpypes]'
-objectname="objectName: $(bashio::config 'objectname')"
-address="address: $IPvar"
+objectname="objectName: $(bashio::config 'objectName')"
+address="address: $(bashio::config 'address')"
 objectIdentifier="objectIdentifier: $(bashio::config 'objectIdentifier')"
 maxApduLenghtAccepted="maxApduLengthAccepted: $(bashio::config 'maxApduLenghtAccepted')"
 segmentationSupported="segmentationSupported: $(bashio::config 'segmentationSupported')"

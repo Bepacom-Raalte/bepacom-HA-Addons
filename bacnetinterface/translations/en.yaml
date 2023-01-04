@@ -1,5 +1,5 @@
 configuration:
-  objectname:
+  objectName:
     name: Object Name
     description: The name of the interface in the BACnet network
   address:
@@ -18,12 +18,12 @@ configuration:
     name: Vendor Identifier
     description: The vendor ID of the interface
   foreignBBMD:
-    name: BACnet/IP Broadcast Banagement Device
+    name: BACnet/IP Broadcast Management Device
     description: IP address of the BBMD
   foreignTTL: 
     name: Foreign TTL
     description: Time To Live of the packets sent for BBMD
-  maxsegmentsAccepted:
+  maxSegmentsAccepted:
     name: Maximum Segments Accepted
     description: The maximum amount of segments accepted in a message
 network:
