@@ -38,7 +38,7 @@ These API points will be used as follows:
 
 **Device Identifiers** get written as "device:number", so if a device has an identifier of 100, the notation for API will be "device:100".
 
-The same applies to **Object Identifiers**. The object name will be camelCase. An example notation for an AnalogInput 1 would be "analogInput:1".
+**Object Identifiers** apply the same notation. The object name will be camelCase. An example notation for an AnalogInput 1 would be "analogInput:1".
 
 **Property Identifiers** also apply camelCase logic. An object identifier will be written as "objectIdentifier". 
 Fortunately, you only need to write the value for writing properties.
@@ -78,13 +78,13 @@ Whether segmentation is supported by the interface. Recommended to leave as is, 
 ### Option: `vendorID`
 Identifier of the vendor of the interface. As we don't have an official identifier, put anything you want in here.
 
-### Option: `BACnet/IP Broadcast Management Device`
+### Option: `foreignBBMD`
 The address of a BBMD device. Not implemented.
 
 ### Option: `foreignTTL`
 The Time To Live for BBMD packets. Not implemented.
 
-### Option: `Max Segments Accepted`
+### Option: `maxSegmentsAccepted`
 The maximum amount of segments that'll be accepted by the interface.
 
 
