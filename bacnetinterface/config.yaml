@@ -39,7 +39,6 @@ schema:
   objectname: str
   address: str
   objectIdentifier: int
-  webServ: str
   maxApduLenghtAccepted: int?
   segmentationSupported: str?
   vendorID: int?
