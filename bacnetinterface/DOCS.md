@@ -51,27 +51,41 @@ Fortunately, you only need to write the value for writing properties.
 Example add-on configuration:
 
 ```yaml
-log_level: info
-seconds_between_quotes: 5
+objectName: EcoPanel
+address: 0.0.0.0
+objectIdentifier: 420
+maxApduLenghtAccepted: 1024
+segmentationSupported: segmentedBoth
+vendorID: 15
+maxSegmentsAccepted: 16
 ```
 
-### Option: `Object Name`
+### Option: `objectName`
+The Object Name that this device will get. This will be seen by other devices on the BACnet network.
 
-### Option: `Interface IP`
+### Option: `address`
+The address of the BACnet interface. 0.0.0.0 is recommended as it'll bind to all available IP addresses, and basically guarantee it'll work.
 
-### Option: `Object ID`
+### Option: `objectIdentifier`
+The Object Identifier that this device will get. This will be seen by other devices on the BACnet network. **Make sure it's unique!**
 
-### Option: `Maximum APDU Length Accepted`
+### Option: `maxApduLenghtAccepted`
+The max length an APDU can be before it'll be rejected. Recommended to leave the default value if you don't know what it does.
 
-### Option: `Segmentation Supported`
+### Option: `segmentationSupported`
+Whether segmentation is supported by the interface. Recommended to leave as is, because there's a lot of data from most devices that can't be received in one message.
 
-### Option: `Vendor Identifier`
+### Option: `vendorID`
+Identifier of the vendor of the interface. As we don't have an official identifier, put anything you want in here.
 
 ### Option: `BACnet/IP Broadcast Management Device`
+The address of a BBMD device. Not implemented.
+
+### Option: `foreignTTL`
+The Time To Live for BBMD packets. Not implemented.
 
 ### Option: `Max Segments Accepted`
-
-
+The maximum amount of segments that'll be accepted by the interface.
 
 
 ## Credits

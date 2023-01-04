@@ -34,9 +34,9 @@ options:
   maxApduLenghtAccepted: 1024
   segmentationSupported: segmentedBoth
   vendorID: 15
-  maxSegmentsAccepted: 16
+  maxSegmentsAccepted: 24
 schema:
-  objectname: str
+  objectName: str
   address: str
   objectIdentifier: int
   maxApduLenghtAccepted: int?
