@@ -28,10 +28,9 @@ ports:
   7813/udp: 7813
   47808/udp: 47808
 options:
-  objectname: BigBoss
+  objectname: EcoPanel
   address: 0.0.0.0
   objectIdentifier: 420
-  webServ: 127.0.0.1
   maxApduLenghtAccepted: 1024
   segmentationSupported: segmentedBoth
   vendorID: 15
