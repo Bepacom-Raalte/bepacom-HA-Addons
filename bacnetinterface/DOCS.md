@@ -47,11 +47,16 @@ Fortunately, you only need to write the value for writing properties.
 ## Credits
 
 Bepacom B.V. Raalte
+
+
 [![Open this add-on in your Home Assistant instance.][bepacom-badge]][bepacom]
 
 
 Windesheim Zwolle Elektrotechniek
+
+
 [![Open this add-on in your Home Assistant instance.][windesheim-badge]][windesheim]
+
 
 [addon-badge]: https://my.home-assistant.io/badges/supervisor_addon.svg
 [addon]: https://my.home-assistant.io/redirect/supervisor_addon/?addon=13b6b180_bacnetinterface&repository_url=https%3A%2F%2Fgithub.com%2FGravySeal%2Fbepacom-repo
