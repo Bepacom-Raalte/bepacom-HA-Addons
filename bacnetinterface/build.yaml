@@ -6,9 +6,9 @@ build_from:
   armv7: "ghcr.io/home-assistant/armv7-base:3.16"
   i386: "ghcr.io/home-assistant/i386-base:3.16"
 labels:
-  org.opencontainers.image.title: "Home Assistant Add-on: Example add-on"
-  org.opencontainers.image.description: "Example add-on to use as a blueprint for new add-ons."
-  org.opencontainers.image.source: "https://github.com/home-assistant/addons-example"
+  org.opencontainers.image.title: "Home Assistant Add-on: Bepacom EcoPanel BACnet/IP Interface"
+  org.opencontainers.image.description: "Add-on for the Bepacom EcoPanel. This add-on will serve as a BACnet device and communicate with any on the network."
+  org.opencontainers.image.source: "https://github.com/GravySeal/bepacom-repo/"
   org.opencontainers.image.licenses: "Apache License 2.0"
 args:
   TEMPIO_VERSION: "2021.09.0"

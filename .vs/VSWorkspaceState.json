@@ -1,16 +1,12 @@
 {
   "ExpandedNodes": [
     "",
-    "\\bacnet",
-    "\\bacnet\\rootfs",
-    "\\bacnet\\rootfs\\etc",
-    "\\bacnet\\rootfs\\etc\\apk",
-    "\\bacnet\\rootfs\\etc\\nginx",
-    "\\bacnet\\rootfs\\etc\\s6-overlay",
-    "\\bacnet\\rootfs\\etc\\s6-overlay\\s6-rc.d",
-    "\\bacnet\\rootfs\\usr",
-    "\\bacnet\\rootfs\\usr\\bin"
+    "\\bacnetinterface",
+    "\\bacnetinterface\\rootfs",
+    "\\bacnetinterface\\rootfs\\usr",
+    "\\bacnetinterface\\rootfs\\usr\\bin",
+    "\\bacnetinterface\\translations"
   ],
-  "SelectedNode": "\\bacnet\\rootfs\\usr\\bin\\BACnetIOHandler.py",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\main.py",
   "PreviewInSolutionExplorer": false
 }

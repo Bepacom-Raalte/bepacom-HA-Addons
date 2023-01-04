@@ -36,7 +36,6 @@ header='[BACpypes]'
 objectname="objectName: $(bashio::config 'objectname')"
 address="address: $IPvar"
 objectIdentifier="objectIdentifier: $(bashio::config 'objectIdentifier')"
-webServ="webServ: $(bashio::config 'webServ')"
 maxApduLenghtAccepted="maxApduLengthAccepted: $(bashio::config 'maxApduLenghtAccepted')"
 segmentationSupported="segmentationSupported: $(bashio::config 'segmentationSupported')"
 vendorID="vendorIdentifier: $(bashio::config 'vendorID')"
@@ -47,7 +46,7 @@ maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted'
 #
 # Generate INI file
 #
-printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$webServ" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
+printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
 cat BACpypes.ini
 
 

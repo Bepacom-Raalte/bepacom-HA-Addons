@@ -21,9 +21,8 @@ from bacpypes.pdu import GlobalBroadcast, RemoteBroadcast, LocalBroadcast, Addre
 #===================================================
 # Global variables
 #===================================================
-webserv: str
+webserv: str = "127.0.0.1"
 port = 7813
-extIP: str
 
 this_application = None
 devices = []
@@ -108,10 +107,6 @@ def main():
     # parse bacpypes.ini
     #===================================================
     args = ConfigArgumentParser(description=__doc__).parse_args()
-    global webserv
-    global extIP
-    webserv = args.ini.webserv
-    extIP = args.ini.address
     
     #===================================================
     # Uvicorn server
