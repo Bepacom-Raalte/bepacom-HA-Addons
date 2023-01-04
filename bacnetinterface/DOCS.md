@@ -36,23 +36,23 @@ These points will allow you to read and write to the BACnet devices on the netwo
 These API points will be used as follows:
 "homeassistant.local/apiv1/json"
 
-*Device Identifiers* get written as "device:number", so if a device has an identifier of 100, the notation for API will be "device:100".
+**Device Identifiers** get written as "device:number", so if a device has an identifier of 100, the notation for API will be "device:100".
 
-The same applies to *Object Identifiers*. The object name will be camelCase. An example notation for an AnalogInput 1 would be "analogInput:1".
+The same applies to **Object Identifiers**. The object name will be camelCase. An example notation for an AnalogInput 1 would be "analogInput:1".
 
-*Property Identifiers* also apply camelCase logic. An object identifier will be written as "objectIdentifier". 
+**Property Identifiers** also apply camelCase logic. An object identifier will be written as "objectIdentifier". 
 Fortunately, you only need to write the value for writing properties.
 
 
 ## Credits
 
-Bepacom B.V. Raalte
+**Bepacom B.V. Raalte**
 
 
 [![Open this add-on in your Home Assistant instance.][bepacom-badge]][bepacom]
 
 
-Windesheim Zwolle Elektrotechniek
+**Windesheim Zwolle Elektrotechniek**
 
 
 [![Open this add-on in your Home Assistant instance.][windesheim-badge]][windesheim]
@@ -62,5 +62,5 @@ Windesheim Zwolle Elektrotechniek
 [addon]: https://my.home-assistant.io/redirect/supervisor_addon/?addon=13b6b180_bacnetinterface&repository_url=https%3A%2F%2Fgithub.com%2FGravySeal%2Fbepacom-repo
 [bepacom-badge]: https://www.bepacom.nl/wp-content/uploads/2018/09/logo-bepacom-besturingstechniek.jpg
 [bepacom]: https://www.bepacom.nl/
-[windesheim-badge]: https://www.windesheim.nl/getmedia/d06bfafc-febf-4c5e-bcec-bdf619d2ae93/Windesheim_logo.png?width=159&height=102&ext=.png
+[windesheim-badge]: https://www.windesheim.nl/getmedia/d06bfafc-febf-4c5e-bcec-bdf619d2ae93/Windesheim_logo.png
 [windesheim]: https://www.windesheim.nl/
