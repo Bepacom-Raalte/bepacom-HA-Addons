@@ -399,7 +399,14 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
     def do_IAmRequest(self, apdu):
         """"Callback on detecting I Am response from other devices"""
 
-        if self.localDevice.objectIdentifier == apdu.iAmDeviceIdentifier or apdu.iAmDeviceIdentifier in self.BACnetDeviceDict:
+        if self.localDevice.objectIdentifier == apdu.iAmDeviceIdentifier:
+            return
+
+        # If device in list, resubscribe and return
+        if apdu.iAmDeviceIdentifier in self.BACnetDeviceDict:
+            for object in self.BACnetDeviceDict[apdu.iAmDeviceIdentifier]:
+                if isinstance(object, tuple):
+                    self.COVSubscribe(object, True, apdu.pduSource)
             return
 
         BACnetDevice = {
@@ -638,5 +645,5 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
 
         # do something for error/reject/abort
         if iocb.ioError:
-            sys.stdout.write("Error Class: " + iocb.ioError.errorClass + "Error Code: " + iocb.ioError.errorCode + "\n")
+            sys.stdout.write("Error Class: " + iocb.ioError.errorClass + "Error Code: " + iocb.ioError.errorCode + " from " +str(iocb.ioError.pduSource) + "\n")
             self.unassign_id((iocb.args[0].monitoredObjectIdentifier.value,self.addr_to_dev_id(iocb.args[0].pduDestination)))

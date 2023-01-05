@@ -118,24 +118,33 @@ async def read_deviceid_dict(deviceid: str):
     """Read a device"""
     global BACnetDeviceDict
     var = BACnetToDict(BACnetDeviceDict)
-    return var[deviceid]
+    try:
+        return var[deviceid]
+    except Exception as e:
+        return "Error: " + str(e)
 
 @app.get("/apiv1/{deviceid}/{objectid}")
 async def read_objectid_dict(deviceid: str, objectid: str):
     """Read an object from a device"""
-    global BACnetDeviceDict
-    var = BACnetToDict(BACnetDeviceDict)
-    for key in var[deviceid].keys():
-        if key.lower() == objectid:
-            objectid = key
-    return var[deviceid][objectid]
+    try:
+        global BACnetDeviceDict
+        var = BACnetToDict(BACnetDeviceDict)
+        for key in var[deviceid].keys():
+            if key.lower() == objectid:
+                objectid = key
+        return var[deviceid][objectid]
+    except Exception as e:
+        return "Error: " + str(e)
 
 @app.get("/apiv1/{deviceid}/{objectid}/{propertyid}")
 async def read_objectid_property(deviceid: str, objectid: str, propertyid: str):
     """Read a property of an object from a device"""
     global BACnetDeviceDict
     var = BACnetToDict(BACnetDeviceDict)
-    return var[deviceid][objectid][propertyid]
+    try:
+        return var[deviceid][objectid][propertyid]
+    except Exception as e:
+        return "Error: " + str(e)
 
 @app.post("/apiv1/{deviceid}/{objectid}")
 async def write_objectid_property(
@@ -178,12 +187,21 @@ async def write_objectid_property(
         property_dict.update({'units': units})
     if covIncrement != None:
         property_dict.update({'covIncrement': covIncrement})
+
+    if property_dict == {}:
+        return "No property values"
+
     dict_to_write = {deviceid: {objectid: property_dict}}
-    bacnet_dict = DictToBACnet(dict_to_write)
+
+    try:
+        bacnet_dict = DictToBACnet(dict_to_write)
+    except Exception as e:
+        return "Error: " + str(e)
+
     global writeQueue
     # Send this dict to threading queue for processing and making a request through BACnet
     writeQueue.put(bacnet_dict)
-    return True
+    return "Successfully put in Write Queue"
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
