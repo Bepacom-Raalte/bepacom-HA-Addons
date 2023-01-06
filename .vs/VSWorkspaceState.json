@@ -3,10 +3,15 @@
     "",
     "\\bacnetinterface",
     "\\bacnetinterface\\rootfs",
+    "\\bacnetinterface\\rootfs\\etc",
+    "\\bacnetinterface\\rootfs\\etc\\s6-overlay",
+    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d",
+    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user",
+    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user\\contents.d",
     "\\bacnetinterface\\rootfs\\usr",
     "\\bacnetinterface\\rootfs\\usr\\bin",
     "\\bacnetinterface\\translations"
   ],
-  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\main.py",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\webAPI.py",
   "PreviewInSolutionExplorer": false
 }

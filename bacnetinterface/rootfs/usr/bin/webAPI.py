@@ -37,7 +37,9 @@ def BACnetToDict(BACnetDict):
         'reliability',
         'statusFlags',
         'units',
-        'covIncrement'
+        'covIncrement',
+        'vendorName',
+        'modelName',
         )
     devicesDict = {}
     for deviceID in BACnetDict.keys():
