@@ -41,6 +41,8 @@ def BACnetToDict(BACnetDict):
         'covIncrement',
         'vendorName',
         'modelName',
+        'stateText',
+        'numberOfStates'
         )
     devicesDict = {}
     for deviceID in BACnetDict.keys():
@@ -115,7 +117,7 @@ async def iam_command():
     return
 
 @app.get("/apiv1/command/readall")
-async def iam_command():
+async def read_all():
     """Send a Read Request to all devices on the BACnet network"""
     threadingReadAllEvent.set()
     return
