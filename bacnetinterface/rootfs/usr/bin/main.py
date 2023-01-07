@@ -76,16 +76,7 @@ class RefreshDict(RecurringTask):
         # install it
         self.install_task()
     def process_task(self):
-        for device, devicedata in this_application.BACnetDeviceDict.items():
-            objectlist = []
-            for object, objectdata in devicedata.items():
-                if isinstance(objectdata, dict):
-                    objectlist.append(object)
-            this_application.ReadPropertyMultiple(
-                objectList=objectlist,
-                propertyList=this_application.propertyList,
-                address=this_application.dev_id_to_addr(device)
-                )
+        this_application.read_entire_dict()
 
 def write_from_dict(dict_to_write: dict):
     deviceID = get_key(dict_to_write)
@@ -95,9 +86,13 @@ def write_from_dict(dict_to_write: dict):
             this_application.WriteProperty(object, property, prop_value, this_application.dev_id_to_addr(deviceID))
 
 def get_key(dictionary: dict) -> str:
+    """Return the first key"""
     for key, value in dictionary.items():
         return key
 
+def read_all_from_dict():
+    """Read all objects from every device included in the dictionary"""
+    this_application.read_entire_dict()
         
 #===================================================
 # Main
@@ -143,6 +138,7 @@ def main():
     api.threadingUpdateEvent = this_application.updateEvent
     who_is_watcher = EventWatcherTask(api.threadingWhoIsEvent, this_application.who_is, 2000)
     i_am_watcher = EventWatcherTask(api.threadingIAmEvent,this_application.i_am, 2000)
+    read_watcher = EventWatcherTask(api.threadingReadAllEvent, read_all_from_dict , 2000)
     write_queue_watcher = QueueWatcherTask(api.writeQueue, write_from_dict, 1000)
     dict_refresher = RefreshDict(60000)
     

@@ -153,6 +153,10 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
         PropertyReference(propertyIdentifier=PropertyIdentifier('eventState').value),
         PropertyReference(propertyIdentifier=PropertyIdentifier('reliability').value),
         PropertyReference(propertyIdentifier=PropertyIdentifier('covIncrement').value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier('vendorName').value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier('modelName').value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier('stateText').value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier('numberOfStates').value),
         ]
 
     id_to_object = {}
@@ -225,6 +229,18 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
         del self.id_to_object[obj_id]
         del self.object_to_id[obj]
         self.available_ids.add(obj_id)
+
+    def read_entire_dict(self):
+        for device, devicedata in self.BACnetDeviceDict.items():
+            objectlist = []
+            for object, objectdata in devicedata.items():
+                if isinstance(objectdata, dict):
+                    objectlist.append(object)
+            self.ReadPropertyMultiple(
+                objectList=objectlist,
+                propertyList=self.propertyList,
+                address=self.dev_id_to_addr(device)
+                )
 
 # ==================================================================================
 # Request functions

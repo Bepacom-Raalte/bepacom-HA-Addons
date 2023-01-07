@@ -17,6 +17,7 @@ websocket_helper_tasks = set()
 threadingUpdateEvent: threading.Event = threading.Event()
 threadingWhoIsEvent: threading.Event = threading.Event()
 threadingIAmEvent: threading.Event = threading.Event()
+threadingReadAllEvent: threading.Event = threading.Event()
 writeQueue: Queue = Queue()
 
 #===================================================
@@ -111,6 +112,12 @@ async def whois_command():
 async def iam_command():
     """Send an I Am Request over the BACnet network"""
     threadingIAmEvent.set()
+    return
+
+@app.get("/apiv1/command/readall")
+async def iam_command():
+    """Send a Read Request to all devices on the BACnet network"""
+    threadingReadAllEvent.set()
     return
 
 # Any commands or not variable paths should go above here... FastAPI will use it as a variable if you make a new path below this.

@@ -1,310 +1,116 @@
-<!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" data-svelte="svelte-r6v5ju">
-    <meta charset="UTF-8" data-svelte="svelte-r6v5ju">
-    <style data-svelte="svelte-r6v5ju">
-        /* Reset & standardize default styles */
-        @import url("https://unpkg.com/@primo-app/primo@1.3.64/reset.css") layer;
-
-        /* Design tokens (apply to components) */
-        :root {
-            /* Custom theme options */
-            --color-accent: rebeccapurple;
-
-            /* Base values */
-            --box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.2);
-            --border-radius: 8px;
-            --border-color: #cbcace;
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
         }
 
-        /* Root element (use instead of `body`) */
-        #page {
-            font-family: system-ui, sans-serif;
-            color: #222;
-            line-height: 1.2;
-            font-size: 1.125rem;
-            background: white;
-        }
-
-        /* Elements */
-        .section-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 5rem 2rem;
-        }
-
-        a.link {
-            line-height: 1.3;
-            font-weight: 500;
-            border-bottom: 2px solid;
-            transform: translateY(-2px);
-            /* move link back into place */
-            transition: 0.1s border;
-            transition: var(--transition, 0.1s border);
-        }
-
-        a.link:hover {
-            border-color: transparent;
-        }
-
-        .heading {
-            font-size: 2.5rem;
-            line-height: 1.15;
-            font-weight: 700;
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 150px;
         }
 
         .button {
-            color: white;
-            background: rebeccapurple;
-            background: var(--color-accent, rebeccapurple);
-            border-radius: 5px;
-            padding: 8px 20px;
-            transition: 0.1s box-shadow;
-            transition: var(--transition, 0.1s box-shadow);
-            border: 0;
+            margin: 10px 0;
+            padding: 10px;
+            border: none;
+            background-color: lightgray;
+            font-size: 16px;
+            cursor: pointer;
         }
 
-        /* reset */
-
-        .button:hover {
-            box-shadow: 0 0 0 2px rebeccapurple;
-            box-shadow: 0 0 0 2px var(--color-accent, rebeccapurple);
-        }
-
-        .button.inverted {
-            background: transparent;
-            color: rebeccapurple;
-            color: var(--color-accent, rebeccapurple);
-        }
-
-        /* Content Section */
-        .section .content p {
-            padding: 0.25rem 0;
-            line-height: 1.5;
-        }
-
-        .section .content img {
-            width: 100%;
-            margin: 2rem 0;
-            box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.2);
-            box-shadow: var(--box-shadow);
-            border-radius: 8px;
-            border-radius: var(--border-radius);
-        }
-
-        .section .content a.link {}
-
-        .section .content h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .section .content h2 {
-            font-size: 2.25rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .section .content h3 {
-            font-size: 1.75rem;
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .section .content ul {
-            list-style: disc;
-            padding: 0.5rem 0;
-            padding-left: 1.25rem;
-        }
-
-        .section .content ol {
-            list-style: decimal;
-            padding: 0.5rem 0;
-            padding-left: 1.25rem;
-        }
-
-        .section .content blockquote {
-            padding: 2rem;
-            box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.2);
-            box-shadow: var(--box-shadow);
-            border-radius: 8px;
-            border-radius: var(--border-radius);
-        }
-
-        h1 {
-            text-align: center
-        }
-
-        P {
-            text-align: center
-        }
-    </style>
-</head>
-
-<body id="page">
-
-
-    <div class="section has-content" id="vtyeo">
-        <div class="content section-container">
-            <h1><em>WebUI</em></h1>
-        </div>
-    </div>
-
-    <style>
-        .heading.svelte-msvj6c.svelte-msvj6c {
-            font-size: 1.75rem;
-            margin-bottom: 3.5rem
-        }
-
-        ul.items.svelte-msvj6c.svelte-msvj6c {
-            display: grid;
-            grid-gap: 4rem;
-            gap: 4rem
-        }
-
-        li.svelte-msvj6c.svelte-msvj6c {
-            display: grid;
-            grid-gap: 3rem;
-            gap: 3rem
-        }
-
-        li.svelte-msvj6c.svelte-msvj6c:not(:last-child) {
-            padding-bottom: 4rem;
-            border-bottom: 1px solid var(--border-color)
-        }
-
-        li.svelte-msvj6c:not(:last-child) .title.svelte-msvj6c {
-            font-size: 1.25rem;
-            font-family: var(--font-primary);
-            font-weight: 500;
-            margin-bottom: 1rem;
-            margin-top: 0.25rem
-        }
-
-        li.svelte-msvj6c:not(:last-child) .description.svelte-msvj6c {
-            margin-bottom: 1rem
-        }
-
-        li.svelte-msvj6c:not(:last-child) .links.svelte-msvj6c {
-            display: flex
-        }
-
-        li.svelte-msvj6c:not(:last-child) .links a.svelte-msvj6c:not(:last-child) {
-            margin-right: 1rem
-        }
-
-        li.svelte-msvj6c img.svelte-msvj6c {
-            box-shadow: var(--box-shadow);
-            border-radius: var(--border-radius)
-        }
-
-        @media(min-width: 600px) {
-            li.svelte-msvj6c.svelte-msvj6c {
-                grid-template-columns: 3fr 1fr;
-                gap: 4rem
+            .button:hover {
+                background-color: gray;
             }
-        }
-    </style>
-    <div class="section has-component" id="aqblq">
-        <div class="component">
-            <section class="section-container">
-                <h2 class="heading svelte-msvj6c">Heading</h2>
-                <ul class="items svelte-msvj6c">
-                    <li class="svelte-msvj6c">
-                        <div>
-                            <h3 class="title svelte-msvj6c">Ut cillum incididunt</h3>
-                            <div class="description svelte-msvj6c">
-                                <!-- HTML_TAG_START -->Ea minim deserunt proident veniam irure Lorem cupidatat adipisicing ullamco nisi. Aute officia non proident ullamco minim veniam ullamco fugiat.
-                                <!-- HTML_TAG_END -->
-                            </div>
-                            <div class="links svelte-msvj6c"><a class="link svelte-msvj6c" href="/">cupidatat</a><a class="link svelte-msvj6c" href="/">elit</a>
-                            </div>
-                        </div>
-                        <img src="https://picsum.photos/600/400?blur=10" class="svelte-msvj6c">
-                    </li>
-                    <li class="svelte-msvj6c">
-                        <div>
-                            <h3 class="title svelte-msvj6c">Nostrud excepteur elit</h3>
-                            <div class="description svelte-msvj6c">
-                                <!-- HTML_TAG_START -->Culpa anim do aliquip labore commodo quis culpa non. Esse officia Lorem magna.
-                                <!-- HTML_TAG_END -->
-                            </div>
-                            <div class="links svelte-msvj6c"><a class="link svelte-msvj6c" href="/">consequat</a><a class="link svelte-msvj6c" href="/">excepteur</a>
-                            </div>
-                        </div>
-                        <img src="https://picsum.photos/600/400?blur=10" class="svelte-msvj6c">
-                    </li>
-                </ul>
-            </section>
-        </div>
-    </div>
 
-    <style>
-        footer.svelte-tbh94z.svelte-tbh94z {
-            border-top: 1px solid #E5E5E7;
-            border-top: 1px solid var(--border-color, #E5E5E7)
-        }
-
-        .section-container.svelte-tbh94z.svelte-tbh94z {
+        .tables-container {
             display: flex;
-            justify-content: space-between;
-            flex-direction: column;
-            align-items: center;
-            gap: 2rem
+            justify-content: center;
         }
 
-        .primo.svelte-tbh94z.svelte-tbh94z {
-            text-align: center;
-            font-weight: 600
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
         }
 
-        .primo.svelte-tbh94z a.svelte-tbh94z {
-            text-decoration: underline;
-            color: rgb(248, 68, 73)
+        th, td {
+            padding: 5px;
         }
 
-        @media(min-width: 600px) {
-            ul.svelte-tbh94z.svelte-tbh94z {
-                font-size: 1.25rem
-            }
+        th {
+            text-align: left;
         }
     </style>
-    <div class="section has-component" id="tpywu">
-        <div class="component">
-            <footer class="svelte-tbh94z">
-                <div class="section-container svelte-tbh94z">
-                    <ul class="svelte-tbh94z">
-                        <li></li>
-                        <li></li>
-                    </ul>
-                    <span class="primo svelte-tbh94z"><a href="https://www.bepacom.nl/" class="svelte-tbh94z">Bepacom</a> Powered
-                    </span>
-                </div>
-            </footer>
-        </div>
+    <title>API Response</title>
+</head>
+<body>
+    <div class="button-container">
+        <button class="button" onclick="sendRequest('http://localhost:7813/apiv1/command/iam')">I Am</button>
+        <button class="button" onclick="sendRequest('http://localhost:7813/apiv1/command/whois')">Who Is</button>
+        <button class="button" onclick="sendRequest('http://localhost:7813/apiv1/command/readall')">Read Request</button>
     </div>
+    <div class="tables-container">
+        <table id="response-table">
+            <thead>
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+    <script>
+        const API_URL = 'http://localhost:7813/apiv1/json';
 
+        function sendRequest(url) {
+            fetch(url)
+                .then((response) => response.json())
+                .then((data) => {
+                    const tbody = document.querySelector('#response-table tbody');
+                    tbody.innerHTML = '';
+                    for (const deviceKey in data) {
+                        addRows(data[deviceKey], deviceKey + '.');
+                    }
+                });
+        }
 
-    <script type="module">
-        const [{
-            default: App
-        }, data] = await Promise.all([
-            import('/_modules/aeltx.js'),
-            fetch('/en.json').then(res => res.json())
-        ]).catch(e => console.error(e))
-        new App({
-            target: document.querySelector('#tpywu'),
-            hydrate: true,
-            props: {
-                ...data,
-                ...data['index'],
-                ...data['index']['tpywu']
+        function createRow(key, value) {
+            const row = document.createElement('tr');
+
+            const keyCell = document.createElement('td');
+            keyCell.textContent = key;
+            row.appendChild(keyCell);
+
+            const valueCell = document.createElement('td');
+            valueCell.textContent = JSON.stringify(value);
+            row.appendChild(valueCell);
+
+            return row;
+        }
+
+        function addRows(data, prefix = '') {
+            const tbody = document.querySelector('#response-table tbody');
+            for (const key in data) {
+                if (typeof data[key] === 'object' && !Array.isArray(data[key])) {
+                    addRows(data[key], prefix + key + '.');
+                } else {
+                    tbody.appendChild(createRow(prefix + key, data[key]));
+                }
             }
-        })
+        }
+
+        fetch(API_URL)
+            .then((response) => response.json())
+            .then((data) => {
+                for (const deviceKey in data) {
+                    addRows(data[deviceKey], deviceKey + '.');
+                }
+            });
     </script>
 </body>
-
 </html>
