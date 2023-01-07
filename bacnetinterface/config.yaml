@@ -14,7 +14,6 @@ init: false
 ingress: true
 ingress_entry: webapp/
 host_network: true
-full_access: false
 panel_icon: mdi:router-wireless-settings
 map:
   - backup:rw
@@ -24,8 +23,6 @@ map:
   - ssl:rw
 ports:
   80/tcp: 80
-  7813/tcp: 7813
-  7813/udp: 7813
   47808/udp: 47808
 options:
   objectName: EcoPanel

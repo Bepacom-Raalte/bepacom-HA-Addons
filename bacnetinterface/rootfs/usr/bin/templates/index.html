@@ -48,9 +48,9 @@
 </head>
 <body>
     <div class="button-container">
-        <button class="button" onclick="sendRequest('http://localhost:7813/apiv1/command/iam')">I Am</button>
-        <button class="button" onclick="sendRequest('http://localhost:7813/apiv1/command/whois')">Who Is</button>
-        <button class="button" onclick="sendRequest('http://localhost:7813/apiv1/command/readall')">Read Request</button>
+        <button class="button" onclick="sendRequest('http://homeassistant.local/apiv1/command/iam')">I Am</button>
+        <button class="button" onclick="sendRequest('http://homeassistant.local/apiv1/command/whois')">Who Is</button>
+        <button class="button" onclick="sendRequest('http://homeassistant.local/apiv1/command/readall')">Read Request</button>
     </div>
     <div class="tables-container">
         <table id="response-table">
@@ -65,7 +65,7 @@
         </table>
     </div>
     <script>
-        const API_URL = 'http://localhost:7813/apiv1/json';
+        const API_URL = 'http://homeassistant.local/apiv1/json';
 
         function sendRequest(url) {
             fetch(url)
