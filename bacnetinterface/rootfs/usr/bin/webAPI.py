@@ -1,3 +1,4 @@
+"""API script for BACnet Add-On"""
 import asyncio
 import json
 import sys

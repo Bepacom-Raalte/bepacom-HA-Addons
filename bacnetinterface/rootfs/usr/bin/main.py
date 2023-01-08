@@ -1,6 +1,5 @@
-# ===================================================
-# Importing from libraries
-# ===================================================
+"""Main script for EcoPanel BACnet Add-On."""
+
 import pickle
 import sys
 from collections.abc import Callable
@@ -9,23 +8,25 @@ from threading import Event, Thread
 from typing import Any
 
 import uvicorn
-from bacpypes.basetypes import (EventType, PropertyIdentifier,
-                                PropertyReference, PropertyValue, Recipient,
-                                RecipientProcess, ServicesSupported)
+from bacpypes.basetypes import (
+    EventType,
+    PropertyIdentifier,
+    PropertyReference,
+    PropertyValue,
+    Recipient,
+    RecipientProcess,
+    ServicesSupported,
+)
 from bacpypes.consolelogging import ConfigArgumentParser, ConsoleLogHandler
 from bacpypes.core import deferred, enable_sleeping, run, stop
 from bacpypes.debugging import ModuleLogger, bacpypes_debugging
 from bacpypes.local.device import LocalDeviceObject
-from bacpypes.pdu import (Address, GlobalBroadcast, LocalBroadcast,
-                          RemoteBroadcast)
+from bacpypes.pdu import Address, GlobalBroadcast, LocalBroadcast, RemoteBroadcast
 from bacpypes.task import RecurringTask
 
 import webAPI as api
 from BACnetIOHandler import BACnetIOHandler
 
-# ===================================================
-# Global variables
-# ===================================================
 webserv: str = "127.0.0.1"
 port = 7813
 
@@ -36,17 +37,16 @@ rsvp = (True, None, None)
 _debug = 0
 _log = ModuleLogger(globals())
 
-# ===================================================
-# Threads
-# ===================================================
-# Uvicorn thread
+
 class uviThread(Thread):
+    """Thread for Uvicorn."""
+
     def run(self):
         uvicorn.run(api.app, host=webserv, port=port)
 
 
 class EventWatcherTask(RecurringTask):
-    """Checks if event is true. When it is, do callback"""
+    """Checks if event is true. When it is, do callback."""
 
     def __init__(self, event: Event(), callback: Callable, interval):
         RecurringTask.__init__(self, interval)
@@ -63,7 +63,7 @@ class EventWatcherTask(RecurringTask):
 
 
 class QueueWatcherTask(RecurringTask):
-    """Checks if queue has items. When it has, do callback"""
+    """Checks if queue has items. When it has, do callback."""
 
     def __init__(self, queue: Queue(), callback: Callable, interval):
         RecurringTask.__init__(self, interval)
@@ -81,7 +81,7 @@ class QueueWatcherTask(RecurringTask):
 
 
 class RefreshDict(RecurringTask):
-    """Checks if queue has items. When it has, do callback"""
+    """Checks if queue has items. When it has, do callback."""
 
     def __init__(self, interval):
         RecurringTask.__init__(self, interval)
@@ -94,6 +94,7 @@ class RefreshDict(RecurringTask):
 
 
 def write_from_dict(dict_to_write: dict):
+    """Write to object from a dict received by API"""
     deviceID = get_key(dict_to_write)
     for object in dict_to_write[deviceID]:
         for property in dict_to_write[deviceID][object]:
@@ -114,24 +115,13 @@ def read_all_from_dict():
     this_application.read_entire_dict()
 
 
-# ===================================================
-# Main
-# ===================================================
 def main():
-    # ===================================================
-    # parse bacpypes.ini
-    # ===================================================
+
     args = ConfigArgumentParser(description=__doc__).parse_args()
 
-    # ===================================================
-    # Uvicorn server
-    # ===================================================
     server = uviThread()
     server.start()
 
-    # ===================================================
-    # BACnet server
-    # ===================================================
     global this_application
     global this_device
 
