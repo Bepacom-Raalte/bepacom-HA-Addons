@@ -140,7 +140,8 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
         'largeAnalogValue',
         'integerValue',
         'positiveIntegerValue',
-        'lightingOutput'
+        'lightingOutput',
+        'notificationClass',
         ]
     propertyList = [
         PropertyReference(propertyIdentifier=PropertyIdentifier('objectIdentifier').value),
@@ -153,6 +154,7 @@ class BACnetIOHandler(BIPSimpleApplication, ReadWritePropertyMultipleServices, C
         PropertyReference(propertyIdentifier=PropertyIdentifier('eventState').value),
         PropertyReference(propertyIdentifier=PropertyIdentifier('reliability').value),
         PropertyReference(propertyIdentifier=PropertyIdentifier('covIncrement').value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier('notificationClass').value),
         ]
 
     id_to_object = {}

@@ -40,6 +40,7 @@ def BACnetToDict(BACnetDict):
         'covIncrement',
         'vendorName',
         'modelName',
+        'notificationClass'
         )
     devicesDict = {}
     for deviceID in BACnetDict.keys():
