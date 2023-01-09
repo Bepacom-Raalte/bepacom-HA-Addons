@@ -1,8 +1,6 @@
 {
   "ExpandedNodes": [
     "",
-    "\\.github",
-    "\\.github\\workflows",
     "\\bacnetinterface",
     "\\bacnetinterface\\rootfs",
     "\\bacnetinterface\\rootfs\\etc",
@@ -10,8 +8,9 @@
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d",
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\nginx",
     "\\bacnetinterface\\rootfs\\usr",
-    "\\bacnetinterface\\rootfs\\usr\\bin"
+    "\\bacnetinterface\\rootfs\\usr\\bin",
+    "\\bacnetinterface\\rootfs\\usr\\bin\\templates"
   ],
-  "SelectedNode": "\\bacnetinterface\\config.yaml",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\templates\\index.html",
   "PreviewInSolutionExplorer": false
 }
