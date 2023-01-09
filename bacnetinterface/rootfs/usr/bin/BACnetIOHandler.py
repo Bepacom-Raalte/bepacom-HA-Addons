@@ -158,7 +158,7 @@ class BACnetIOHandler(
         "integerValue",
         "positiveIntegerValue",
         "lightingOutput",
-        "NotificationClass",
+        "notificationClass",
     ]
     propertyList = [
         PropertyReference(
