@@ -62,8 +62,6 @@ from typing import Any
 import bacpypes.constructeddata
 from bacpypes.apdu import (
     AbortPDU,
-    IAmRequest,
-    IHaveRequest,
     PropertyReference,
     ReadAccessSpecification,
     ReadPropertyACK,
@@ -72,13 +70,7 @@ from bacpypes.apdu import (
     ReadPropertyRequest,
     RejectPDU,
     SimpleAckPDU,
-    SubscribeCOVPropertyRequest,
     SubscribeCOVRequest,
-    UnconfirmedRequestPDU,
-    WhoHasLimits,
-    WhoHasObject,
-    WhoHasRequest,
-    WhoIsRequest,
     WritePropertyRequest,
 )
 from bacpypes.app import BIPSimpleApplication

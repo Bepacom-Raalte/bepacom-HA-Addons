@@ -1,6 +1,5 @@
 """Main script for EcoPanel BACnet add-on."""
 
-import pickle
 import sys
 from collections.abc import Callable
 from queue import Queue

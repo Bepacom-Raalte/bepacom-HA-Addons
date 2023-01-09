@@ -12,6 +12,6 @@
     "\\bacnetinterface\\rootfs\\usr\\bin",
     "\\bacnetinterface\\translations"
   ],
-  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\webAPI.py",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\BACnetIOHandler.py",
   "PreviewInSolutionExplorer": false
 }
