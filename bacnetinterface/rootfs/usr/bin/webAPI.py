@@ -1,3 +1,4 @@
+"""API script for BACnet add-on."""
 import asyncio
 import json
 import sys
@@ -40,6 +41,7 @@ def BACnetToDict(BACnetDict):
         "modelName",
         "stateText",
         "numberOfStates",
+        "notificationClass",
     )
     devicesDict = {}
     for deviceID in BACnetDict.keys():

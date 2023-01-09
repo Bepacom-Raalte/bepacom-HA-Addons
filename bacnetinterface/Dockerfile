@@ -16,11 +16,11 @@ RUN \
     py3-setuptools \
     py3-wheel \
   && pip3 install --no-cache-dir --upgrade pip\
-    bacpypes \
-    flask \
-    fastapi \
-    uvicorn \
-    websockets
+    bacpypes>=0.18.6 \
+    flask>=2.2.2 \
+    fastapi>=0.88.0 \
+    uvicorn>=0.20.0 \
+    websockets>=10.4
 
 WORKDIR /
 
