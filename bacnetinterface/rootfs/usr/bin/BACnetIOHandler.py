@@ -170,9 +170,15 @@ class BACnetIOHandler(
         PropertyReference(propertyIdentifier=PropertyIdentifier("stateText").value),
         PropertyReference(
             propertyIdentifier=PropertyIdentifier("numberOfStates").value
-        ),
+            ),
         PropertyReference(
             propertyIdentifier=PropertyIdentifier("notificationClass").value
+            ),
+        PropertyReference(
+            propertyIdentifier=PropertyIdentifier("minPresValue").value
+            ),
+        PropertyReference(
+            propertyIdentifier=PropertyIdentifier("maxPresValue").value
             ),
     ]
 
