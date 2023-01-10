@@ -7,20 +7,15 @@ from threading import Event, Thread
 from typing import Any
 
 import uvicorn
-from bacpypes.basetypes import (
-    EventType,
-    PropertyIdentifier,
-    PropertyReference,
-    PropertyValue,
-    Recipient,
-    RecipientProcess,
-    ServicesSupported,
-)
+from bacpypes.basetypes import (EventType, PropertyIdentifier,
+                                PropertyReference, PropertyValue, Recipient,
+                                RecipientProcess, ServicesSupported)
 from bacpypes.consolelogging import ConfigArgumentParser, ConsoleLogHandler
 from bacpypes.core import deferred, enable_sleeping, run, stop
 from bacpypes.debugging import ModuleLogger, bacpypes_debugging
 from bacpypes.local.device import LocalDeviceObject
-from bacpypes.pdu import Address, GlobalBroadcast, LocalBroadcast, RemoteBroadcast
+from bacpypes.pdu import (Address, GlobalBroadcast, LocalBroadcast,
+                          RemoteBroadcast)
 from bacpypes.task import RecurringTask
 
 import webAPI as api

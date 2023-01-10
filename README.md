@@ -1,6 +1,6 @@
 # Bepacom Addon Repository
 
-This repository can be used as a "blueprint" for add-on development to help you get started.
+This repository contains everything related to Bepacom's EcoPanel functionality.
 
 Add-on documentation: <https://developers.home-assistant.io/docs/add-ons>
 

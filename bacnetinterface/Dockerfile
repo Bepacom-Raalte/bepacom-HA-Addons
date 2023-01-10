@@ -8,9 +8,7 @@ USER root
 WORKDIR /usr/src
 RUN \
   apk add --no-cache \
-    iproute2 \
     nginx \
-    nmap \
     python3 \
     py3-pip \
     py3-setuptools \

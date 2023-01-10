@@ -19,10 +19,8 @@ declare foreignBBMD
 declare foreignTTL
 declare maxSegmentsAccepted
 
+# Setting variables
 
-#
-# Assigning value to variables from HA config 
-#
 header='[BACpypes]'
 objectname="objectName: $(bashio::config 'objectName')"
 address="address: $(bashio::config 'address')"
@@ -34,9 +32,8 @@ foreignBBMD="foreignBBMD: $(bashio::config 'foreignBBMD')"
 foreignTTL="foreignTTL: $(bashio::config 'foreignTTL')"
 maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted')"
 
-#
 # Generate INI file
-#
+
 printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
 cat BACpypes.ini
 

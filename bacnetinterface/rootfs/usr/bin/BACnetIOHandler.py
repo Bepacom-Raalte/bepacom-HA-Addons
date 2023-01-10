@@ -60,58 +60,29 @@ import threading
 from typing import Any
 
 import bacpypes.constructeddata
-from bacpypes.apdu import (
-    AbortPDU,
-    PropertyReference,
-    ReadAccessSpecification,
-    ReadPropertyACK,
-    ReadPropertyMultipleACK,
-    ReadPropertyMultipleRequest,
-    ReadPropertyRequest,
-    RejectPDU,
-    SimpleAckPDU,
-    SubscribeCOVRequest,
-    WritePropertyRequest,
-)
+from bacpypes.apdu import (AbortPDU, PropertyReference,
+                           ReadAccessSpecification, ReadPropertyACK,
+                           ReadPropertyMultipleACK,
+                           ReadPropertyMultipleRequest, ReadPropertyRequest,
+                           RejectPDU, SimpleAckPDU, SubscribeCOVRequest,
+                           WritePropertyRequest)
 from bacpypes.app import BIPSimpleApplication
-from bacpypes.basetypes import (
-    EventType,
-    PropertyIdentifier,
-    PropertyReference,
-    PropertyValue,
-    Recipient,
-    RecipientProcess,
-    ServicesSupported,
-)
+from bacpypes.basetypes import (EventType, PropertyIdentifier,
+                                PropertyReference, PropertyValue, Recipient,
+                                RecipientProcess, ServicesSupported)
 from bacpypes.constructeddata import AnyAtomic, Array
-from bacpypes.errors import (
-    ExecutionError,
-    InconsistentParameters,
-    MissingRequiredParameter,
-    ParameterOutOfRange,
-)
+from bacpypes.errors import (ExecutionError, InconsistentParameters,
+                             MissingRequiredParameter, ParameterOutOfRange)
 from bacpypes.iocb import IOCB
 from bacpypes.object import get_datatype
-from bacpypes.pdu import Address, GlobalBroadcast, LocalBroadcast, RemoteBroadcast
-
+from bacpypes.pdu import (Address, GlobalBroadcast, LocalBroadcast,
+                          RemoteBroadcast)
 # Datatypes:
 # Datatypes:
-from bacpypes.primitivedata import (
-    Atomic,
-    BitString,
-    Boolean,
-    CharacterString,
-    Date,
-    Double,
-    Integer,
-    Null,
-    ObjectIdentifier,
-    OctetString,
-    Real,
-    Time,
-    Unsigned,
-)
-
+from bacpypes.primitivedata import (Atomic, BitString, Boolean,
+                                    CharacterString, Date, Double, Integer,
+                                    Null, ObjectIdentifier, OctetString, Real,
+                                    Time, Unsigned)
 # importing services
 from bacpypes.service.cov import ChangeOfValueServices
 from bacpypes.service.object import ReadWritePropertyMultipleServices
@@ -170,16 +141,12 @@ class BACnetIOHandler(
         PropertyReference(propertyIdentifier=PropertyIdentifier("stateText").value),
         PropertyReference(
             propertyIdentifier=PropertyIdentifier("numberOfStates").value
-            ),
+        ),
         PropertyReference(
             propertyIdentifier=PropertyIdentifier("notificationClass").value
-            ),
-        PropertyReference(
-            propertyIdentifier=PropertyIdentifier("minPresValue").value
-            ),
-        PropertyReference(
-            propertyIdentifier=PropertyIdentifier("maxPresValue").value
-            ),
+        ),
+        PropertyReference(propertyIdentifier=PropertyIdentifier("minPresValue").value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier("maxPresValue").value),
     ]
 
     id_to_object = {}
@@ -667,13 +634,14 @@ class BACnetIOHandler(
                         )
 
                         if (
-                            result.objectIdentifier,
-                            self.addr_to_dev_id(response.pduSource),
-                        ) not in self.object_to_id and result.objectIdentifier[
-                            0
-                        ] in self.objectFilter and result.objectIdentifier[
-                            0
-                        ] is not "notificationClass":
+                            (
+                                result.objectIdentifier,
+                                self.addr_to_dev_id(response.pduSource),
+                            )
+                            not in self.object_to_id
+                            and result.objectIdentifier[0] in self.objectFilter
+                            and result.objectIdentifier[0] != "notificationClass"
+                        ):
                             self.COVSubscribe(
                                 result.objectIdentifier, True, response.pduSource
                             )
@@ -765,13 +733,14 @@ class BACnetIOHandler(
                         )
 
                         if (
-                            response.objectIdentifier,
-                            self.addr_to_dev_id(response.pduSource),
-                        ) not in self.object_to_id and response.objectIdentifier[
-                            0
-                        ] in self.objectFilter and response.objectIdentifier[
-                            0
-                        ] is not "notificationClass":
+                            (
+                                response.objectIdentifier,
+                                self.addr_to_dev_id(response.pduSource),
+                            )
+                            not in self.object_to_id
+                            and response.objectIdentifier[0] in self.objectFilter
+                            and response.objectIdentifier[0] != "notificationClass"
+                        ):
                             self.COVSubscribe(
                                 response.objectIdentifier, True, response.pduSource
                             )
@@ -814,7 +783,7 @@ class BACnetIOHandler(
                 + iocb.ioError.errorCode
                 + " from "
                 + str(iocb.ioError.pduSource)
-                + "\n"
+                + " Subscribing error\n"
             )
             self.unassign_id(
                 (
