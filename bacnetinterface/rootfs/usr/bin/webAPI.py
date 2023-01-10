@@ -54,7 +54,7 @@ def BACnetToDict(BACnetDict):
             objectIDstr = ":".join(map(str, objectID))
             for propertyID, value in BACnetDict[deviceID][objectID].items():
                 if propertyID in propertyFilter:
-                    if isinstance(value, (int, float, bool, str)):
+                    if isinstance(value, (int, float, bool, str, list, dict, tuple, None)):
                         objectDict.update({propertyID: value})
                     else:
                         objectDict.update({propertyID: str(value)})

@@ -671,7 +671,9 @@ class BACnetIOHandler(
                             self.addr_to_dev_id(response.pduSource),
                         ) not in self.object_to_id and result.objectIdentifier[
                             0
-                        ] in self.objectFilter:
+                        ] in self.objectFilter and result.objectIdentifier[
+                            0
+                        ] is not "notificationClass":
                             self.COVSubscribe(
                                 result.objectIdentifier, True, response.pduSource
                             )
@@ -767,7 +769,9 @@ class BACnetIOHandler(
                             self.addr_to_dev_id(response.pduSource),
                         ) not in self.object_to_id and response.objectIdentifier[
                             0
-                        ] in self.objectFilter:
+                        ] in self.objectFilter and response.objectIdentifier[
+                            0
+                        ] is not "notificationClass":
                             self.COVSubscribe(
                                 response.objectIdentifier, True, response.pduSource
                             )
