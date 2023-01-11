@@ -95,7 +95,7 @@ flask_app = Flask("WebUI", template_folder="/usr/bin/templates")
 @flask_app.route("/")
 def flask_main():
     """WebUI page for Home Assistant."""
-    return render_template("index.html")
+    return render_template("index.html", bacnetdict=BACnetToDict(BACnetDeviceDict))
 
 
 app = FastAPI(on_startup=[on_start])

@@ -6,29 +6,55 @@
             font-family: 'Roboto', sans-serif;
         }
 
-        .button-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 150px;
+        .header {
+            background-color: white;
+            padding: 20px;
+            text-align: center;
         }
 
-        .button {
-            margin: 10px 0;
-            padding: 10px;
-            border: none;
-            background-color: lightgray;
-            font-size: 16px;
-            cursor: pointer;
+        /* Style the top navigation bar */
+        .topnav {
+            overflow: hidden;
+            background-color: #f60000;
         }
 
-            .button:hover {
-                background-color: gray;
+            /* Style the topnav links */
+            .topnav a {
+                float: left;
+                display: block;
+                color: white;
+                text-align: center;
+                padding: 14px 16px;
+                text-decoration: none;
             }
 
-        .tables-container {
+                /* Change color on hover */
+                .topnav a:hover {
+                    background-color: white;
+                    color: #f60000;
+                }
+
+
+
+        .flex-container {
             display: flex;
+            height: 80%
+        }
+
+        .flex-button {
+            flex: 1;
+            border: 2px solid #f60000;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
+            align-items: center;
+        }
+
+        .flex-table {
+            flex: 4;
+            border: 2px solid #f60000;
+            align-items: center; /* Centering the buttons vertically */
+            overflow-y: scroll;
         }
 
         table, th, td {
@@ -43,29 +69,77 @@
         th {
             text-align: left;
         }
+
+        .button {
+            padding: 10px;
+            width: 100%;
+            border: none;
+            background-color: #f60000;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            .button:hover {
+                background-color: white;
+                color: #f60000
+            }
     </style>
-    <title>API Response</title>
+    <title>WebUI</title>
 </head>
 <body>
-    <div class="button-container">
-        <button class="button" onclick="sendRequest('http://homeassistant.local/apiv1/command/iam')">I Am</button>
-        <button class="button" onclick="sendRequest('http://homeassistant.local/apiv1/command/whois')">Who Is</button>
-        <button class="button" onclick="sendRequest('http://homeassistant.local/apiv1/command/readall')">Read Request</button>
+    <div class="header">
+        <img src="/usr/bin/templates/logo.png" alt="Bepacom B.V. Raalte" style="float: left; justify-content: center; align-items: center;">
+        <h1>BACnet/IP Interface</h1>
     </div>
-    <div class="tables-container">
-        <table id="response-table">
-            <thead>
+    <div class="topnav">
+        <a href="http://127.0.0.1:7813/webapp">Home</a>
+    </div>
+
+    <div class="flex-container">
+        <div class="flex-button" style="width:20%">
+            <button class="button" onclick="sendRequest('http://127.0.0.1:7813/apiv1/command/iam')">I Am</button>
+            <button class="button" onclick="sendRequest('http://127.0.0.1:7813/apiv1/command/whois')">Who Is</button>
+            <button class="button" onclick="sendRequest('http://127.0.0.1:7813/apiv1/command/readall')">Read Request</button>
+        </div>
+        <div class="flex-table">
+            <table>
                 <tr>
-                    <th>Key</th>
-                    <th>Value</th>
+                    <th>Device</th>
+                    <th>Object</th>
+                    <th>Property</th>
+                    <th>PropertyValue</th>
                 </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+                {% set devicelist = [] %}
+                {% set objectlist = [] %}
+                {% for device, objects in bacnetdict.items() %}
+                {% for object, property in objects.items() %}
+                {% for key, value in property.items() %}
+                <tr>
+                    {% if device in devicelist %}
+                    <td></td>
+                    {% else %}
+                    <td>{{device}}</td>
+                    {{ devicelist.append(device) or "" }}
+                    {% endif %}
+                    {% if object in objectlist %}
+                    <td></td>
+                    {% else %}
+                    <td>{{object}}</td>
+                    {{ objectlist.append(object) or "" }}
+                    {% endif %}
+                    <td>{{key}}</td>
+                    <td>{{value}}</td>
+                </tr>
+                {% endfor %}
+                {% endfor %}
+                {% endfor %}
+
+            </table>
+        </div>
     </div>
     <script>
-        const API_URL = 'http://homeassistant.local/apiv1/json';
+        const API_URL = 'http://127.0.0.1:7813/apiv1/json';
 
         function sendRequest(url) {
             fetch(url)

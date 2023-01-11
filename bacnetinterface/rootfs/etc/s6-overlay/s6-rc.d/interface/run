@@ -37,7 +37,6 @@ maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted'
 printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
 cat BACpypes.ini
 
-
 bashio::log.info "Running interface"
 
 exec python3 /usr/bin/main.py
