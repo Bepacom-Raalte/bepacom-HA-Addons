@@ -48,6 +48,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            overflow: clip;
         }
 
         .flex-table {
@@ -89,18 +90,18 @@
 </head>
 <body>
     <div class="header">
-        <img src="https://github.com/GravySeal/bepacom-repo/blob/main/bacnetinterface/logo.png" alt="Bepacom B.V. Raalte" style="float: left; justify-content: center; align-items: center; height:10%;">
+        <img src="https://www.bepacom.nl/wp-content/uploads/2018/09/logo-bepacom-besturingstechniek.jpg" alt="Bepacom B.V. Raalte" style="float: left; justify-content: center; align-items: center; height:40px;">
         <h1>BACnet/IP Interface</h1>
     </div>
     <div class="topnav">
-        <a href="http://127.0.0.1:80/webapp">Home</a>
+        <a href=".">Refresh</a>
     </div>
-
     <div class="flex-container">
         <div class="flex-button" style="width:20%">
-            <button class="button" onclick="sendRequest('http://127.0.0.1:80/apiv1/command/iam')">I Am</button>
-            <button class="button" onclick="sendRequest('http://127.0.0.1:80/apiv1/command/whois')">Who Is</button>
-            <button class="button" onclick="sendRequest('http://127.0.0.1:80/apiv1/command/readall')">Read Request</button>
+            <button class="button" onclick="iam()">I Am Request</button>
+            <button class="button" onclick="whois()">Who Is Request</button>
+            <button class="button" onclick="readall()">Read All Devices</button>
+
         </div>
         <div class="flex-table">
             <table>
@@ -141,50 +142,34 @@
     <script>
         const API_URL = 'http://127.0.0.1:80/apiv1/json';
 
-        function sendRequest(url) {
-            fetch(url)
-                .then((response) => response.json())
-                .then((data) => {
-                    const tbody = document.querySelector('#response-table tbody');
-                    tbody.innerHTML = '';
-                    for (const deviceKey in data) {
-                        addRows(data[deviceKey], deviceKey + '.');
-                    }
+        let hostname = location.hostname
+
+        function whois() {
+            fetch("../apiv1/command/whois")
+                .then(response => response.text())
+                .then(data => {
+                    console.log(data);
+                    // do something with the data here
                 });
         }
 
-        function createRow(key, value) {
-            const row = document.createElement('tr');
-
-            const keyCell = document.createElement('td');
-            keyCell.textContent = key;
-            row.appendChild(keyCell);
-
-            const valueCell = document.createElement('td');
-            valueCell.textContent = JSON.stringify(value);
-            row.appendChild(valueCell);
-
-            return row;
+        function iam() {
+            fetch("../apiv1/command/iam")
+                .then(response => response.text())
+                .then(data => {
+                    console.log(data);
+                    // do something with the data here
+                });
         }
 
-        function addRows(data, prefix = '') {
-            const tbody = document.querySelector('#response-table tbody');
-            for (const key in data) {
-                if (typeof data[key] === 'object' && !Array.isArray(data[key])) {
-                    addRows(data[key], prefix + key + '.');
-                } else {
-                    tbody.appendChild(createRow(prefix + key, data[key]));
-                }
-            }
+        function readall() {
+            fetch("../apiv1/command/readall")
+                .then(response => response.text())
+                .then(data => {
+                    console.log(data);
+                    // do something with the data here
+                });
         }
-
-        fetch(API_URL)
-            .then((response) => response.json())
-            .then((data) => {
-                for (const deviceKey in data) {
-                    addRows(data[deviceKey], deviceKey + '.');
-                }
-            });
     </script>
 </body>
 </html>
