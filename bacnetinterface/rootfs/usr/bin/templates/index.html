@@ -89,18 +89,18 @@
 </head>
 <body>
     <div class="header">
-        <img src="/usr/bin/templates/logo.png" alt="Bepacom B.V. Raalte" style="float: left; justify-content: center; align-items: center;">
+        <img src="https://github.com/GravySeal/bepacom-repo/blob/main/bacnetinterface/logo.png" alt="Bepacom B.V. Raalte" style="float: left; justify-content: center; align-items: center; height:10%;">
         <h1>BACnet/IP Interface</h1>
     </div>
     <div class="topnav">
-        <a href="http://127.0.0.1:7813/webapp">Home</a>
+        <a href="http://127.0.0.1:80/webapp">Home</a>
     </div>
 
     <div class="flex-container">
         <div class="flex-button" style="width:20%">
-            <button class="button" onclick="sendRequest('http://127.0.0.1:7813/apiv1/command/iam')">I Am</button>
-            <button class="button" onclick="sendRequest('http://127.0.0.1:7813/apiv1/command/whois')">Who Is</button>
-            <button class="button" onclick="sendRequest('http://127.0.0.1:7813/apiv1/command/readall')">Read Request</button>
+            <button class="button" onclick="sendRequest('http://127.0.0.1:80/apiv1/command/iam')">I Am</button>
+            <button class="button" onclick="sendRequest('http://127.0.0.1:80/apiv1/command/whois')">Who Is</button>
+            <button class="button" onclick="sendRequest('http://127.0.0.1:80/apiv1/command/readall')">Read Request</button>
         </div>
         <div class="flex-table">
             <table>
@@ -139,7 +139,7 @@
         </div>
     </div>
     <script>
-        const API_URL = 'http://127.0.0.1:7813/apiv1/json';
+        const API_URL = 'http://127.0.0.1:80/apiv1/json';
 
         function sendRequest(url) {
             fetch(url)
