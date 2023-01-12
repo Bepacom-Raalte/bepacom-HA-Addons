@@ -98,9 +98,9 @@
     </div>
     <div class="flex-container">
         <div class="flex-button" style="width:20%">
-            <button class="button" onclick="iam()">I Am Request</button>
-            <button class="button" onclick="whois()">Who Is Request</button>
-            <button class="button" onclick="readall()">Read All Devices</button>
+            <button class="button" onclick="command('iam')">I Am Request</button>
+            <button class="button" onclick="command('whois')">Who Is Request</button>
+            <button class="button" onclick="command('readall')">Read All Devices</button>
 
         </div>
         <div class="flex-table">
@@ -140,36 +140,32 @@
         </div>
     </div>
     <script>
-        const API_URL = 'http://127.0.0.1:80/apiv1/json';
+        const API_URL = './apiv1/json';
 
         let hostname = location.hostname
 
-        function whois() {
-            fetch("../apiv1/command/whois")
+        var refreshing = false; // flag to check if the page is already
+
+        function command(text) {
+
+            if (refreshing) return; // if the page is already refreshing, return and don't call the function again
+
+            let url = "../apiv1/command/" + text
+
+            fetch(url)
                 .then(response => response.text())
                 .then(data => {
                     console.log(data);
                     // do something with the data here
                 });
+
+            // Add a 2 second delay before refreshing the page
+            setTimeout(function () {
+                refreshing = false; // after refresh is done, set the flag to false
+                location.reload();
+            }, 2000);
         }
 
-        function iam() {
-            fetch("../apiv1/command/iam")
-                .then(response => response.text())
-                .then(data => {
-                    console.log(data);
-                    // do something with the data here
-                });
-        }
-
-        function readall() {
-            fetch("../apiv1/command/readall")
-                .then(response => response.text())
-                .then(data => {
-                    console.log(data);
-                    // do something with the data here
-                });
-        }
     </script>
 </body>
 </html>
