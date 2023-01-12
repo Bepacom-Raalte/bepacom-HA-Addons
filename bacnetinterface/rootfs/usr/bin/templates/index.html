@@ -115,7 +115,8 @@
         </div>
         <div class="div2">
             <a href=".">Refresh</a>
-            <a href="../docs">API Docs</a>
+            <a href="../openapi.json">API Docs JSON</a>
+            <a id="docs" href="#">API Docs</a>
             <a href="../about" style="float:right;">About</a>
         </div>
         <div class="div3">
@@ -135,9 +136,12 @@
     <script>
         const API_URL = './apiv1/json';
 
-        let hostname = location.hostname
 
         var refreshing = false; // flag to check if the page is already
+
+        var link = document.getElementById("docs");
+
+        link.href = "http://" + location.hostname + "/docs";
 
         function command(text) {
 
