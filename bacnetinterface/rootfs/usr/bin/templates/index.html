@@ -18,7 +18,7 @@
 
         .parent {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: 0.8fr repeat(4, 1fr);
             grid-template-rows: 0.8fr 0.2fr repeat(3, 1fr);
             grid-column-gap: 0px;
             grid-row-gap: 0px;
@@ -32,8 +32,10 @@
         .div1 {
             grid-area: 1 / 1 / 2 / 6;
             border: 2px solid #f60000;
-            text-align: center;
         }
+
+            .div1 h1 {
+            }
 
         .div2 {
             border: 2px solid #f60000;
@@ -89,7 +91,7 @@
         }
 
         .button {
-            padding: 10px;
+            padding: 20px;
             width: 100%;
             border: none;
             background-color: #f60000;
@@ -113,6 +115,8 @@
         </div>
         <div class="div2">
             <a href=".">Refresh</a>
+            <a href="../docs">API Docs</a>
+            <a href="../about" style="float:right;">About</a>
         </div>
         <div class="div3">
             <button class="button" onclick="command('iam')">I Am Request</button>
