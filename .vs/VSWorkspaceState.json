@@ -7,6 +7,6 @@
     "\\bacnetinterface\\rootfs\\usr\\bin",
     "\\bacnetinterface\\rootfs\\usr\\bin\\templates"
   ],
-  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\templates\\index.html",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\webAPI.py",
   "PreviewInSolutionExplorer": false
 }
