@@ -68,6 +68,7 @@
             border: 2px solid #f60000;
             grid-area: 3 / 2 / 6 / 5;
             align-items: center; /* Centering the table vertically */
+            text-align: left;
             overflow-y: scroll;
             scrollbar-width: none; /* Firefox */
         }
@@ -76,6 +77,56 @@
             border: 2px solid #f60000;
             grid-area: 3 / 5 / 6 / 6;
         }
+
+            .div5 form {
+                border: 0px;
+                border-radius: 2px;
+            }
+
+            .div5 select {
+                padding: 20px;
+                width: 100%;
+                background-color: white;
+                color: #f60000;
+                font-size: 16px;
+            }
+
+                .div5 select:hover {
+                    color: black;
+                }
+
+            .div5 label {
+                padding: 10px;
+                width: 100%;
+                background-color: #f60000;
+                color: white;
+                font-size: 16px;
+                display: block;
+            }
+
+
+            .div5 input[type=text] {
+                padding: 20px;
+                width: 100%;
+                background-color: white;
+                color: #f60000;
+                font-size: 16px;
+            }
+
+            .div5 input[type=button] {
+                padding: 20px;
+                width: 100%;
+                border: none;
+                background-color: #f60000;
+                color: white;
+                font-size: 16px;
+                cursor: pointer;
+            }
+
+                .div5 input[type=button]:hover {
+                    background-color: white;
+                    color: #f60000
+                }
 
         table, th, td {
             border: 1px solid black;
@@ -130,7 +181,21 @@
             </table>
         </div>
         <div class="div5">
-
+            <form id="form">
+                <label for="device">Select Device:</label>
+                <select id="device" name="device"></select>
+                <br>
+                <label for="object">Select Object:</label>
+                <select id="object" name="object"></select>
+                <br>
+                <label for="property">Property identifier:</label>
+                <input type="text" id="property" name="property">
+                <br>
+                <label for="value">Value:</label>
+                <input type="text" id="value" name="value">
+                <br>
+                <input type="button" value="Write" onclick="submitForm()">
+            </form>
         </div>
     </div>
     <script>
@@ -140,6 +205,8 @@
         var refreshing = false; // flag to check if the page is already
 
         var link = document.getElementById("docs");
+
+        var devicedict = null;
 
         link.href = "http://" + location.hostname + "/docs";
 
@@ -158,6 +225,8 @@
         }
 
 
+
+
         document.addEventListener("DOMContentLoaded", function () {
             const table = document.getElementById("table");
 
@@ -165,12 +234,36 @@
                 fetch("../apiv1/json")
                     .then(response => response.json())
                     .then(data => {
+
+                        devicedict = data
+
+                        fillOptions()
+
                         // Clear the table
                         while (table.firstChild) {
                             table.removeChild(table.firstChild);
                         }
                         let devicelist = [];
                         let objectlist = [];
+
+                        // Create table header
+                        var thead = document.createElement("thead");
+                        var tr = document.createElement("tr");
+                        var th1 = document.createElement("th");
+                        th1.innerHTML = "Device ID";
+                        var th2 = document.createElement("th");
+                        th2.innerHTML = "Object ID";
+                        var th3 = document.createElement("th");
+                        th3.innerHTML = "Property";
+                        var th4 = document.createElement("th");
+                        th4.innerHTML = "Value";
+                        tr.appendChild(th1);
+                        tr.appendChild(th2);
+                        tr.appendChild(th3);
+                        tr.appendChild(th4);
+                        thead.appendChild(tr);
+                        table.appendChild(thead);
+
                         for (let device in data) {
                             for (let object in data[device]) {
                                 for (let key in data[device][object]) {
@@ -212,8 +305,49 @@
             setInterval(updateTable, 1000);
         });
 
-
-
+        let devices = [];
+        let objects = [];
+        function fillOptions() {
+            let selectDevice = document.getElementById("device");
+            let selectObject = document.getElementById("object");
+            for (let device in devicedict) {
+                if (!devices.includes(device)) {
+                    devices.push(device);
+                    let option = document.createElement("option");
+                    option.value = device;
+                    option.text = device;
+                    selectDevice.appendChild(option);
+                }
+                for (let object in devicedict[device]) {
+                    if (!objects.includes(object)) {
+                        objects.push(object);
+                        let option = document.createElement("option");
+                        option.value = object;
+                        option.text = object;
+                        selectObject.appendChild(option);
+                    }
+                }
+            }
+        }
+        function submitForm() {
+            let device = document.getElementById("device").value;
+            let object = document.getElementById("object").value;
+            let property = document.getElementById("property").value;
+            let value = document.getElementById("value").value;
+            let url = `../apiv1/${device}/${object}?${property}=${value}`;
+            let data = { property: value };
+            fetch(url, {
+                method: "POST",
+                body: JSON.stringify(data),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                });
+        }
     </script>
 </body>
 </html>

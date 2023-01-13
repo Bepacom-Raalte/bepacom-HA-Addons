@@ -3,10 +3,12 @@
     "",
     "\\bacnetinterface",
     "\\bacnetinterface\\rootfs",
+    "\\bacnetinterface\\rootfs\\etc",
+    "\\bacnetinterface\\rootfs\\etc\\nginx",
     "\\bacnetinterface\\rootfs\\usr",
     "\\bacnetinterface\\rootfs\\usr\\bin",
     "\\bacnetinterface\\rootfs\\usr\\bin\\templates"
   ],
-  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\webAPI.py",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\templates\\index.html",
   "PreviewInSolutionExplorer": false
 }
