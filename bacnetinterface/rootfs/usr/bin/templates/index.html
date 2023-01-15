@@ -15,7 +15,6 @@
             margin: 0;
         }
 
-
         .parent {
             display: grid;
             grid-template-columns: 0.8fr repeat(4, 1fr);
@@ -67,10 +66,10 @@
         .div4 {
             border: 2px solid #f60000;
             grid-area: 3 / 2 / 6 / 5;
-            align-items: center; /* Centering the table vertically */
+            align-items: center;
             text-align: left;
             overflow-y: scroll;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none;
         }
 
         .div5 {
@@ -104,7 +103,6 @@
                 display: block;
             }
 
-
             .div5 input[type=text] {
                 padding: 20px;
                 width: 100%;
@@ -128,12 +126,15 @@
                     color: #f60000
                 }
 
-        table, th, td {
+        table,
+        th,
+        td {
             border: 1px solid black;
             border-collapse: collapse;
         }
 
-        th, td {
+        th,
+        td {
             padding: 5px;
         }
 
@@ -166,9 +167,9 @@
         </div>
         <div class="div2">
             <a href=".">Refresh</a>
-            <a href="../openapi.json">API Docs JSON</a>
             <a id="docs" href="#">API Docs</a>
-            <a href="../about" style="float:right;">About</a>
+            <a href="../subscriptions">Manage Subscriptions</a>
+            <a href="https://www.bepacom.nl" style="float:right;">About</a>
         </div>
         <div class="div3">
             <button class="button" onclick="command('iam')">I Am Request</button>
@@ -200,113 +201,101 @@
     </div>
     <script>
         const API_URL = './apiv1/json';
-
-
         var refreshing = false; // flag to check if the page is already
-
         var link = document.getElementById("docs");
-
         var devicedict = null;
-
         link.href = "http://" + location.hostname + "/docs";
 
         function command(text) {
-
             if (refreshing) return; // if the page is already refreshing, return and don't call the function again
-
             let url = "../apiv1/command/" + text
-
-            fetch(url)
-                .then(response => response.text())
-                .then(data => {
-                    console.log(data);
-                    // do something with the data here
-                });
+            fetch(url).then(response => response.text()).then(data => {
+                console.log(data);
+                // do something with the data here
+            });
+            switch (text) {
+                case "whois":
+                    alert('Who Is Request Sent!');
+                    break
+                case "iam":
+                    alert('I Am Request Sent!');
+                    break
+                case "readall":
+                    alert('Multiple Read Request Sent to all detected devices!');
+                    break
+                default:
+                    alert("Something went wrong...")
+            }
         }
-
-
-
-
         document.addEventListener("DOMContentLoaded", function () {
             const table = document.getElementById("table");
 
             function updateTable() {
-                fetch("../apiv1/json")
-                    .then(response => response.json())
-                    .then(data => {
-
-                        devicedict = data
-
-                        fillOptions()
-
-                        // Clear the table
-                        while (table.firstChild) {
-                            table.removeChild(table.firstChild);
-                        }
-                        let devicelist = [];
-                        let objectlist = [];
-
-                        // Create table header
-                        var thead = document.createElement("thead");
-                        var tr = document.createElement("tr");
-                        var th1 = document.createElement("th");
-                        th1.innerHTML = "Device ID";
-                        var th2 = document.createElement("th");
-                        th2.innerHTML = "Object ID";
-                        var th3 = document.createElement("th");
-                        th3.innerHTML = "Property";
-                        var th4 = document.createElement("th");
-                        th4.innerHTML = "Value";
-                        tr.appendChild(th1);
-                        tr.appendChild(th2);
-                        tr.appendChild(th3);
-                        tr.appendChild(th4);
-                        thead.appendChild(tr);
-                        table.appendChild(thead);
-
-                        for (let device in data) {
-                            for (let object in data[device]) {
-                                for (let key in data[device][object]) {
-                                    let value = data[device][object][key];
-                                    let row = document.createElement("tr");
-                                    let deviceCol = document.createElement("td");
-                                    let objectCol = document.createElement("td");
-                                    let keyCol = document.createElement("td");
-                                    let valueCol = document.createElement("td");
-
-                                    if (devicelist.includes(device)) {
-                                        deviceCol.innerHTML = "";
-                                    } else {
-                                        deviceCol.innerHTML = device;
-                                        devicelist.push(device);
-                                    }
-
-                                    if (objectlist.includes(object)) {
-                                        objectCol.innerHTML = "";
-                                    } else {
-                                        objectCol.innerHTML = object;
-                                        objectlist.push(object);
-                                    }
-
-                                    keyCol.innerHTML = key;
-                                    valueCol.innerHTML = value;
-
-                                    row.appendChild(deviceCol);
-                                    row.appendChild(objectCol);
-                                    row.appendChild(keyCol);
-                                    row.appendChild(valueCol);
-                                    table.appendChild(row);
+                fetch("../apiv1/json").then(response => response.json()).then(data => {
+                    devicedict = data
+                    fillOptions()
+                    // Clear the table
+                    while (table.firstChild) {
+                        table.removeChild(table.firstChild);
+                    }
+                    let devicelist = [];
+                    let objectlist = [];
+                    // Create table header
+                    var thead = document.createElement("thead");
+                    var tr = document.createElement("tr");
+                    var th1 = document.createElement("th");
+                    th1.innerHTML = "Device ID";
+                    var th2 = document.createElement("th");
+                    th2.innerHTML = "Object ID";
+                    var th3 = document.createElement("th");
+                    th3.innerHTML = "Property";
+                    var th4 = document.createElement("th");
+                    th4.innerHTML = "Value";
+                    tr.appendChild(th1);
+                    tr.appendChild(th2);
+                    tr.appendChild(th3);
+                    tr.appendChild(th4);
+                    thead.appendChild(tr);
+                    table.appendChild(thead);
+                    for (let device in data) {
+                        for (let object in data[device]) {
+                            for (let key in data[device][object]) {
+                                let value = data[device][object][key];
+                                let row = document.createElement("tr");
+                                let deviceCol = document.createElement("td");
+                                let objectCol = document.createElement("td");
+                                let keyCol = document.createElement("td");
+                                let valueCol = document.createElement("td");
+                                if (devicelist.includes(device)) {
+                                    deviceCol.innerHTML = "";
+                                } else {
+                                    deviceCol.innerHTML = device;
+                                    devicelist.push(device);
                                 }
+                                if (objectlist.includes(object)) {
+                                    objectCol.innerHTML = "";
+                                } else {
+                                    objectCol.innerHTML = object;
+                                    objectlist.push(object);
+                                }
+                                keyCol.innerHTML = key;
+                                valueCol.innerHTML = value;
+                                row.appendChild(deviceCol);
+                                row.appendChild(objectCol);
+                                row.appendChild(keyCol);
+                                row.appendChild(valueCol);
+                                table.appendChild(row);
                             }
                         }
-                    });
+                    }
+                });
             }
             //call the updateTable function every 2 seconds
             setInterval(updateTable, 1000);
         });
-
         let devices = [];
         let objects = [];
+
         function fillOptions() {
             let selectDevice = document.getElementById("device");
             let selectObject = document.getElementById("object");
@@ -329,24 +318,26 @@
                 }
             }
         }
+
         function submitForm() {
             let device = document.getElementById("device").value;
             let object = document.getElementById("object").value;
             let property = document.getElementById("property").value;
             let value = document.getElementById("value").value;
             let url = `../apiv1/${device}/${object}?${property}=${value}`;
-            let data = { property: value };
+            let data = {
+                property: value
+            };
             fetch(url, {
                 method: "POST",
                 body: JSON.stringify(data),
                 headers: {
                     "Content-Type": "application/json"
                 }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);
-                });
+            }).then(response => response.json()).then(data => {
+                console.log(data);
+            });
+            alert("Write Request Sent!")
         }
     </script>
 </body>
