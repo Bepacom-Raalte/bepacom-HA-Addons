@@ -4,11 +4,13 @@
     "\\bacnetinterface",
     "\\bacnetinterface\\rootfs",
     "\\bacnetinterface\\rootfs\\etc",
-    "\\bacnetinterface\\rootfs\\etc\\nginx",
+    "\\bacnetinterface\\rootfs\\etc\\s6-overlay",
+    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d",
+    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\interface",
     "\\bacnetinterface\\rootfs\\usr",
     "\\bacnetinterface\\rootfs\\usr\\bin",
     "\\bacnetinterface\\rootfs\\usr\\bin\\templates"
   ],
-  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\templates\\index.html",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\templates\\subscriptions.html",
   "PreviewInSolutionExplorer": false
 }

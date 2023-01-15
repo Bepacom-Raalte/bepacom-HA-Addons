@@ -16,6 +16,7 @@ from flask import Flask, render_template
 
 BACnetDeviceDict = dict()
 websocket_helper_tasks = set()
+subscription_id_to_object: dict
 threadingUpdateEvent: threading.Event = threading.Event()
 threadingWhoIsEvent: threading.Event = threading.Event()
 threadingIAmEvent: threading.Event = threading.Event()
@@ -97,6 +98,11 @@ def flask_main():
     """WebUI page for Home Assistant."""
     return render_template("index.html", bacnetdict=BACnetToDict(BACnetDeviceDict))
 
+@flask_app.route("/subscriptions")
+def flask_subscriptions():
+    """WebUI page for Home Assistant."""
+    return render_template("subscriptions.html", subscriptions=subscription_id_to_object)
+
 
 app = FastAPI(on_startup=[on_start])
 
@@ -127,6 +133,7 @@ async def read_all():
     """Send a Read Request to all devices on the BACnet network."""
     threadingReadAllEvent.set()
     return
+
 
 
 # Any commands or not variable paths should go above here... FastAPI will use it as a variable if you make a new path below this.
