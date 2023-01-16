@@ -166,9 +166,9 @@
             <h1>BACnet/IP Interface</h1>
         </div>
         <div class="div2">
-            <a href="..">Main</a>
+            <a href=".">Main</a>
             <a id="docs" href="#">API Docs</a>
-            <a href=".">Manage Subscriptions</a>
+            <a href="./subscriptions">Manage Subscriptions</a>
             <a href="https://www.bepacom.nl" style="float:right;">About</a>
         </div>
         <div class="div3">
@@ -177,10 +177,20 @@
             <button class="button" onclick="command('readall')">Read All Devices</button>
         </div>
         <div class="div4">
-            {% for key, value in subscriptions.items() %}
-            <h1>Key: {{key}}</h1>
-            <h2>Value: {{value}}</h2>
-            {% endfor %}
+            <table>
+                <tr>
+                    <th>Subscription ID</th>
+                    <th>Object/Device of the subscription</th>
+                </tr>
+                {% for key, value in subscriptions.items() %}
+                <tr>
+                    <td>{{key}}</td>
+                    <td>{{value}}</td>
+                </tr>
+                {% endfor %}
+
+            </table>
+
         </div>
         <div class="div5">
             <form id="form">
