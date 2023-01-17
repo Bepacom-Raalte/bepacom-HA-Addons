@@ -91,7 +91,7 @@ async def on_start():
     await asyncio.sleep(3)
 
 
-description = """"
+description = """
 The Bepacom EcoPanel BACnet/IP Interface is cool!
 
 ## Things
@@ -113,8 +113,8 @@ app = FastAPI(
     contact={
         "name": "Bepacom B.V.",
         "url": "https://www.bepacom.nl/contact/",
-        }
-    )
+    },
+)
 
 
 templates = Jinja2Templates(directory="/usr/bin/templates")
