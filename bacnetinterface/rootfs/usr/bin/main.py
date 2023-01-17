@@ -1,5 +1,6 @@
 """Main script for EcoPanel BACnet add-on."""
 
+
 import sys
 from collections.abc import Callable
 from queue import Queue
@@ -104,11 +105,6 @@ def get_key(dictionary: dict) -> str:
         return key
 
 
-def read_all_from_dict():
-    """Read all objects from every device included in the dictionary"""
-    this_application.read_entire_dict()
-
-
 def main():
 
     args = ConfigArgumentParser(description=__doc__).parse_args()
@@ -145,7 +141,9 @@ def main():
         api.threadingWhoIsEvent, this_application.who_is, 2000
     )
     i_am_watcher = EventWatcherTask(api.threadingIAmEvent, this_application.i_am, 2000)
-    read_watcher = EventWatcherTask(api.threadingReadAllEvent, read_all_from_dict, 2000)
+    read_watcher = EventWatcherTask(
+        api.threadingReadAllEvent, this_application.read_entire_dict, 2000
+    )
     write_queue_watcher = QueueWatcherTask(api.writeQueue, write_from_dict, 1000)
     dict_refresher = RefreshDict(60000)
 

@@ -6,9 +6,10 @@ import threading
 from queue import Queue
 from typing import Any, Union
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.wsgi import WSGIMiddleware
-from flask import Flask, render_template
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 # ===================================================
 # Global variables
@@ -87,24 +88,28 @@ def str_to_tuple(input_str: str) -> tuple:
 
 async def on_start():
     """Startup sequence of FastAPI."""
-    await asyncio.sleep(4)
-
-
-flask_app = Flask("WebUI", template_folder="/usr/bin/templates")
-
-
-@flask_app.route("/")
-def flask_main():
-    """WebUI page for Home Assistant."""
-    return render_template("index.html", bacnetdict=BACnetToDict(BACnetDeviceDict))
-
-@flask_app.route("/subscriptions")
-def flask_subscriptions():
-    """WebUI page for Home Assistant."""
-    return render_template("subscriptions.html", subscriptions=subscription_id_to_object)
+    await asyncio.sleep(3)
 
 
 app = FastAPI(on_startup=[on_start])
+
+
+templates = Jinja2Templates(directory="/usr/bin/templates")
+
+
+@app.get("/webapp", response_class=HTMLResponse)
+async def webapp(request: Request):
+    """Index and main page of the add-on"""
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/subscriptions", response_class=HTMLResponse)
+async def webapp(request: Request):
+    """Page to see subscription ID's"""
+    return templates.TemplateResponse(
+        "subscriptions.html",
+        {"request": request, "subscriptions": subscription_id_to_object},
+    )
 
 
 @app.get("/apiv1/json")
@@ -129,11 +134,10 @@ async def iam_command():
 
 
 @app.get("/apiv1/command/readall")
-async def read_all():
+async def read_all_command():
     """Send a Read Request to all devices on the BACnet network."""
     threadingReadAllEvent.set()
     return
-
 
 
 # Any commands or not variable paths should go above here... FastAPI will use it as a variable if you make a new path below this.
@@ -312,7 +316,3 @@ async def on_value_changed(updateEvent: asyncio.Event):
                 # sys.stdout.write("Update set...\n")
     except:
         sys.stdout.write("Exited on_change\n")
-
-
-# mounting flask into FastAPI
-app.mount("/webapp", WSGIMiddleware(flask_app))
