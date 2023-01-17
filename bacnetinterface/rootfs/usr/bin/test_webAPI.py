@@ -1,9 +1,15 @@
 """Testing flask part of webAPI"""
 from fastapi.testclient import TestClient
+from fastapi import FastAPI
+import pytest
+from ..webAPI import app
+
+client = TestClient(app)
 
 def test_webapp_html(client: TestClient):
     response = client.get("/webapp")
     assert response.status_code == 200
+    print("webapp succesful")
     #assert response.json() == {"message": "Hello World"}
 
 def test_subscriptions_html(client: TestClient):
