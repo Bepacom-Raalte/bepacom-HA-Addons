@@ -127,7 +127,7 @@ async def webapp(request: Request):
 
 
 @app.get("/subscriptions", response_class=HTMLResponse)
-async def webapp(request: Request):
+async def subscriptions(request: Request):
     """Page to see subscription ID's"""
     return templates.TemplateResponse(
         "subscriptions.html",

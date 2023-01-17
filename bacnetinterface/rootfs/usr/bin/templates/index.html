@@ -208,7 +208,7 @@
 
         function command(text) {
             if (refreshing) return; // if the page is already refreshing, return and don't call the function again
-            let url = "../apiv1/command/" + text
+            let url = "./apiv1/command/" + text
             fetch(url).then(response => response.text()).then(data => {
                 console.log(data);
                 // do something with the data here
@@ -231,7 +231,7 @@
             const table = document.getElementById("table");
 
             function updateTable() {
-                fetch("../apiv1/json").then(response => response.json()).then(data => {
+                fetch("./apiv1/json").then(response => response.json()).then(data => {
                     devicedict = data
                     fillOptions()
                     // Clear the table
