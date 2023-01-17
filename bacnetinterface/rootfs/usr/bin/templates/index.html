@@ -262,10 +262,10 @@
                     tr.appendChild(th4);
                     thead.appendChild(tr);
                     table.appendChild(thead);
-                    for (let device in data) {
-                        for (let object in data[device]) {
-                            for (let key in data[device][object]) {
-                                let value = data[device][object][key];
+                    for (let device in devicedict) {
+                        for (let object in devicedict[device]) {
+                            for (let key in devicedict[device][object]) {
+                                let value = devicedict[device][object][key];
                                 let row = document.createElement("tr");
                                 let deviceCol = document.createElement("td");
                                 let objectCol = document.createElement("td");
