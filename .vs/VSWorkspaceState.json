@@ -10,6 +10,6 @@
     "\\bacnetinterface\\rootfs\\usr\\bin\\templates",
     "\\bacnetinterface\\rootfs\\usr\\bin\\tests"
   ],
-  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\tests\\fastAPI_test.py",
+  "SelectedNode": "\\bacnetinterface\\Dockerfile",
   "PreviewInSolutionExplorer": false
 }
