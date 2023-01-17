@@ -227,13 +227,18 @@
                     alert("Something went wrong...")
             }
         }
+
+        function updateData() {
+            fetch("./apiv1/json").then(response => response.json()).then(data => {
+                devicedict = data
+                fillOptions()
+            });
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             const table = document.getElementById("table");
 
             function updateTable() {
-                fetch("./apiv1/json").then(response => response.json()).then(data => {
-                    devicedict = data
-                    fillOptions()
                     // Clear the table
                     while (table.firstChild) {
                         table.removeChild(table.firstChild);
@@ -288,9 +293,10 @@
                             }
                         }
                     }
-                });
             }
             //call the updateTable function every 2 seconds
+            updateData()
+            setInterval(updateData, 1000);
             setInterval(updateTable, 1000);
         });
         let devices = [];

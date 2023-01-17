@@ -237,6 +237,17 @@
             }
         }
 
+        function updateData() {
+            fetch("./apiv1/json").then(response => response.json()).then(data => {
+                devicedict = data
+                fillOptions()
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            updateData()
+            setInterval(updateData, 10000);
+        });
         let devices = [];
         let objects = [];
 
@@ -268,7 +279,7 @@
             let object = document.getElementById("object").value;
             let property = document.getElementById("property").value;
             let value = document.getElementById("value").value;
-            let url = `../apiv1/${device}/${object}?${property}=${value}`;
+            let url = `./apiv1/${device}/${object}?${property}=${value}`;
             let data = {
                 property: value
             };
