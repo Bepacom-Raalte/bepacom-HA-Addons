@@ -91,7 +91,30 @@ async def on_start():
     await asyncio.sleep(3)
 
 
-app = FastAPI(on_startup=[on_start])
+description = """"
+The Bepacom EcoPanel BACnet/IP Interface is cool!
+
+## Things
+
+You can do things!
+
+## More things
+
+We have these things!
+
+"""
+
+
+app = FastAPI(
+    on_startup=[on_start],
+    title="Bepacom EcoPanel BACnet/IP Interface API",
+    description=description,
+    version="0.0.1",
+    contact={
+        "name": "Bepacom B.V.",
+        "url": "https://www.bepacom.nl/contact/",
+        }
+    )
 
 
 templates = Jinja2Templates(directory="/usr/bin/templates")
