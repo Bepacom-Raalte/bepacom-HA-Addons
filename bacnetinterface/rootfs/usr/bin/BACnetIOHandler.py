@@ -568,10 +568,8 @@ class BACnetIOHandler(
             else:
                 objectList = []
                 for spec in iocb.args[0].listOfReadAccessSpecs:
-                    objectList.append(spec.objectIdentifier)
-
-                self.ReadPropertyMultiple(
-                    objectList=objectList,
+                    self.ReadPropertyMultiple(
+                    objectList=[spec.objectIdentifier],
                     propertyList=self.propertyList,
                     address=iocb.ioError.pduSource,
                 )

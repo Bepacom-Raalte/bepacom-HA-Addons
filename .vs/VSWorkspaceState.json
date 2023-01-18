@@ -7,9 +7,8 @@
     "\\bacnetinterface\\rootfs\\etc\\nginx",
     "\\bacnetinterface\\rootfs\\usr",
     "\\bacnetinterface\\rootfs\\usr\\bin",
-    "\\bacnetinterface\\rootfs\\usr\\bin\\templates",
-    "\\bacnetinterface\\rootfs\\usr\\bin\\tests"
+    "\\bacnetinterface\\rootfs\\usr\\bin\\templates"
   ],
-  "SelectedNode": "\\bacnetinterface\\Dockerfile",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\webAPI.py",
   "PreviewInSolutionExplorer": false
 }
