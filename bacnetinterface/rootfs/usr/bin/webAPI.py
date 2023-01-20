@@ -7,7 +7,6 @@ from queue import Queue
 from typing import Any, Union
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-from fastapi.middleware.wsgi import WSGIMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -259,6 +258,7 @@ async def write_objectid_property(
     writeQueue.put(bacnet_dict)
     return "Successfully put in Write Queue"
 
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """This function will be called whenever a new client connects to the server."""
@@ -313,4 +313,3 @@ async def websocket_writer(websocket: WebSocket):
                 return
         else:
             await asyncio.sleep(1)
-

@@ -75,15 +75,10 @@ from bacpypes.errors import (ExecutionError, InconsistentParameters,
                              MissingRequiredParameter, ParameterOutOfRange)
 from bacpypes.iocb import IOCB
 from bacpypes.object import get_datatype
-from bacpypes.pdu import (Address, GlobalBroadcast, LocalBroadcast,
-                          RemoteBroadcast)
-# Datatypes:
-# Datatypes:
 from bacpypes.primitivedata import (Atomic, BitString, Boolean,
                                     CharacterString, Date, Double, Integer,
                                     Null, ObjectIdentifier, OctetString, Real,
                                     Time, Unsigned)
-# importing services
 from bacpypes.service.cov import ChangeOfValueServices
 from bacpypes.service.object import ReadWritePropertyMultipleServices
 
@@ -569,10 +564,10 @@ class BACnetIOHandler(
                 objectList = []
                 for spec in iocb.args[0].listOfReadAccessSpecs:
                     self.ReadPropertyMultiple(
-                    objectList=[spec.objectIdentifier],
-                    propertyList=self.propertyList,
-                    address=iocb.ioError.pduSource,
-                )
+                        objectList=[spec.objectIdentifier],
+                        propertyList=self.propertyList,
+                        address=iocb.ioError.pduSource,
+                    )
             return
         # do something for success
         elif iocb.ioResponse:
@@ -586,63 +581,66 @@ class BACnetIOHandler(
             elif isinstance(iocb.ioResponse, ReadPropertyMultipleACK):
                 response = iocb.ioResponse
                 obj_dict = return_value_read_multiple(response)
-                for result in response.listOfReadAccessResults:
-                    if result.objectIdentifier[0] == "device":
-                        if (
-                            not result.objectIdentifier
-                            in self.BACnetDeviceDict[result.objectIdentifier]
-                        ):
-                            self.update_object(
-                                result.objectIdentifier,
-                                self.addr_to_dev_id(response.pduSource),
-                                obj_dict[result.objectIdentifier],
-                            )
+                try:
+                    for result in response.listOfReadAccessResults:
+                        if result.objectIdentifier[0] == "device":
+                            if (
+                                not result.objectIdentifier
+                                in self.BACnetDeviceDict[result.objectIdentifier]
+                            ):
+                                self.update_object(
+                                    result.objectIdentifier,
+                                    self.addr_to_dev_id(response.pduSource),
+                                    obj_dict[result.objectIdentifier],
+                                )
 
-                            objectList = []
-                            for object in self.BACnetDeviceDict[
-                                result.objectIdentifier
-                            ][result.objectIdentifier]["objectList"]:
-                                if object[0] in self.objectFilter:
-                                    objectList.append(object)
+                                objectList = []
+                                for object in self.BACnetDeviceDict[
+                                    result.objectIdentifier
+                                ][result.objectIdentifier]["objectList"]:
+                                    if object[0] in self.objectFilter:
+                                        objectList.append(object)
 
-                            self.ReadPropertyMultiple(
-                                objectList=objectList,
-                                propertyList=[
-                                    PropertyReference(
-                                        propertyIdentifier=PropertyIdentifier(
-                                            "all"
-                                        ).value
-                                    )
-                                ],
-                                address=self.BACnetDeviceDict[result.objectIdentifier][
-                                    "address"
-                                ],
-                            )
+                                self.ReadPropertyMultiple(
+                                    objectList=objectList,
+                                    propertyList=[
+                                        PropertyReference(
+                                            propertyIdentifier=PropertyIdentifier(
+                                                "all"
+                                            ).value
+                                        )
+                                    ],
+                                    address=self.BACnetDeviceDict[
+                                        result.objectIdentifier
+                                    ]["address"],
+                                )
+                            else:
+                                self.update_object(
+                                    result.objectIdentifier,
+                                    self.addr_to_dev_id(response.pduSource),
+                                    obj_dict[result.objectIdentifier],
+                                )
                         else:
                             self.update_object(
                                 result.objectIdentifier,
                                 self.addr_to_dev_id(response.pduSource),
                                 obj_dict[result.objectIdentifier],
                             )
-                    else:
-                        self.update_object(
-                            result.objectIdentifier,
-                            self.addr_to_dev_id(response.pduSource),
-                            obj_dict[result.objectIdentifier],
-                        )
 
-                        if (
-                            (
-                                result.objectIdentifier,
-                                self.addr_to_dev_id(response.pduSource),
-                            )
-                            not in self.object_to_id
-                            and result.objectIdentifier[0] in self.objectFilter
-                            and result.objectIdentifier[0] != "notificationClass"
-                        ):
-                            self.COVSubscribe(
-                                result.objectIdentifier, True, response.pduSource
-                            )
+                            if (
+                                (
+                                    result.objectIdentifier,
+                                    self.addr_to_dev_id(response.pduSource),
+                                )
+                                not in self.object_to_id
+                                and result.objectIdentifier[0] in self.objectFilter
+                                and result.objectIdentifier[0] != "notificationClass"
+                            ):
+                                self.COVSubscribe(
+                                    result.objectIdentifier, True, response.pduSource
+                                )
+                except Exception as e:
+                    sys.stdout.write("Error: " + str(e) + "\n")
 
     def on_ReadResult(self, iocb: IOCB) -> None:
         """Callback for result after reading single or multiple properties."""
