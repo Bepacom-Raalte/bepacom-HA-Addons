@@ -16,13 +16,13 @@ from fastapi.templating import Jinja2Templates
 # ===================================================
 
 BACnetDeviceDict = dict()
-websocket_helper_tasks = set()
 subscription_id_to_object: dict
 threadingUpdateEvent: threading.Event = threading.Event()
 threadingWhoIsEvent: threading.Event = threading.Event()
 threadingIAmEvent: threading.Event = threading.Event()
 threadingReadAllEvent: threading.Event = threading.Event()
 writeQueue: Queue = Queue()
+activeSockets: list = []
 
 
 def BACnetToDict(BACnetDict):
@@ -259,56 +259,24 @@ async def write_objectid_property(
     writeQueue.put(bacnet_dict)
     return "Successfully put in Write Queue"
 
-
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """This function will be called whenever a new client connects to the server."""
-    updateEvent = asyncio.Event()
     await websocket.accept()
+
     # Start a task to write data to the websocket
-    write_task = asyncio.create_task(websocket_writer(websocket, updateEvent))
-    websocket_helper_tasks.add(write_task)
-    read_task = asyncio.create_task(websocket_reader(websocket, updateEvent))
-    websocket_helper_tasks.add(read_task)
-    update_monitor_task = asyncio.create_task(on_value_changed(updateEvent))
-    websocket_helper_tasks.add(update_monitor_task)
-    while True:
-        try:
-            await asyncio.sleep(1)
-        except WebSocketDisconnect:
-            sys.stdout.write("Exception")
+    write_task = asyncio.create_task(websocket_writer(websocket))
 
+    activeSockets.append(websocket)
 
-async def websocket_writer(websocket: WebSocket, updateEvent: asyncio.Event):
-    """Writer task for when a websocket is opened"""
-    global BACnetDeviceDict
-    while True:
-        try:
-            await updateEvent.wait()
-            await websocket.send_json(BACnetToDict(BACnetDeviceDict))
-            updateEvent.clear()
-        except (RuntimeError, asyncio.CancelledError) as error:
-            sys.stdout.write(str(error))
-            return
-        except WebSocketDisconnect:
-            sys.stdout.write("Exception Disconnect for writer")
-            return
-
-
-async def websocket_reader(websocket: WebSocket, updateEvent: asyncio.Event):
-    """Reader task for when a websocket is openened."""
     while True:
         try:
             data = await websocket.receive()
             # sys.stdout.write(str(data)+"\n")
             if data["type"] == "websocket.disconnect":
-                for (
-                    task
-                ) in (
-                    websocket_helper_tasks
-                ):  # Cancel read and write tasks when disconnecting
-                    task.cancel()
-                websocket_helper_tasks.clear()
+                write_task.cancel
+                activeSockets.remove(websocket)
+                websocket.close()
                 sys.stdout.write("Disconnected...\n")
                 return
             if "{" in data["text"]:
@@ -320,22 +288,29 @@ async def websocket_reader(websocket: WebSocket, updateEvent: asyncio.Event):
                 writeQueue.put(bacnet_dict)
         except (RuntimeError, asyncio.CancelledError) as error:
             sys.stdout.write(str(error))
+            activeSockets.remove(websocket)
             return
         except WebSocketDisconnect:
             sys.stdout.write("Exception Disconnect for reader")
+            activeSockets.remove(websocket)
             return
 
 
-async def on_value_changed(updateEvent: asyncio.Event):
-    """Watch whether value has changed."""
+async def websocket_writer(websocket: WebSocket):
+    """Writer task for when a websocket is opened"""
     global BACnetDeviceDict
-    try:
-        while True:
-            if not threadingUpdateEvent.is_set():
-                await asyncio.sleep(1)
-            else:
+    while True:
+        if threadingUpdateEvent.is_set():
+            try:
+                for websocket in activeSockets:
+                    await websocket.send_json(BACnetToDict(BACnetDeviceDict))
                 threadingUpdateEvent.clear()
-                updateEvent.set()
-                # sys.stdout.write("Update set...\n")
-    except:
-        sys.stdout.write("Exited on_change\n")
+            except (RuntimeError, asyncio.CancelledError) as error:
+                sys.stdout.write(str(error))
+                return
+            except WebSocketDisconnect:
+                sys.stdout.write("Exception Disconnect for writer")
+                return
+        else:
+            await asyncio.sleep(1)
+
