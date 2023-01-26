@@ -228,7 +228,9 @@
             }
         }
 
-        var ws = new WebSocket("ws://localhost:80/ws");
+        let hostname = window.location.hostname;
+        let url = new URL("ws://" + hostname + "/ws");
+        var ws = new WebSocket(url);
         ws.onmessage = function (event) {
             event.JSON
             devicedict = JSON.parse(event.data)
