@@ -276,9 +276,9 @@ async def websocket_endpoint(websocket: WebSocket):
             if data["type"] == "websocket.disconnect":
                 write_task.cancel
                 activeSockets.remove(websocket)
-                sys.stdout.write("Disconnected...\n")
+                sys.stdout.write("Disconnected gracefully...\n")
                 return
-            if "{" in data["text"]:
+            if "{device:" in data["text"]:
                 message = data["text"]
                 message = json.loads(message)
                 bacnet_dict = DictToBACnet(message)
@@ -286,9 +286,19 @@ async def websocket_endpoint(websocket: WebSocket):
                 # Send this dict to threading queue for processing and making a request through BACnet
                 writeQueue.put(bacnet_dict)
         except (RuntimeError, asyncio.CancelledError) as error:
+            write_task.cancel
+            activeSockets.remove(websocket)
+            sys.stdout.write("Disconnected with RuntimeError or CancelledError...\n")
             return
         except WebSocketDisconnect:
+            write_task.cancel
+            activeSockets.remove(websocket)
+            sys.stdout.write("Disconnected with WebSocketDisconnect...\n")
             return
+        except Exception as e:
+            write_task.cancel
+            activeSockets.remove(websocket)
+            sys.stdout.write("Disconnected with Exception" +  str(e) +"...\n")
 
 
 async def websocket_writer(websocket: WebSocket):
