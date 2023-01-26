@@ -150,14 +150,14 @@ class BACnetIOHandler(
     next_id = 1
     updateEvent = threading.Event()
 
-    def __init__(self, *args):
+    def __init__(self, *args) -> None:
         BIPSimpleApplication.__init__(self, *args)
         self.startup()
         self._request = None
         sys.stdout.write("Initialized BACnetIOHandler\n")
         self.who_is()
 
-    def update_object(self, objectID: tuple, deviceID: tuple, new_val: dict):
+    def update_object(self, objectID: tuple, deviceID: tuple, new_val: dict) -> None:
         """Update the object using both object ID and device ID."""
         for device in self.BACnetDeviceDict:
             if device == deviceID:
@@ -167,7 +167,7 @@ class BACnetIOHandler(
                 except:
                     self.BACnetDeviceDict[deviceID][objectID] = new_val
 
-    def addr_to_dev_id(self, address) -> tuple:
+    def addr_to_dev_id(self, address: Any) -> tuple:
         """Convert address to corresponding device ID."""
         for key, value in self.BACnetDeviceDict.items():
             if value["address"] == address:
@@ -209,7 +209,7 @@ class BACnetIOHandler(
         del self.object_to_id[obj]
         self.available_ids.add(obj_id)
 
-    def read_entire_dict(self):
+    def read_entire_dict(self) -> None:
         """Send a read request for every object in every device."""
         for device, devicedata in self.BACnetDeviceDict.items():
             objectlist = []
@@ -224,7 +224,7 @@ class BACnetIOHandler(
 
     def ReadProperty(
         self, objectID: ObjectIdentifier, propertyID: PropertyIdentifier, address: str
-    ):
+    ) -> bool:
         """Send a ReadPropertyRequest to designated address."""
         try:
             # make request
@@ -276,7 +276,7 @@ class BACnetIOHandler(
             sys.stdout.write("Unsuccessful ReadPropertyMultipleRequest\n")
             pass
 
-    def WriteProperty(self, objectID, propertyID, value, address):
+    def WriteProperty(self, objectID: Any, propertyID: Any, value, address) -> None:
         """Send a WritePropertyRequest to designated address."""
 
         try:
@@ -335,7 +335,7 @@ class BACnetIOHandler(
         except Exception as e:
             sys.stdout.write("Error while writing... " + str(e) + "\n")
 
-    def COVSubscribe(self, objectID, confirmationType, address):
+    def COVSubscribe(self, objectID, confirmationType, address) -> None:
         """Send a SubscribeCOVRequest to designated address."""
         try:
             request = SubscribeCOVRequest(

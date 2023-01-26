@@ -2,7 +2,6 @@
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 from webAPI import app, BACnetToDict, DictToBACnet, str_to_tuple
 
 client = TestClient(app)
@@ -57,6 +56,7 @@ def test_str_to_tuple():
     expected_output = ("3", 4)
     assert str_to_tuple(input_str) == expected_output
 
+
 @pytest.mark.skip(reason="Don't want to bother getting template in here")
 def test_webapp_html(client: TestClient = client):
     response = client.get("/webapp")
@@ -66,7 +66,6 @@ def test_webapp_html(client: TestClient = client):
 def test_subscriptions_html(client: TestClient= client):
     response = client.get("/subscriptions")
     assert response.status_code == 200
-
 
 
 def test_get_entire_dict(client: TestClient= client):

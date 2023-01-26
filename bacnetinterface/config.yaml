@@ -12,7 +12,7 @@ arch:
   - i386
 init: false
 ingress: true
-ingress_entry: webapp
+ingress_entry: webapp/
 host_network: true
 panel_icon: mdi:router-wireless-settings
 map:
@@ -31,10 +31,6 @@ options:
   objectName: EcoPanel
   address: 0.0.0.0
   objectIdentifier: 420
-  maxApduLenghtAccepted: 1024
-  segmentationSupported: segmentedBoth
-  vendorID: 15
-  maxSegmentsAccepted: 24
 schema:
   objectName: str
   address: str
