@@ -276,7 +276,7 @@ async def websocket_endpoint(websocket: WebSocket):
             if data["type"] == "websocket.disconnect":
                 write_task.cancel
                 activeSockets.remove(websocket)
-                websocket.close()
+                await websocket.close()
                 sys.stdout.write("Disconnected...\n")
                 return
             if "{" in data["text"]:
