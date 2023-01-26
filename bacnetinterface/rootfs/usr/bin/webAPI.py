@@ -276,12 +276,15 @@ async def websocket_endpoint(websocket: WebSocket):
             if data["type"] == "websocket.disconnect":
                 write_task.cancel
                 activeSockets.remove(websocket)
-                sys.stdout.write("Disconnected gracefully...\n")
+                sys.stdout.write("Disconnected...\n")
                 return
-            if "{device:" in data["text"]:
+            if data["type"] == "websocket.receive" and "device:" in data["text"]:
                 message = data["text"]
-                message = json.loads(message)
-                bacnet_dict = DictToBACnet(message)
+                try:
+                    message = json.loads(message)
+                    bacnet_dict = DictToBACnet(message)
+                except:
+                    pass
                 global writeQueue
                 # Send this dict to threading queue for processing and making a request through BACnet
                 writeQueue.put(bacnet_dict)
