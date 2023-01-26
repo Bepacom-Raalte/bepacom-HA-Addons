@@ -237,6 +237,7 @@
             }
         }
 
+
         function updateData() {
             fetch("./apiv1/json").then(response => response.json()).then(data => {
                 devicedict = data
@@ -246,7 +247,6 @@
 
         document.addEventListener("DOMContentLoaded", function () {
             updateData()
-            setInterval(updateData, 10000);
         });
         let devices = [];
         let objects = [];

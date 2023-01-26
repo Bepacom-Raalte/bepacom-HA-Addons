@@ -228,75 +228,74 @@
             }
         }
 
-        function updateData() {
-            fetch("./apiv1/json").then(response => response.json()).then(data => {
-                devicedict = data
-                fillOptions()
-            });
+        var ws = new WebSocket("ws://localhost:80/ws");
+        ws.onmessage = function (event) {
+            event.JSON
+            devicedict = JSON.parse(event.data)
+            fillOptions()
         }
+
 
         document.addEventListener("DOMContentLoaded", function () {
             const table = document.getElementById("table");
 
             function updateTable() {
-                    // Clear the table
-                    while (table.firstChild) {
-                        table.removeChild(table.firstChild);
-                    }
-                    let devicelist = [];
-                    let objectlist = [];
-                    // Create table header
-                    var thead = document.createElement("thead");
-                    var tr = document.createElement("tr");
-                    var th1 = document.createElement("th");
-                    th1.innerHTML = "Device ID";
-                    var th2 = document.createElement("th");
-                    th2.innerHTML = "Object ID";
-                    var th3 = document.createElement("th");
-                    th3.innerHTML = "Property";
-                    var th4 = document.createElement("th");
-                    th4.innerHTML = "Value";
-                    tr.appendChild(th1);
-                    tr.appendChild(th2);
-                    tr.appendChild(th3);
-                    tr.appendChild(th4);
-                    thead.appendChild(tr);
-                    table.appendChild(thead);
-                    for (let device in devicedict) {
-                        for (let object in devicedict[device]) {
-                            for (let key in devicedict[device][object]) {
-                                let value = devicedict[device][object][key];
-                                let row = document.createElement("tr");
-                                let deviceCol = document.createElement("td");
-                                let objectCol = document.createElement("td");
-                                let keyCol = document.createElement("td");
-                                let valueCol = document.createElement("td");
-                                if (devicelist.includes(device)) {
-                                    deviceCol.innerHTML = "";
-                                } else {
-                                    deviceCol.innerHTML = device;
-                                    devicelist.push(device);
-                                }
-                                if (objectlist.includes(object)) {
-                                    objectCol.innerHTML = "";
-                                } else {
-                                    objectCol.innerHTML = object;
-                                    objectlist.push(object);
-                                }
-                                keyCol.innerHTML = key;
-                                valueCol.innerHTML = value;
-                                row.appendChild(deviceCol);
-                                row.appendChild(objectCol);
-                                row.appendChild(keyCol);
-                                row.appendChild(valueCol);
-                                table.appendChild(row);
+                // Clear the table
+                while (table.firstChild) {
+                    table.removeChild(table.firstChild);
+                }
+                let devicelist = [];
+                let objectlist = [];
+                // Create table header
+                var thead = document.createElement("thead");
+                var tr = document.createElement("tr");
+                var th1 = document.createElement("th");
+                th1.innerHTML = "Device ID";
+                var th2 = document.createElement("th");
+                th2.innerHTML = "Object ID";
+                var th3 = document.createElement("th");
+                th3.innerHTML = "Property";
+                var th4 = document.createElement("th");
+                th4.innerHTML = "Value";
+                tr.appendChild(th1);
+                tr.appendChild(th2);
+                tr.appendChild(th3);
+                tr.appendChild(th4);
+                thead.appendChild(tr);
+                table.appendChild(thead);
+                for (let device in devicedict) {
+                    for (let object in devicedict[device]) {
+                        for (let key in devicedict[device][object]) {
+                            let value = devicedict[device][object][key];
+                            let row = document.createElement("tr");
+                            let deviceCol = document.createElement("td");
+                            let objectCol = document.createElement("td");
+                            let keyCol = document.createElement("td");
+                            let valueCol = document.createElement("td");
+                            if (devicelist.includes(device)) {
+                                deviceCol.innerHTML = "";
+                            } else {
+                                deviceCol.innerHTML = device;
+                                devicelist.push(device);
                             }
+                            if (objectlist.includes(object)) {
+                                objectCol.innerHTML = "";
+                            } else {
+                                objectCol.innerHTML = object;
+                                objectlist.push(object);
+                            }
+                            keyCol.innerHTML = key;
+                            valueCol.innerHTML = value;
+                            row.appendChild(deviceCol);
+                            row.appendChild(objectCol);
+                            row.appendChild(keyCol);
+                            row.appendChild(valueCol);
+                            table.appendChild(row);
                         }
                     }
+                }
             }
             //call the updateTable function every 2 seconds
-            updateData()
-            setInterval(updateData, 1000);
             setInterval(updateTable, 1000);
         });
         let devices = [];

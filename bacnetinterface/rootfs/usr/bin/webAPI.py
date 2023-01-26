@@ -308,6 +308,7 @@ async def websocket_endpoint(websocket: WebSocket):
 async def websocket_writer(websocket: WebSocket):
     """Writer task for when a websocket is opened"""
     global BACnetDeviceDict
+    await websocket.send_json(BACnetToDict(BACnetDeviceDict))
     while True:
         if threadingUpdateEvent.is_set():
             try:
