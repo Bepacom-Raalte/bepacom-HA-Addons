@@ -273,12 +273,6 @@ async def websocket_endpoint(websocket: WebSocket):
         try:
             data = await websocket.receive()
             # sys.stdout.write(str(data)+"\n")
-            if data["type"] == "websocket.disconnect":
-                write_task.cancel
-                activeSockets.remove(websocket)
-                await websocket.close()
-                sys.stdout.write("Disconnected...\n")
-                return
             if "{" in data["text"]:
                 message = data["text"]
                 message = json.loads(message)
