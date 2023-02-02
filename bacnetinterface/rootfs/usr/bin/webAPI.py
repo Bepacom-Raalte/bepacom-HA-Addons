@@ -3,6 +3,7 @@ import asyncio
 import json
 import sys
 import threading
+import logging
 from queue import Queue
 from typing import Any, Union
 
@@ -145,21 +146,21 @@ async def get_entire_dict():
 async def whois_command():
     """Send a Who Is Request over the BACnet network."""
     threadingWhoIsEvent.set()
-    return
+    return "Command queued"
 
 
 @app.get("/apiv1/command/iam")
 async def iam_command():
     """Send an I Am Request over the BACnet network."""
     threadingIAmEvent.set()
-    return
+    return "Command queued"
 
 
 @app.get("/apiv1/command/readall")
 async def read_all_command():
     """Send a Read Request to all devices on the BACnet network."""
     threadingReadAllEvent.set()
-    return
+    return "Command queued"
 
 
 # Any commands or not variable paths should go above here... FastAPI will use it as a variable if you make a new path below this.
@@ -272,11 +273,10 @@ async def websocket_endpoint(websocket: WebSocket):
     while True:
         try:
             data = await websocket.receive()
-            # sys.stdout.write(str(data)+"\n")
             if data["type"] == "websocket.disconnect":
                 write_task.cancel
                 activeSockets.remove(websocket)
-                sys.stdout.write("Disconnected gracefully...\n")
+                logging.info("Disconnected gracefully...\n")
                 return
             if data["type"] == "websocket.receive" and "device:" in data["text"]:
                 message = data["text"]
@@ -292,17 +292,17 @@ async def websocket_endpoint(websocket: WebSocket):
         except (RuntimeError, asyncio.CancelledError) as error:
             write_task.cancel
             activeSockets.remove(websocket)
-            sys.stdout.write("Disconnected with RuntimeError or CancelledError...\n")
+            logging.error("Disconnected with RuntimeError or CancelledError...\n")
             return
         except WebSocketDisconnect:
             write_task.cancel
             activeSockets.remove(websocket)
-            sys.stdout.write("Disconnected with WebSocketDisconnect...\n")
+            logging.error("Disconnected with WebSocketDisconnect...\n")
             return
         except Exception as e:
             write_task.cancel
             activeSockets.remove(websocket)
-            sys.stdout.write("Disconnected with Exception" +  str(e) +"...\n")
+            logging.error("Disconnected with Exception" +  str(e) +"...\n")
 
 
 async def websocket_writer(websocket: WebSocket):
@@ -316,10 +316,10 @@ async def websocket_writer(websocket: WebSocket):
                     await websocket.send_json(BACnetToDict(BACnetDeviceDict))
                 threadingUpdateEvent.clear()
             except (RuntimeError, asyncio.CancelledError) as error:
-                sys.stdout.write(str(error))
+                logging.error(str(error))
                 return
             except WebSocketDisconnect:
-                sys.stdout.write("Exception Disconnect for writer")
+                logging.error("Exception Disconnect for writer")
                 return
         else:
             await asyncio.sleep(1)

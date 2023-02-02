@@ -57,28 +57,57 @@
 # Importing libraries
 import sys
 import threading
+import logging
 from typing import Any
 
 import bacpypes.constructeddata
-from bacpypes.apdu import (AbortPDU, PropertyReference,
-                           ReadAccessSpecification, ReadPropertyACK,
-                           ReadPropertyMultipleACK,
-                           ReadPropertyMultipleRequest, ReadPropertyRequest,
-                           RejectPDU, SimpleAckPDU, SubscribeCOVRequest,
-                           WritePropertyRequest)
+from bacpypes.apdu import (
+    AbortPDU,
+    PropertyReference,
+    ReadAccessSpecification,
+    ReadPropertyACK,
+    ReadPropertyMultipleACK,
+    ReadPropertyMultipleRequest,
+    ReadPropertyRequest,
+    RejectPDU,
+    SimpleAckPDU,
+    SubscribeCOVRequest,
+    WritePropertyRequest,
+)
 from bacpypes.app import BIPSimpleApplication
-from bacpypes.basetypes import (EventType, PropertyIdentifier,
-                                PropertyReference, PropertyValue, Recipient,
-                                RecipientProcess, ServicesSupported)
+from bacpypes.basetypes import (
+    EventType,
+    PropertyIdentifier,
+    PropertyReference,
+    PropertyValue,
+    Recipient,
+    RecipientProcess,
+    ServicesSupported,
+)
 from bacpypes.constructeddata import AnyAtomic, Array
-from bacpypes.errors import (ExecutionError, InconsistentParameters,
-                             MissingRequiredParameter, ParameterOutOfRange)
+from bacpypes.errors import (
+    ExecutionError,
+    InconsistentParameters,
+    MissingRequiredParameter,
+    ParameterOutOfRange,
+)
 from bacpypes.iocb import IOCB
 from bacpypes.object import get_datatype
-from bacpypes.primitivedata import (Atomic, BitString, Boolean,
-                                    CharacterString, Date, Double, Integer,
-                                    Null, ObjectIdentifier, OctetString, Real,
-                                    Time, Unsigned)
+from bacpypes.primitivedata import (
+    Atomic,
+    BitString,
+    Boolean,
+    CharacterString,
+    Date,
+    Double,
+    Integer,
+    Null,
+    ObjectIdentifier,
+    OctetString,
+    Real,
+    Time,
+    Unsigned,
+)
 from bacpypes.service.cov import ChangeOfValueServices
 from bacpypes.service.object import ReadWritePropertyMultipleServices
 
@@ -98,6 +127,8 @@ class BACnetIOHandler(
     # COVUnsubscribe(SubscriptionID, Object ID, Confirmed/Unconfirmed, Address)   ->          Send a SubscribeCOVRequest to designated address with time 1 to stop notifications
     # do_ConfirmedCOVNotificationRequest(apdu)                                    ->          Callback for Confirmed COV Notification
     # do_UnconfirmedCOVNotificationRequest(apdu)                                  ->          Callback for Unconfirmed COV Notification
+
+    logging.basicConfig(format="%(levelname)s:    %(message)s", level=logging.WARNING)
 
     BACnetDeviceDict = {}
     objectFilter = [
@@ -154,7 +185,6 @@ class BACnetIOHandler(
         BIPSimpleApplication.__init__(self, *args)
         self.startup()
         self._request = None
-        sys.stdout.write("Initialized BACnetIOHandler\n")
         self.who_is()
 
     def update_object(self, objectID: tuple, deviceID: tuple, new_val: dict) -> None:
@@ -243,7 +273,8 @@ class BACnetIOHandler(
             # Send the request through
             self.request_io(iocb)
 
-        except Exception:
+        except Exception as e:
+            logging.error(str(e))
             return False
         else:
             return True
@@ -272,9 +303,11 @@ class BACnetIOHandler(
             # Send the request through
             self.request_io(iocb)
 
-        except Exception:
-            sys.stdout.write("Unsuccessful ReadPropertyMultipleRequest\n")
-            pass
+        except Exception as e:
+            logging.error(str(e))
+            return False
+        else:
+            return True
 
     def WriteProperty(self, objectID: Any, propertyID: Any, value, address) -> None:
         """Send a WritePropertyRequest to designated address."""
@@ -333,7 +366,8 @@ class BACnetIOHandler(
             self.request_io(iocb)
 
         except Exception as e:
-            sys.stdout.write("Error while writing... " + str(e) + "\n")
+            logging.error(str(e))
+            return False
 
     def COVSubscribe(self, objectID, confirmationType, address) -> None:
         """Send a SubscribeCOVRequest to designated address."""
@@ -354,8 +388,9 @@ class BACnetIOHandler(
             iocb = IOCB(request)
             iocb.add_callback(self.on_Subscribed)
             self.request_io(iocb)
-        except Exception:
-            sys.stdout.write("Trouble sending subscribe request\n")
+        except Exception as e:
+            logging.error(str(e))
+            return False
 
     def COVUnsubscribe(self, objectID, confirmationType, address):
         """Send a SubscribeCOVRequest to designated address with time 1 to stop notifications."""
@@ -381,8 +416,8 @@ class BACnetIOHandler(
             self.request_io(iocb)
 
         except Exception as e:
-            sys.stdout.write("Error COVUnsubscribe: " + str(e) + "\n")
-            pass
+            logging.error(str(e))
+            return False
 
     def do_IAmRequest(self, apdu):
         """ "Callback on detecting I Am response from other devices."""
@@ -438,6 +473,7 @@ class BACnetIOHandler(
             ],
             address=BACnetDevice["address"],
         )
+        logging.info("Sent I Am Request")
 
     def do_ConfirmedCOVNotificationRequest(self, apdu):
         """Callback on receiving Unconfirmed COV Notification."""
@@ -547,9 +583,7 @@ class BACnetIOHandler(
             return objectdict
 
         if iocb.ioError:
-            sys.stdout.write(
-                "Something went horribly wrong... " + str(iocb.ioError) + "\n"
-            )
+            logging.error(str(iocb.ioError))
             if (
                 iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier[0] == "device"
                 and len(iocb.args[0].listOfReadAccessSpecs) == 1
@@ -573,74 +607,72 @@ class BACnetIOHandler(
         elif iocb.ioResponse:
             # should be a read property or read property multiple ack
             if not isinstance(iocb.ioResponse, ReadPropertyMultipleACK):
-                sys.stdout.write(
-                    "Wrong ACKs... " + iocb.ioResponse.apduAbortRejectReason + "\n"
-                )
+                logging.warning(str(iocb.ioResponse.apduAbortRejectReason))
                 return
-            # do thing on read property multiple ack
-            elif isinstance(iocb.ioResponse, ReadPropertyMultipleACK):
-                response = iocb.ioResponse
-                obj_dict = return_value_read_multiple(response)
-                try:
-                    for result in response.listOfReadAccessResults:
-                        if result.objectIdentifier[0] == "device":
-                            if (
-                                not result.objectIdentifier
-                                in self.BACnetDeviceDict[result.objectIdentifier]
-                            ):
-                                self.update_object(
-                                    result.objectIdentifier,
-                                    self.addr_to_dev_id(response.pduSource),
-                                    obj_dict[result.objectIdentifier],
-                                )
 
-                                objectList = []
-                                for object in self.BACnetDeviceDict[
-                                    result.objectIdentifier
-                                ][result.objectIdentifier]["objectList"]:
-                                    if object[0] in self.objectFilter:
-                                        objectList.append(object)
-
-                                self.ReadPropertyMultiple(
-                                    objectList=objectList,
-                                    propertyList=[
-                                        PropertyReference(
-                                            propertyIdentifier=PropertyIdentifier(
-                                                "all"
-                                            ).value
-                                        )
-                                    ],
-                                    address=self.BACnetDeviceDict[
-                                        result.objectIdentifier
-                                    ]["address"],
-                                )
-                            else:
-                                self.update_object(
-                                    result.objectIdentifier,
-                                    self.addr_to_dev_id(response.pduSource),
-                                    obj_dict[result.objectIdentifier],
-                                )
-                        else:
+            response = iocb.ioResponse
+            obj_dict = return_value_read_multiple(response)
+            try:
+                for result in response.listOfReadAccessResults:
+                    if result.objectIdentifier[0] == "device":
+                        if (
+                            not result.objectIdentifier
+                            in self.BACnetDeviceDict[result.objectIdentifier]
+                        ):
                             self.update_object(
                                 result.objectIdentifier,
                                 self.addr_to_dev_id(response.pduSource),
                                 obj_dict[result.objectIdentifier],
                             )
 
-                            if (
-                                (
-                                    result.objectIdentifier,
-                                    self.addr_to_dev_id(response.pduSource),
-                                )
-                                not in self.object_to_id
-                                and result.objectIdentifier[0] in self.objectFilter
-                                and result.objectIdentifier[0] != "notificationClass"
-                            ):
-                                self.COVSubscribe(
-                                    result.objectIdentifier, True, response.pduSource
-                                )
-                except Exception as e:
-                    sys.stdout.write("Error: " + str(e) + "\n")
+                            objectList = []
+                            for object in self.BACnetDeviceDict[
+                                result.objectIdentifier
+                            ][result.objectIdentifier]["objectList"]:
+                                if object[0] in self.objectFilter:
+                                    objectList.append(object)
+
+                            self.ReadPropertyMultiple(
+                                objectList=objectList,
+                                propertyList=[
+                                    PropertyReference(
+                                        propertyIdentifier=PropertyIdentifier(
+                                            "all"
+                                        ).value
+                                    )
+                                ],
+                                address=self.BACnetDeviceDict[result.objectIdentifier][
+                                    "address"
+                                ],
+                            )
+                        else:
+                            self.update_object(
+                                result.objectIdentifier,
+                                self.addr_to_dev_id(response.pduSource),
+                                obj_dict[result.objectIdentifier],
+                            )
+                    else:
+                        self.update_object(
+                            result.objectIdentifier,
+                            self.addr_to_dev_id(response.pduSource),
+                            obj_dict[result.objectIdentifier],
+                        )
+
+                        if (
+                            (
+                                result.objectIdentifier,
+                                self.addr_to_dev_id(response.pduSource),
+                            )
+                            not in self.object_to_id
+                            and result.objectIdentifier[0] in self.objectFilter
+                            and result.objectIdentifier[0] != "notificationClass"
+                        ):
+                            self.COVSubscribe(
+                                result.objectIdentifier, True, response.pduSource
+                            )
+            except Exception as e:
+                logging.error(str(e))
+                return False
 
     def on_ReadResult(self, iocb: IOCB) -> None:
         """Callback for result after reading single or multiple properties."""
@@ -667,9 +699,7 @@ class BACnetIOHandler(
             return val_dict
 
         if iocb.ioError:
-            sys.stdout.write(
-                "Something went horribly wrong... " + str(iocb.ioError) + "\n"
-            )
+            logging.error(str(iocb.ioResponse.apduAbortRejectReason))
             if iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier[0] == "device":
                 self.ReadProperty(
                     iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier,
@@ -684,78 +714,75 @@ class BACnetIOHandler(
             if not isinstance(iocb.ioResponse, ReadPropertyACK) and not isinstance(
                 iocb.ioResponse, ReadPropertyMultipleACK
             ):
-                sys.stdout.write(
+                logging.warning(
                     "No ACKs... " + iocb.ioResponse.apduAbortRejectReason + "\n"
                 )
                 return
-            # do thing on read property ack
-            elif isinstance(iocb.ioResponse, ReadPropertyACK):
-                response = iocb.ioResponse
-                try:
-                    val_dict = return_value_read(response)
-                    if response.objectIdentifier[0] == "device":
-                        if (
-                            not response.objectIdentifier
-                            in self.BACnetDeviceDict[response.objectIdentifier]
-                        ):
-                            self.update_object(
-                                response.objectIdentifier,
-                                response.objectIdentifier,
-                                val_dict,
-                            )
-                            objectList = []
-                            for object in self.BACnetDeviceDict[
-                                response.objectIdentifier
-                            ][response.objectIdentifier]["objectList"]:
-                                objectList.append(object)
-                            self.ReadPropertyMultiple(
-                                objectList=objectList,
-                                propertyList=self.propertyList,
-                                address=self.BACnetDeviceDict[
-                                    response.objectIdentifier
-                                ]["address"],
-                            )
-                        else:
-                            self.update_object(
-                                response.objectIdentifier,
-                                self.addr_to_dev_id(response.pduSource),
-                                val_dict,
-                            )
+
+            response = iocb.ioResponse
+            try:
+                val_dict = return_value_read(response)
+                if response.objectIdentifier[0] == "device":
+                    if (
+                        not response.objectIdentifier
+                        in self.BACnetDeviceDict[response.objectIdentifier]
+                    ):
+                        self.update_object(
+                            response.objectIdentifier,
+                            response.objectIdentifier,
+                            val_dict,
+                        )
+                        objectList = []
+                        for object in self.BACnetDeviceDict[response.objectIdentifier][
+                            response.objectIdentifier
+                        ]["objectList"]:
+                            objectList.append(object)
+                        self.ReadPropertyMultiple(
+                            objectList=objectList,
+                            propertyList=self.propertyList,
+                            address=self.BACnetDeviceDict[response.objectIdentifier][
+                                "address"
+                            ],
+                        )
                     else:
                         self.update_object(
                             response.objectIdentifier,
                             self.addr_to_dev_id(response.pduSource),
                             val_dict,
                         )
+                else:
+                    self.update_object(
+                        response.objectIdentifier,
+                        self.addr_to_dev_id(response.pduSource),
+                        val_dict,
+                    )
 
-                        if (
-                            (
-                                response.objectIdentifier,
-                                self.addr_to_dev_id(response.pduSource),
-                            )
-                            not in self.object_to_id
-                            and response.objectIdentifier[0] in self.objectFilter
-                            and response.objectIdentifier[0] != "notificationClass"
-                        ):
-                            self.COVSubscribe(
-                                response.objectIdentifier, True, response.pduSource
-                            )
-                except Exception:
-                    pass
+                    if (
+                        (
+                            response.objectIdentifier,
+                            self.addr_to_dev_id(response.pduSource),
+                        )
+                        not in self.object_to_id
+                        and response.objectIdentifier[0] in self.objectFilter
+                        and response.objectIdentifier[0] != "notificationClass"
+                    ):
+                        self.COVSubscribe(
+                            response.objectIdentifier, True, response.pduSource
+                        )
+            except Exception as e:
+                logging.error(str(e))
+                return False
 
     def on_WriteResult(self, iocb):
         """Response after writing to an object."""
         if iocb.ioError:
-            sys.stdout.write(
-                "Something went horribly wrong... " + str(iocb.ioError) + "\n"
-            )
+            logging.error(str(iocb.ioError))
             return
+
         if iocb.ioResponse:
             # should be a read property or read property multiple ack
             if not isinstance(iocb.ioResponse, SimpleAckPDU):
-                sys.stdout.write(
-                    "Wrong ACKs... " + iocb.ioResponse.apduAbortRejectReason + "\n"
-                )
+                logging.error(str(iocb.ioResponse.apduAbortRejectReason))
                 return
             # Another read to update the dictionary value... CoV doesn't update every single thing.
             self.ReadProperty(
@@ -768,19 +795,19 @@ class BACnetIOHandler(
         """Callback on whether subscribing was successful."""
         # do something for success
         if iocb.ioResponse:
+            logging.info(
+                "Subscribed to "
+                + str(iocb.ioResponse.pduSource)
+                + " object "
+                + str(iocb.args[0].monitoredObjectIdentifier.value)
+                + " with ID "
+                + str(iocb.args[0].subscriberProcessIdentifier)
+            )
             return
 
         # do something for error/reject/abort
         if iocb.ioError:
-            sys.stdout.write(
-                "Error Class: "
-                + iocb.ioError.errorClass
-                + "Error Code: "
-                + iocb.ioError.errorCode
-                + " from "
-                + str(iocb.ioError.pduSource)
-                + " Subscribing error\n"
-            )
+            logging.error(str(iocb.ioError) + " from " + str(iocb.ioError.pduSource))
             self.unassign_id(
                 (
                     iocb.args[0].monitoredObjectIdentifier.value,
