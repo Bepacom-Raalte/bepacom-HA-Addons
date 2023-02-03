@@ -23,7 +23,7 @@ declare maxSegmentsAccepted
 
 ipaddr=$(hostname -i)
 
-bashio::log.info "$ip"
+bashio::log.info "$ipaddr"
 
 header='[BACpypes]'
 objectname="objectName: $(bashio::config 'objectName')"
