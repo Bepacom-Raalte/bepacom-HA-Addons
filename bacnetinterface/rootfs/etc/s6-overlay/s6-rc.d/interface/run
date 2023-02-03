@@ -22,22 +22,20 @@ declare maxSegmentsAccepted
 # Setting variables
 
 
-
 { # Try
-	extIP=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
+	ipaddr=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
+} || { # or try this...
+	ipaddr=$(ifconfig enp0s3 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
 } || { # Catch
-	bashio::log.info "Falling back to hostname -i"
 	ipaddr=$(hostname -i)
 }
-
-
 
 
 header='[BACpypes]'
 objectname="objectName: $(bashio::config 'objectName')"
 
 if [[ $(bashio::config 'address') == "auto" ]]; then
-	address="address: $extIP/24" || address="address: $ipaddr/24"
+	address="address: $ipaddr/24"
 else
 	address="address: $(bashio::config 'address')"
 fi
