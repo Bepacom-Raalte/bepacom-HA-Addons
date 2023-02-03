@@ -128,6 +128,8 @@ class BACnetIOHandler(
     # do_ConfirmedCOVNotificationRequest(apdu)                                    ->          Callback for Confirmed COV Notification
     # do_UnconfirmedCOVNotificationRequest(apdu)                                  ->          Callback for Unconfirmed COV Notification
 
+    
+
     BACnetDeviceDict = {}
     objectFilter = [
         "accumulator",
@@ -249,6 +251,15 @@ class BACnetIOHandler(
                 propertyList=self.propertyList,
                 address=self.dev_id_to_addr(device),
             )
+
+    
+    def who_is(self):
+        logging.info("Doing Who Is Request")
+        super().who_is()
+
+    def i_am(self):
+        logging.info("Doing I Am Request")
+        super().i_am()
 
     def ReadProperty(
         self, objectID: ObjectIdentifier, propertyID: PropertyIdentifier, address: str
@@ -420,6 +431,8 @@ class BACnetIOHandler(
     def do_IAmRequest(self, apdu):
         """ "Callback on detecting I Am response from other devices."""
 
+        logging.info("I Am from " + str(apdu.iAmDeviceIdentifier))
+
         if self.localDevice.objectIdentifier == apdu.iAmDeviceIdentifier:
             return
 
@@ -471,7 +484,6 @@ class BACnetIOHandler(
             ],
             address=BACnetDevice["address"],
         )
-        logging.info("Sent I Am Request")
 
     def do_ConfirmedCOVNotificationRequest(self, apdu):
         """Callback on receiving Unconfirmed COV Notification."""
