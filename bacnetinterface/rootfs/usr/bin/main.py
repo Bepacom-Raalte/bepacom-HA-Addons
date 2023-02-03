@@ -5,6 +5,7 @@ import sys
 from collections.abc import Callable
 from queue import Queue
 from threading import Event, Thread
+import logging
 from typing import Any
 
 import uvicorn
@@ -17,6 +18,8 @@ from bacpypes.task import RecurringTask
 import webAPI as api
 from BACnetIOHandler import BACnetIOHandler
 
+
+
 webserv: str = "127.0.0.1"
 port = 7813
 
@@ -25,7 +28,7 @@ devices = []
 rsvp = (True, None, None)
 
 _debug = 0
-_log = ModuleLogger(globals())
+logging.basicConfig(format="%(levelname)s:    %(message)s", level=logging.INFO)
 
 
 class uviThread(Thread):
@@ -64,10 +67,11 @@ class QueueWatcherTask(RecurringTask):
         self.install_task()
 
     def process_task(self):
-        if self.queue.empty():
+        while not self.queue.empty():
+            queue_item = self.queue.get()
+            self.callback(queue_item)
+        else:
             return
-        queue_item = self.queue.get()
-        self.callback(queue_item)
 
 
 class RefreshDict(RecurringTask):
@@ -89,6 +93,7 @@ def write_from_dict(dict_to_write: dict):
     for object in dict_to_write[deviceID]:
         for property in dict_to_write[deviceID][object]:
             prop_value = dict_to_write[deviceID][object].get(property)
+            logging.info("Writing to " + str(object) + " + " + str(property))
             this_application.WriteProperty(
                 object, property, prop_value, this_application.dev_id_to_addr(deviceID)
             )
@@ -126,7 +131,7 @@ def main():
 
     # make a simple application
     this_application = BACnetIOHandler(this_device, args.ini.address)
-    sys.stdout.write("Starting BACnet device on " + args.ini.address + "\n")
+    logging.info("Starting BACnet device on " + args.ini.address + "\n")
 
     # Coupling of FastAPI and BACnetIOHandler
     api.BACnetDeviceDict = this_application.BACnetDeviceDict

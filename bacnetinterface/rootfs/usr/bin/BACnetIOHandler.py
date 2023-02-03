@@ -128,8 +128,6 @@ class BACnetIOHandler(
     # do_ConfirmedCOVNotificationRequest(apdu)                                    ->          Callback for Confirmed COV Notification
     # do_UnconfirmedCOVNotificationRequest(apdu)                                  ->          Callback for Unconfirmed COV Notification
 
-    logging.basicConfig(format="%(levelname)s:    %(message)s", level=logging.WARNING)
-
     BACnetDeviceDict = {}
     objectFilter = [
         "accumulator",
