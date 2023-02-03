@@ -373,18 +373,21 @@ class BACnetIOHandler(
         """Send a SubscribeCOVRequest to designated address."""
         try:
             request = SubscribeCOVRequest(
-                subscriberProcessIdentifier=int(
-                    self.assign_id((objectID, self.addr_to_dev_id(address)))
-                ),
                 monitoredObjectIdentifier=ObjectIdentifier(objectID),
             )
+
+            request.subscriberProcessIdentifier = self.assign_id(
+                (objectID, self.addr_to_dev_id(address))
+                )
+
             request.pduDestination = address
+
             if confirmationType == True:
                 request.issueConfirmedNotifications = "true"
             else:
                 request.issueConfirmedNotifications = None
 
-            request.lifetime = None
+            request.lifetime = 28799
             iocb = IOCB(request)
             iocb.add_callback(self.on_Subscribed)
             self.request_io(iocb)
@@ -392,7 +395,7 @@ class BACnetIOHandler(
             logging.error(str(e))
             return False
 
-    def COVUnsubscribe(self, objectID, confirmationType, address):
+    def COVUnsubscribe(self, objectID, address):
         """Send a SubscribeCOVRequest to designated address with time 1 to stop notifications."""
         try:
             request = SubscribeCOVRequest(
@@ -403,14 +406,11 @@ class BACnetIOHandler(
             )
 
             self.unsubscribe_id(objectID)
+
             request.pduDestination = address
 
-            if confirmationType == True:
-                request.issueConfirmedNotifications = "true"
-            else:
-                request.issueConfirmedNotifications = None
+            request.issueConfirmedNotifications = None
 
-            request.lifetime = int(1)
             iocb = IOCB(request)
             iocb.add_callback(self.on_Subscribed)
             self.request_io(iocb)
