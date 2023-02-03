@@ -21,7 +21,7 @@ declare maxSegmentsAccepted
 
 # Setting variables
 
-ipaddr = $(hostname -i)
+ipaddr=$(hostname -i)
 
 bashio::log.info "$ip"
 
