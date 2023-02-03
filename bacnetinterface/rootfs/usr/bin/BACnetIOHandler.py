@@ -252,15 +252,6 @@ class BACnetIOHandler(
                 address=self.dev_id_to_addr(device),
             )
 
-    
-    def who_is(self):
-        logging.info("Doing Who Is Request")
-        super().who_is()
-
-    def i_am(self):
-        logging.info("Doing I Am Request")
-        super().i_am()
-
     def ReadProperty(
         self, objectID: ObjectIdentifier, propertyID: PropertyIdentifier, address: str
     ) -> bool:
