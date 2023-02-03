@@ -23,7 +23,7 @@ declare maxSegmentsAccepted
 
 header='[BACpypes]'
 objectname="objectName: $(bashio::config 'objectName')"
-address="address: $(bashio::config 'address')/24"
+address="address: $(bashio::config 'address')"
 objectIdentifier="objectIdentifier: $(bashio::config 'objectIdentifier')"
 
 if [[ "$(bashio::config 'maxApduLenghtAccepted')" == "null" ]]; then
