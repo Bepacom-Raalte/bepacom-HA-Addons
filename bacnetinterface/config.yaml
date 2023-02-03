@@ -29,7 +29,7 @@ ports_description:
   47808/udp: BACnet port
 options:
   objectName: EcoPanel
-  address: 0.0.0.0
+  address: 0.0.0.0/24
   objectIdentifier: 420
 schema:
   objectName: str

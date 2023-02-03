@@ -36,6 +36,8 @@ These points will allow you to read and write to the BACnet devices on the netwo
 These API points will be used as follows:
 "homeassistant.local/apiv1/json"
 
+You can find the Web UI on /webapp
+
 **Device Identifiers** get written as "device:number", so if a device has an identifier of 100, the notation for API will be "device:100".
 
 **Object Identifiers** apply the same notation. The object name will be camelCase. An example notation for an AnalogInput 1 would be "analogInput:1".
@@ -52,7 +54,7 @@ Example add-on configuration:
 
 ```yaml
 objectName: EcoPanel
-address: 0.0.0.0
+address: 0.0.0.0/24
 objectIdentifier: 420
 maxApduLenghtAccepted: 1024
 segmentationSupported: segmentedBoth
@@ -64,7 +66,8 @@ maxSegmentsAccepted: 16
 The Object Name that this device will get. This will be seen by other devices on the BACnet network.
 
 ### Option: `address`
-The address of the BACnet interface. 0.0.0.0 is recommended as it'll bind to all available IP addresses, and basically guarantee it'll work.
+The address of the BACnet interface. 0.0.0.0/24 is recommended as it'll bind to all available IP addresses.
+Best is to write the IP of the Ethernet port connected to the BACneet network. Include /24 as not all BACnet devices can be detected without.
 
 ### Option: `objectIdentifier`
 The Object Identifier that this device will get. This will be seen by other devices on the BACnet network. **Make sure it's unique!**
