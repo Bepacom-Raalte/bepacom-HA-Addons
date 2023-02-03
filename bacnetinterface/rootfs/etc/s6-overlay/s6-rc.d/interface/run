@@ -21,7 +21,7 @@ declare maxSegmentsAccepted
 
 # Setting variables
 
-hostname = $(hostname -I)
+hostname = $(hostname -i)
 
 header='[BACpypes]'
 objectname="objectName: $(bashio::config 'objectName')"
