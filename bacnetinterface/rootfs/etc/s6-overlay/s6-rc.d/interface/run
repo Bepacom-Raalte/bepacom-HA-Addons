@@ -21,9 +21,17 @@ declare maxSegmentsAccepted
 
 # Setting variables
 
+hostname = $(hostname -I)
+
 header='[BACpypes]'
 objectname="objectName: $(bashio::config 'objectName')"
-address="address: $(bashio::config 'address')"
+
+if [[ $(bashio::config 'address') == "auto" ]]; then
+	address="address: $hostname/24"
+else
+	address="address: $(bashio::config 'address')"
+fi
+
 objectIdentifier="objectIdentifier: $(bashio::config 'objectIdentifier')"
 
 if [[ "$(bashio::config 'maxApduLenghtAccepted')" == "null" ]]; then
