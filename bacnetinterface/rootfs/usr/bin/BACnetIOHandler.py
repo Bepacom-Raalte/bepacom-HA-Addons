@@ -477,31 +477,26 @@ class BACnetIOHandler(
         )
 
     def do_ConfirmedCOVNotificationRequest(self, apdu):
-        """Callback on receiving Unconfirmed COV Notification."""
+        """Callback on receiving Confirmed COV Notification."""
 
         global rsvp
         property_dict = {}
-        for listvalue in apdu.listOfValues:
-            datatype = get_datatype(
-                apdu.monitoredObjectIdentifier[0], listvalue.propertyIdentifier
+        try:
+            for listvalue in apdu.listOfValues:
+                datatype = get_datatype(
+                    apdu.monitoredObjectIdentifier[0], listvalue.propertyIdentifier
+                )
+
+                value = listvalue.value.cast_out(datatype)
+                property_dict.update({listvalue.propertyIdentifier: value})
+            self.update_object(
+                apdu.monitoredObjectIdentifier,
+                apdu.initiatingDeviceIdentifier,
+                property_dict,
             )
 
-            # Array things
-            if issubclass(datatype, Array) and (
-                listvalue.propertyArrayIndex is not None
-            ):
-                if listvalue.propertyArrayIndex == 0:
-                    value = listvalue.value.cast_out(Unsigned)
-                else:
-                    value = listvalue.value.cast_out(datatype.subtype)
-            else:
-                value = listvalue.value.cast_out(datatype)
-            property_dict.update({listvalue.propertyIdentifier: value})
-        self.update_object(
-            apdu.monitoredObjectIdentifier,
-            apdu.initiatingDeviceIdentifier,
-            property_dict,
-        )
+        except Exception as e:
+            logging.error("Confirmed CoV Notification: " + str(e))
 
         if rsvp[0]:
             # success
