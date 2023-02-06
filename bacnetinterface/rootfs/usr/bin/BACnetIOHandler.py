@@ -274,7 +274,7 @@ class BACnetIOHandler(
             self.request_io(iocb)
 
         except Exception as e:
-            logging.error(str(e))
+            logging.error(str(e) + " from ReadProperty")
             return False
         else:
             return True
@@ -304,7 +304,7 @@ class BACnetIOHandler(
             self.request_io(iocb)
 
         except Exception as e:
-            logging.error(str(e))
+            logging.error(str(e) + " from ReadPropertyMultiple")
             return False
         else:
             return True
@@ -366,7 +366,7 @@ class BACnetIOHandler(
             self.request_io(iocb)
 
         except Exception as e:
-            logging.error(str(e))
+            logging.error(str(e) + " from WriteProperty")
             return False
 
     def COVSubscribe(self, objectID, confirmationType, address) -> None:
@@ -392,7 +392,7 @@ class BACnetIOHandler(
             iocb.add_callback(self.on_Subscribed)
             self.request_io(iocb)
         except Exception as e:
-            logging.error(str(e))
+            logging.error(str(e) + "from COVSubscribe")
             return False
 
     def COVUnsubscribe(self, objectID, address):
@@ -416,7 +416,7 @@ class BACnetIOHandler(
             self.request_io(iocb)
 
         except Exception as e:
-            logging.error(str(e))
+            logging.error(str(e) + " from COVUnsubscribe")
             return False
 
     def do_IAmRequest(self, apdu):
