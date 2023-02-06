@@ -1,24 +1,20 @@
 """Main script for EcoPanel BACnet add-on."""
 
 
+import logging
 import sys
 from collections.abc import Callable
 from queue import Queue
 from threading import Event, Thread
-import logging
 from typing import Any
 
 import uvicorn
-from bacpypes.consolelogging import ConfigArgumentParser, ConsoleLogHandler
-from bacpypes.core import deferred, enable_sleeping, run, stop
-from bacpypes.debugging import ModuleLogger, bacpypes_debugging
-from bacpypes.local.device import LocalDeviceObject
-from bacpypes.task import RecurringTask
-
 import webAPI as api
 from BACnetIOHandler import BACnetIOHandler
-
-
+from bacpypes.consolelogging import ConfigArgumentParser, ConsoleLogHandler
+from bacpypes.core import deferred, enable_sleeping, run, stop
+from bacpypes.local.device import LocalDeviceObject
+from bacpypes.task import RecurringTask
 
 webserv: str = "127.0.0.1"
 port = 7813
@@ -28,7 +24,7 @@ devices = []
 rsvp = (True, None, None)
 
 _debug = 0
-logging.basicConfig(format="%(levelname)s:    %(message)s", level=logging.INFO)
+logging.basicConfig(format="%(levelname)s:    %(message)s", level=logging.WARNING)
 
 
 class uviThread(Thread):

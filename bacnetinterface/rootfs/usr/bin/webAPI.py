@@ -1,9 +1,9 @@
 """API script for BACnet add-on."""
 import asyncio
 import json
+import logging
 import sys
 import threading
-import logging
 from queue import Queue
 from typing import Any, Union
 
@@ -288,7 +288,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     writeQueue.put(bacnet_dict)
                 except:
                     pass
-                
+
         except (RuntimeError, asyncio.CancelledError) as error:
             write_task.cancel
             activeSockets.remove(websocket)
@@ -302,7 +302,7 @@ async def websocket_endpoint(websocket: WebSocket):
         except Exception as e:
             write_task.cancel
             activeSockets.remove(websocket)
-            logging.error("Disconnected with Exception" +  str(e) +"...\n")
+            logging.error("Disconnected with Exception" + str(e) + "...\n")
 
 
 async def websocket_writer(websocket: WebSocket):
