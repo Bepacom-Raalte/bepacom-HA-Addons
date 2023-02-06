@@ -695,8 +695,8 @@ class BACnetIOHandler(
             val_dict = {response.propertyIdentifier: value}
             return val_dict
 
-        if iocb.ioError as e:
-            logging.error(str(e) + " from " + str(iocb.ioError.pduSource) + " on read result")
+        if iocb.ioError:
+            logging.error(str(iocb.ioError) + " from " + str(iocb.ioError.pduSource) + " on read result")
             if iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier[0] == "device":
                 self.ReadProperty(
                     iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier,
