@@ -754,12 +754,13 @@ class BACnetIOHandler(
                     )
 
                     if (
-                        (
-                            response.objectIdentifier,
-                            self.addr_to_dev_id(response.pduSource),
-                        )
-                        not in self.object_to_id
-                        and response.objectIdentifier[0] in self.objectFilter
+                        #(
+                        #    response.objectIdentifier,
+                        #    self.addr_to_dev_id(response.pduSource),
+                        #)
+                        #not in self.object_to_id
+                        #and 
+                        response.objectIdentifier[0] in self.objectFilter
                         and response.objectIdentifier[0] != "notificationClass"
                     ):
                         self.COVSubscribe(
