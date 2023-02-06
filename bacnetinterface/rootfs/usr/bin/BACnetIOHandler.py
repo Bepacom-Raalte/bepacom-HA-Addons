@@ -579,7 +579,7 @@ class BACnetIOHandler(
             return objectdict
 
         if iocb.ioError:
-            logging.error(str(iocb.ioError) + " from " + str(iocb.ioResponse.pduSource) + "on read multiple result")
+            logging.error(str(iocb.ioError) + " from " + str(iocb.ioError.pduSource) + "on read multiple result")
             if (
                 iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier[0] == "device"
                 and len(iocb.args[0].listOfReadAccessSpecs) == 1
@@ -668,7 +668,7 @@ class BACnetIOHandler(
                                 result.objectIdentifier, True, response.pduSource
                             )
             except Exception as e:
-                logging.error(str(e) + " from " + str(iocb.ioResponse.pduSource) + " on read multiple result")
+                logging.error(str(e) + " from " + str(iocb.ioError.pduSource) + " on read multiple result")
                 return False
 
     def on_ReadResult(self, iocb: IOCB) -> None:
@@ -695,8 +695,8 @@ class BACnetIOHandler(
             val_dict = {response.propertyIdentifier: value}
             return val_dict
 
-        if iocb.ioError:
-            logging.error(str(iocb.ioResponse.apduAbortRejectReason) + " from " + str(iocb.ioResponse.pduSource) + " on read result")
+        if iocb.ioError as e:
+            logging.error(str(e) + " from " + str(iocb.ioError.pduSource) + " on read result")
             if iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier[0] == "device":
                 self.ReadProperty(
                     iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier,
@@ -774,7 +774,7 @@ class BACnetIOHandler(
     def on_WriteResult(self, iocb):
         """Response after writing to an object."""
         if iocb.ioError:
-            logging.error(str(iocb.ioError) + " from " + str(iocb.ioResponse.pduSource) + " while writing")
+            logging.error(str(iocb.ioError) + " from " + str(iocb.ioError.pduSource) + " while writing")
             return
 
         if iocb.ioResponse:
