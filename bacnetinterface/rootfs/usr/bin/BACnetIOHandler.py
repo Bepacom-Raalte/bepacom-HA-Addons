@@ -579,7 +579,7 @@ class BACnetIOHandler(
             return objectdict
 
         if iocb.ioError:
-            logging.error(str(iocb.ioError))
+            logging.error(str(iocb.ioError) + " from " + str(iocb.ioResponse.pduSource) + "on read multiple result")
             if (
                 iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier[0] == "device"
                 and len(iocb.args[0].listOfReadAccessSpecs) == 1
@@ -655,19 +655,20 @@ class BACnetIOHandler(
                         )
 
                         if (
-                            (
-                                result.objectIdentifier,
-                                self.addr_to_dev_id(response.pduSource),
-                            )
-                            not in self.object_to_id
-                            and result.objectIdentifier[0] in self.objectFilter
+                            #(
+                            #    result.objectIdentifier,
+                            #    self.addr_to_dev_id(response.pduSource),
+                            #)
+                            #not in self.object_to_id
+                            #and 
+                            result.objectIdentifier[0] in self.objectFilter
                             and result.objectIdentifier[0] != "notificationClass"
                         ):
                             self.COVSubscribe(
                                 result.objectIdentifier, True, response.pduSource
                             )
             except Exception as e:
-                logging.error(str(e))
+                logging.error(str(e) + " from " + str(iocb.ioResponse.pduSource) + " on read multiple result")
                 return False
 
     def on_ReadResult(self, iocb: IOCB) -> None:
@@ -695,7 +696,7 @@ class BACnetIOHandler(
             return val_dict
 
         if iocb.ioError:
-            logging.error(str(iocb.ioResponse.apduAbortRejectReason))
+            logging.error(str(iocb.ioResponse.apduAbortRejectReason) + " from " + str(iocb.ioResponse.pduSource) + " on read result")
             if iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier[0] == "device":
                 self.ReadProperty(
                     iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier,
@@ -767,19 +768,19 @@ class BACnetIOHandler(
                             response.objectIdentifier, True, response.pduSource
                         )
             except Exception as e:
-                logging.error(str(e))
+                logging.error(str(e) + " from " + str(iocb.ioResponse.pduSource) + "on read response")
                 return False
 
     def on_WriteResult(self, iocb):
         """Response after writing to an object."""
         if iocb.ioError:
-            logging.error(str(iocb.ioError))
+            logging.error(str(iocb.ioError) + " from " + str(iocb.ioResponse.pduSource) " while writing")
             return
 
         if iocb.ioResponse:
             # should be a read property or read property multiple ack
             if not isinstance(iocb.ioResponse, SimpleAckPDU):
-                logging.error(str(iocb.ioResponse.apduAbortRejectReason))
+                logging.error(str(iocb.ioResponse.apduAbortRejectReason) + " from " + str(iocb.ioResponse.pduSource))
                 return
             # Another read to update the dictionary value... CoV doesn't update every single thing.
             self.ReadProperty(
@@ -804,7 +805,7 @@ class BACnetIOHandler(
 
         # do something for error/reject/abort
         if iocb.ioError:
-            logging.error(str(iocb.ioError) + " from " + str(iocb.ioError.pduSource))
+            logging.error(str(iocb.ioError) + " from " + str(iocb.ioError.pduSource) + "while subscribing")
             self.unassign_id(
                 (
                     iocb.args[0].monitoredObjectIdentifier.value,
