@@ -774,7 +774,7 @@ class BACnetIOHandler(
     def on_WriteResult(self, iocb):
         """Response after writing to an object."""
         if iocb.ioError:
-            logging.error(str(iocb.ioError) + " from " + str(iocb.ioResponse.pduSource) " while writing")
+            logging.error(str(iocb.ioError) + " from " + str(iocb.ioResponse.pduSource) + " while writing")
             return
 
         if iocb.ioResponse:
