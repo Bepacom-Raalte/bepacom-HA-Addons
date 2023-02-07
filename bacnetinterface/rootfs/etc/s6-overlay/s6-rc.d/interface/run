@@ -26,6 +26,8 @@ declare maxSegmentsAccepted
 	ipaddr=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
 } || { # or try this...
 	ipaddr=$(ifconfig enp0s3 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
+} || { # or try this...
+	ipaddr=$(ifconfig eth0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
 } || { # Catch
 	ipaddr=$(hostname -i)
 }
