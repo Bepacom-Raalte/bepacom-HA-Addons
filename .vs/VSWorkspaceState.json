@@ -4,13 +4,14 @@
     "\\bacnetinterface",
     "\\bacnetinterface\\rootfs",
     "\\bacnetinterface\\rootfs\\etc",
-    "\\bacnetinterface\\rootfs\\etc\\nginx",
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay",
+    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d",
+    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\nginx",
     "\\bacnetinterface\\rootfs\\usr",
     "\\bacnetinterface\\rootfs\\usr\\bin",
     "\\bacnetinterface\\rootfs\\usr\\bin\\templates",
     "\\bacnetinterface\\translations"
   ],
-  "SelectedNode": "\\bacnetinterface\\rootfs\\usr",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\BACnetIOHandler.py",
   "PreviewInSolutionExplorer": false
 }
