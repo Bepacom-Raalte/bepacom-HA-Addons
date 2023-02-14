@@ -5,6 +5,8 @@
 # s6-overlay docs: https://github.com/just-containers/s6-overlay
 # ==============================================================================
 
+cp /usr/bin/BACpypes.ini > BACpypes.ini
+
 bashio::log.info "Running interface"
 
 exec python3 /usr/bin/main.py
