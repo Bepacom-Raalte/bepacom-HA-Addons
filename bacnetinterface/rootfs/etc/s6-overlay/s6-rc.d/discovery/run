@@ -7,7 +7,7 @@
 declare config
 
 # Wait for AdGuard Home to become available
-bashio::net.wait_for 8099 127.0.0.1 300
+bashio::net.wait_for 7813
 
 config=$(\
     bashio::var.json \
