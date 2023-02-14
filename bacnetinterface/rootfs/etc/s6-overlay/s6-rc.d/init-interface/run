@@ -1,6 +1,5 @@
 #!/command/with-contenv bashio
 # shellcheck shell=bash
-# shellcheck disable=SC2207
 
 # Declaring variables
 
@@ -79,7 +78,5 @@ fi
 
 # Generate INI file
 
-printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
-cat BACpypes.ini
-
-cp BACpypes.ini /usr/bin/
+printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > /usr/bin/BACpypes.ini
+cat /usr/bin/BACpypes.ini
