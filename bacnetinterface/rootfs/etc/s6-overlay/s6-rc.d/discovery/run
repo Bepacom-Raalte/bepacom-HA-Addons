@@ -2,81 +2,19 @@
 # shellcheck shell=bash
 # shellcheck disable=SC2207
 
-# Declaring variables
+declare config
 
-declare header
-declare objectname
-declare address
-declare objectIdentifier
-declare maxApduLenghtAccepted
-declare segmentationSupported
-declare vendorID
-declare foreignBBMD
-declare foreignTTL
-declare maxSegmentsAccepted
+sleep 5
 
-# Setting variables
+config=$(\
+    bashio::var.json \
+        host "127.0.0.1" \
+)
 
-
-{ # Try
-	ipaddr=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
-} || { # or try this...
-	ipaddr=$(ifconfig enp0s3 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
-} || { # or try this...
-	ipaddr=$(ifconfig eth0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
-} || { # Catch
-	ipaddr=$(hostname -i)
-}
-
-
-header='[BACpypes]'
-objectname="objectName: $(bashio::config 'objectName')"
-
-if [[ $(bashio::config 'address') == "auto" ]]; then
-	address="address: $ipaddr/24"
+if bashio::discovery "bacnet_interface" "${config}" > /dev/null; then
+    bashio::log.info "Successfully send discovery information to Home Assistant."
 else
-	address="address: $(bashio::config 'address')"
+    bashio::log.error "Discovery message to Home Assistant failed!"
 fi
 
-objectIdentifier="objectIdentifier: $(bashio::config 'objectIdentifier')"
 
-if [[ "$(bashio::config 'maxApduLenghtAccepted')" == "null" ]]; then
-	maxApduLenghtAccepted="maxApduLengthAccepted: 1024"
-else
-	maxApduLenghtAccepted="maxApduLengthAccepted: $(bashio::config 'maxApduLenghtAccepted')"
-fi
-
-if [[ "$(bashio::config 'segmentationSupported')" == "null" ]]; then
-	segmentationSupported="segmentationSupported: segmentedBoth"
-else
-	segmentationSupported="segmentationSupported: $(bashio::config 'segmentationSupported')"
-fi
-
-if [[ "$(bashio::config 'vendorID')" == "null" ]]; then
-	vendorID="vendorIdentifier: 15"
-else
-	vendorID="vendorIdentifier: $(bashio::config 'vendorID')"
-fi
-
-if [[ "$(bashio::config 'foreignBBMD')" == "null" ]]; then
-	foreignBBMD="foreignBBMD: -"
-else
-	foreignBBMD="foreignBBMD: $(bashio::config 'foreignBBMD')"
-fi
-
-if [[ "$(bashio::config 'foreignBBMD')" == "null" ]]; then
-	foreignTTL="foreignTTL: 255"
-else
-	foreignTTL="foreignTTL: $(bashio::config 'foreignTTL')"
-fi
-
-if [[ "$(bashio::config 'maxSegmentsAccepted')" == "null" ]]; then
-	maxSegmentsAccepted="maxSegmentsAccepted: 24"
-else
-	maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted')"
-fi
-
-# Generate INI file
-
-printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" > BACpypes.ini
-cat BACpypes.ini

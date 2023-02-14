@@ -5,10 +5,7 @@
 # s6-overlay docs: https://github.com/just-containers/s6-overlay
 # ==============================================================================
 
-# Add your code here
 
 bashio::log.info "Running interface"
 
 exec python3 /usr/bin/main.py
-
-bashio::log.info "After exec python"
