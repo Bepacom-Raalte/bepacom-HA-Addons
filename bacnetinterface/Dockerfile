@@ -4,6 +4,10 @@ FROM $BUILD_FROM
 
 USER root 
 
+# Set shell
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+
 # Install requirements for add-on
 WORKDIR /usr/src
 RUN \
