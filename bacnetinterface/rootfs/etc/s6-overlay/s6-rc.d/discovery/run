@@ -15,7 +15,7 @@ payload=$(\
         host "$(hostname)" \
 )
 
-if bashio::discovery "bacnet-interface" "${payload}" > /dev/null; then
+if bashio::discovery "bacnet_interface" "${payload}" > /dev/null; then
     bashio::log.info "Successfully send discovery information to Home Assistant."
 else
     bashio::log.error "Discovery message to Home Assistant failed!"
