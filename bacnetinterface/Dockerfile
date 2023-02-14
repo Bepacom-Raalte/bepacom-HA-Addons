@@ -1,8 +1,6 @@
 ARG BUILD_FROM=ghcr.io/hassio-addons/base:13.0.0
 # hadolint ignore=DL3006
 FROM ${BUILD_FROM}
-# Set shell
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install requirements for add-on
 WORKDIR /usr/src
@@ -23,7 +21,3 @@ RUN \
 WORKDIR /
 
 COPY rootfs /
-
-RUN chmod +x /rootfs/etc/s6-overlay/s6-rc.d/discovery/run
-
-RUN chmod +x /rootfs/etc/s6-overlay/s6-rc.d/init-interface/run

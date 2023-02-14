@@ -1,9 +1,6 @@
 #!/command/with-contenv bashio
 # shellcheck shell=bash
-# ==============================================================================
-# Home Assistant Community Add-on: Z-Wave JS UI
-# Send zwave_js discovery information to Home Assistant
-# ==============================================================================
+
 declare payload
 
 # Wait for Z-Wave JS UI to be available
@@ -23,3 +20,4 @@ if bashio::discovery "bacnet-interface" "${payload}" > /dev/null; then
 else
     bashio::log.error "Discovery message to Home Assistant failed!"
 fi
+
