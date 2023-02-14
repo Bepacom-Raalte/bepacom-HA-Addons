@@ -17,6 +17,7 @@ declare maxSegmentsAccepted
 
 # Setting variables
 
+bashio::log.info "Generating BACpypes.ini"
 
 { # Try
 	ipaddr=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')

@@ -4,6 +4,8 @@
 
 declare config
 
+bashio::log.info "sleeping before discovery..."
+
 sleep 5
 
 config=$(\

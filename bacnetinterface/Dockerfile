@@ -4,7 +4,6 @@ FROM ${BUILD_FROM}
 # Set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-
 # Install requirements for add-on
 WORKDIR /usr/src
 RUN \
@@ -22,9 +21,6 @@ RUN \
     websockets>=10.4
 
 WORKDIR /
-
-# Add execute permission to the "run" script
-RUN chmod +x rootfs/etc/s6-overlay/s6-rc.d/discovery/run
 
 COPY rootfs /
 
