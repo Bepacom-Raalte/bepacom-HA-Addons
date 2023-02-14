@@ -16,5 +16,3 @@ if bashio::discovery "bacnet_interface" "${config}" > /dev/null; then
 else
     bashio::log.error "Discovery message to Home Assistant failed!"
 fi
-
-
