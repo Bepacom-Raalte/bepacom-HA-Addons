@@ -24,3 +24,6 @@ WORKDIR /
 
 COPY rootfs /
 
+RUN chmod +x /rootfs/etc/s6-overlay/s6-rc.d/discovery/run
+
+RUN chmod +x /rootfs/etc/s6-overlay/s6-rc.d/init-interface/run
