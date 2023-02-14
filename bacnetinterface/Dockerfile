@@ -23,5 +23,8 @@ RUN \
 
 WORKDIR /
 
+# Add execute permission to the "run" script
+RUN chmod +x rootfs/etc/s6-overlay/s6-rc.d/discovery/run
 
 COPY rootfs /
+
