@@ -3,12 +3,12 @@
 
 declare config
 
-# Wait for AdGuard Home to become available
-bashio::net.wait_for 7813
+sleep 5
 
 config=$(\
     bashio::var.json \
         host "127.0.0.1" \
+        port "^8099" \
 )
 
 if bashio::discovery "bacnet_interface" "${config}" > /dev/null; then
