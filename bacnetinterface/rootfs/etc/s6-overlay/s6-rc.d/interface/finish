@@ -1,19 +1,26 @@
-#!/usr/bin/env bashio
+#!/command/with-contenv bashio
 # ==============================================================================
-# Take down the S6 supervision tree when example fails
-# s6-overlay docs: https://github.com/just-containers/s6-overlay
+# Home Assistant Community Add-on: AdGuard Home
+# Take down the S6 supervision tree when Nginx fails
 # ==============================================================================
+declare exit_code
+readonly exit_code_container=$(</run/s6-linux-init-container-results/exitcode)
+readonly exit_code_service="${1}"
+readonly exit_code_signal="${2}"
+readonly service="BACnet Interface"
 
+bashio::log.info \
+  "Service ${service} exited with code ${exit_code_service}" \
+  "(by signal ${exit_code_signal})"
 
-
-
-declare APP_EXIT_CODE=${1}
-
-if [[ "${APP_EXIT_CODE}" -ne 0 ]] && [[ "${APP_EXIT_CODE}" -ne 256 ]]; then
-  bashio::log.warning "Halt add-on with exit code ${APP_EXIT_CODE}"
-  echo "${APP_EXIT_CODE}" > /run/s6-linux-init-container-results/exitcode
+if [[ "${exit_code_service}" -eq 256 ]]; then
+  if [[ "${exit_code_container}" -eq 0 ]]; then
+    echo $((128 + $exit_code_signal)) > /run/s6-linux-init-container-results/exitcode
+  fi
+  [[ "${exit_code_signal}" -eq 15 ]] && exec /run/s6/basedir/bin/halt
+elif [[ "${exit_code_service}" -ne 0 ]]; then
+  if [[ "${exit_code_container}" -eq 0 ]]; then
+    echo "${exit_code_service}" > /run/s6-linux-init-container-results/exitcode
+  fi
   exec /run/s6/basedir/bin/halt
 fi
-
-
-bashio::log.info "Interface restart after closing with "${APP_EXIT_CODE}""

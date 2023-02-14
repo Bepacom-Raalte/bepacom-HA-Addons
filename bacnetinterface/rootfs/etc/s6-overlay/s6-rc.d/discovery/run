@@ -1,6 +1,4 @@
 #!/command/with-contenv bashio
-# shellcheck shell=bash
-# shellcheck disable=SC2207
 
 declare config
 
