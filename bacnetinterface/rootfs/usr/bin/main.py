@@ -83,7 +83,7 @@ class RefreshDict(RecurringTask):
         this_application.read_entire_dict()
 
 
-def write_from_dict(dict_to_write: dict):
+def write_from_dict(dict_to_write: dict) -> None:
     """Write to object from a dict received by API"""
     deviceID = get_key(dict_to_write)
     for object in dict_to_write[deviceID]:
@@ -95,17 +95,18 @@ def write_from_dict(dict_to_write: dict):
             )
 
 
-def sub_from_tuple(subTuple: tuple):
+def sub_from_tuple(subTuple: tuple) -> None:
+    """Receives a tuple with deviceID, objectID, confirmationType and lifetime."""
     this_application.COVSubscribe(
-        objectid=subTuple[0],
-        address=subTuple[1],
+        objectID=subTuple[1],
+        address=this_application.dev_id_to_addr(subTuple[0]),
         confirmationType=subTuple[2],
-        lifetime=subTuple[4],
-    )
+        lifetime=subTuple[3],
+        )
 
 
 def get_key(dictionary: dict) -> str:
-    """Return the first key"""
+    """Return the first key."""
     for key, value in dictionary.items():
         return key
 
