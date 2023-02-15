@@ -18,20 +18,26 @@ This add-on works on Home Assistant OS as well as Home Assistant Supervised.
 1. Start the "Bepacom EcoPanel BACnet/IP Interface" add-on.
 1. Check the logs of the "Bepacom EcoPanel BACnet/IP Interface" add-on to see if everything went
    well.
-1. Now you're free to use the add-on!
+1. Now your Home Assistant device is a virtual BACnet/IP device!
 
 
 ## API Points
 
 You'll be able to find all API points at "homeassistant.local/docs" whereas homeassistant.local is your host name.
-These points will allow you to read and write to the BACnet devices on the network.
+These points will allow you to GET data:
 
 - /apiv1/json								- Return a full list of all device data.
 - /apiv1/command/whois						- Make the add-on do a Who Is request.
 - /apiv1/command/iam						- Make the add-on do an I Am request.
+- /apiv1/command/readall					- Make the add-on read everything
 - /apiv1/{deviceid}							- Retrieve all data from a specific device.
 - /apiv1/{deviceid}{objectid}				- Retrieve all data from an object from a specific device.
 - /apiv1/{deviceid}{objectid}{propertyid}	- Retrieve a property value from an object in a specific device.
+
+These points will allow you to POST data:
+- /apiv1/{deviceid}{objectid}				- Write to an object from a specific device.
+- /apiv1/subscribe/{deviceid}{objectid}		- Subscribe to an object from a specific device.
+
 
 These API points will be used as follows:
 "homeassistant.local/apiv1/json"
