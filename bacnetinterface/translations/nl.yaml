@@ -1,0 +1,30 @@
+configuration:
+  objectName:
+    name: Objecten Naam
+    description: Naam van het BACnet apparaat op het netwerk.
+  address:
+    name: Interface IP
+    description: BACnet/IP host adres. "auto" probeert je IP automatisch op te halen. x.x.x.x/24 format.
+  objectIdentifier:
+    name: Object ID
+    description: De identifier die je apparaat mee krijgt.
+  maxApduLenghtAccepted: 
+    name: Maximum  APDU Lengte Geaccepteerd
+    description: Maximum hoeveelheid Application Layer Protocol Data Units toegestaan.
+  segmentationSupported:
+    name: Segmentatie Ondersteund
+    description: Ondersteunde type segmentatie. "segmentedBoth" als standaard.
+  vendorID:
+    name: Vendor Identifier
+    description: Het ID van de regelaar's leverancier.
+  foreignBBMD:
+    name: BACnet/IP Broadcast Management Device
+    description: IP address van het BBMD
+  foreignTTL: 
+    name: Foreign TTL
+    description: Time To Live packets voor BBMD
+  maxSegmentsAccepted:
+    name: Maximum Segmenten Geaccepted
+    description: De maximale hoeveelheid segmenten er in een BACnet bericht mogen zitten.
+network:
+  47808/udp: BACnet poort

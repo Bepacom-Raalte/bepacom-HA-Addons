@@ -12,11 +12,14 @@
 - Websockets can handle multiple clients now.
 - Configuration of the add-on has been simplified.
 - Added some API tests internally.
+- API can subscribe now
 - Flask no longer included, FastAPI handles everything now, along with uvicorn.
 - WebUI gets updated over websocket. This means values are the same as in the API.
 - WebUI can write now as well.
 - WebUI has gotten a makeover in general.
+- WebUI Subscription page can actually subscribe
 - This add-on runs on Raspberry Pi 3 as it would on an Intel NUC. This means Raspberry Pi is supported.
+- Dutch translations added.
 
 
 # 0.1.0

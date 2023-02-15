@@ -22,6 +22,7 @@ threadingWhoIsEvent: threading.Event = threading.Event()
 threadingIAmEvent: threading.Event = threading.Event()
 threadingReadAllEvent: threading.Event = threading.Event()
 writeQueue: Queue = Queue()
+subQueue: Queue = Queue()
 activeSockets: list = []
 
 
@@ -203,7 +204,7 @@ async def read_objectid_property(deviceid: str, objectid: str, propertyid: str):
 
 
 @app.post("/apiv1/{deviceid}/{objectid}")
-async def write_objectid_property(
+async def write_property(
     deviceid: str,
     objectid: str,
     objectIdentifier: Union[str, None] = None,
@@ -258,6 +259,31 @@ async def write_objectid_property(
     # Send this dict to threading queue for processing and making a request through BACnet
     writeQueue.put(bacnet_dict)
     return "Successfully put in Write Queue"
+
+
+@app.post("/apiv1/subscribe/{deviceid}/{objectid}")
+async def subscribe_objectid(
+    deviceid: str, objectid: str, confirmationType: str, lifetime: int
+):
+    """Subscribe to an object of a device."""
+    try:
+        subTuple = (
+            str_to_tuple(deviceid),
+            str_to_tuple(objectid),
+            confirmationType,
+            lifetime,
+        )
+        if not "device" in subTuple[0][0]:
+            raise Exception("Device value is not a device")
+
+    except Exception as e:
+        logging.error(e + " on subscribe from API POST request")
+
+    global subQueue
+    # Send this tuple to threading queue for processing and making a request through BACnet
+    subQueue.put(subTuple)
+
+    return "Successfully put in Subscription Queue"
 
 
 @app.websocket("/ws")

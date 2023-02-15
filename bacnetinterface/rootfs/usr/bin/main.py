@@ -95,6 +95,15 @@ def write_from_dict(dict_to_write: dict):
             )
 
 
+def sub_from_tuple(subTuple: tuple):
+    this_application.COVSubscribe(
+        objectid=subTuple[0],
+        address=subTuple[1],
+        confirmationType=subTuple[2],
+        lifetime=subTuple[4],
+    )
+
+
 def get_key(dictionary: dict) -> str:
     """Return the first key"""
     for key, value in dictionary.items():
@@ -141,6 +150,7 @@ def main():
         api.threadingReadAllEvent, this_application.read_entire_dict, 2000
     )
     write_queue_watcher = QueueWatcherTask(api.writeQueue, write_from_dict, 1000)
+    sub_queue_watcher = QueueWatcherTask(api.subQueue, sub_from_tuple, 1000)
     dict_refresher = RefreshDict(60000)
 
     while True:

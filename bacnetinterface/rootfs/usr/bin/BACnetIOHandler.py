@@ -55,60 +55,31 @@
 
 
 import logging
-
 # Importing libraries
 import sys
 import threading
 from typing import Any
 
 import bacpypes.constructeddata
-from bacpypes.apdu import (
-    AbortPDU,
-    PropertyReference,
-    ReadAccessSpecification,
-    ReadPropertyACK,
-    ReadPropertyMultipleACK,
-    ReadPropertyMultipleRequest,
-    ReadPropertyRequest,
-    RejectPDU,
-    SimpleAckPDU,
-    SubscribeCOVRequest,
-    WritePropertyRequest,
-)
+from bacpypes.apdu import (AbortPDU, PropertyReference,
+                           ReadAccessSpecification, ReadPropertyACK,
+                           ReadPropertyMultipleACK,
+                           ReadPropertyMultipleRequest, ReadPropertyRequest,
+                           RejectPDU, SimpleAckPDU, SubscribeCOVRequest,
+                           WritePropertyRequest)
 from bacpypes.app import BIPSimpleApplication
-from bacpypes.basetypes import (
-    EventType,
-    PropertyIdentifier,
-    PropertyReference,
-    PropertyValue,
-    Recipient,
-    RecipientProcess,
-    ServicesSupported,
-)
+from bacpypes.basetypes import (EventType, PropertyIdentifier,
+                                PropertyReference, PropertyValue, Recipient,
+                                RecipientProcess, ServicesSupported)
 from bacpypes.constructeddata import AnyAtomic, Array
-from bacpypes.errors import (
-    ExecutionError,
-    InconsistentParameters,
-    MissingRequiredParameter,
-    ParameterOutOfRange,
-)
+from bacpypes.errors import (ExecutionError, InconsistentParameters,
+                             MissingRequiredParameter, ParameterOutOfRange)
 from bacpypes.iocb import IOCB
 from bacpypes.object import get_datatype
-from bacpypes.primitivedata import (
-    Atomic,
-    BitString,
-    Boolean,
-    CharacterString,
-    Date,
-    Double,
-    Integer,
-    Null,
-    ObjectIdentifier,
-    OctetString,
-    Real,
-    Time,
-    Unsigned,
-)
+from bacpypes.primitivedata import (Atomic, BitString, Boolean,
+                                    CharacterString, Date, Double, Integer,
+                                    Null, ObjectIdentifier, OctetString, Real,
+                                    Time, Unsigned)
 from bacpypes.service.cov import ChangeOfValueServices
 from bacpypes.service.object import ReadWritePropertyMultipleServices
 
@@ -368,7 +339,9 @@ class BACnetIOHandler(
             logging.error(str(e) + " from WriteProperty")
             return False
 
-    def COVSubscribe(self, objectID, confirmationType, address) -> None:
+    def COVSubscribe(
+        self, objectID, address, confirmationType=True, lifetime=28799
+    ) -> None:
         """Send a SubscribeCOVRequest to designated address."""
         try:
             request = SubscribeCOVRequest(
@@ -383,10 +356,18 @@ class BACnetIOHandler(
 
             if confirmationType == True:
                 request.issueConfirmedNotifications = "true"
+            elif confirmationType == False:
+                request.issueConfirmedNotifications = "false"
             else:
                 request.issueConfirmedNotifications = None
 
-            request.lifetime = 28799
+            if confirmationType == "false" and lifetime == 0:
+                self.unassign_id((objectID, self.addr_to_dev_id(address)))
+                logging.warning(
+                    "Unsubscribing from " + str(objectID) + " " + str(address)
+                )
+
+            request.lifetime = lifetime
             iocb = IOCB(request)
             iocb.add_callback(self.on_Subscribed)
             self.request_io(iocb)
@@ -424,13 +405,6 @@ class BACnetIOHandler(
         logging.info("I Am from " + str(apdu.iAmDeviceIdentifier))
 
         if self.localDevice.objectIdentifier == apdu.iAmDeviceIdentifier:
-            return
-
-        # If device in list, resubscribe and return
-        if apdu.iAmDeviceIdentifier in self.BACnetDeviceDict:
-            for object in self.BACnetDeviceDict[apdu.iAmDeviceIdentifier]:
-                if isinstance(object, tuple):
-                    self.COVSubscribe(object, True, apdu.pduSource)
             return
 
         BACnetDevice = {
@@ -669,7 +643,8 @@ class BACnetIOHandler(
                             and result.objectIdentifier[0] != "notificationClass"
                         ):
                             self.COVSubscribe(
-                                result.objectIdentifier, True, response.pduSource
+                                objectID=result.objectIdentifier,
+                                address=response.pduSource,
                             )
             except Exception as e:
                 logging.error(
@@ -779,7 +754,8 @@ class BACnetIOHandler(
                         and response.objectIdentifier[0] != "notificationClass"
                     ):
                         self.COVSubscribe(
-                            response.objectIdentifier, True, response.pduSource
+                            objectID=response.objectIdentifier,
+                            address=response.pduSource,
                         )
             except Exception as e:
                 logging.error(

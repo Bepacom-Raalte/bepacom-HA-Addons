@@ -198,13 +198,16 @@
                 <label for="object">Select Object:</label>
                 <select id="object" name="object"></select>
                 <br>
-                <label for="property">Property identifier:</label>
-                <input type="text" id="property" name="property">
+                <label for="confirmationType">Confirmation Type:</label>
+                <select id="confirmationType" name="confirmationType">
+                    <option value="true">Confirmed</option>
+                    <option value="false">Unconfirmed</option>
+                </select>
                 <br>
-                <label for="value">Value:</label>
-                <input type="text" id="value" name="value">
+                <label for="value">Subscription Lifetime:</label>
+                <input type="text" id="lifetime" name="lifetime">
                 <br>
-                <input type="button" value="Write" onclick="submitForm()">
+                <input type="button" value="Subscribe" onclick="submitForm()">
             </form>
         </div>
     </div>
@@ -277,11 +280,12 @@
         function submitForm() {
             let device = document.getElementById("device").value;
             let object = document.getElementById("object").value;
-            let property = document.getElementById("property").value;
-            let value = document.getElementById("value").value;
-            let url = `./apiv1/${device}/${object}?${property}=${value}`;
+            let confirmationType = document.getElementById("confirmationType").value;
+            let lifetime = document.getElementById("lifetime").value;
+            let url = `./apiv1/subscribe/${device}/${object}?confirmationType=${confirmationType}&lifetime=${lifetime}`;
             let data = {
-                property: value
+                lifetime: lifetime,
+                confirmationType: confirmationType
             };
             fetch(url, {
                 method: "POST",

@@ -16,11 +16,7 @@ ingress_entry: webapp/
 host_network: true
 panel_icon: mdi:router-wireless-settings
 map:
-  - backup:rw
   - config:rw
-  - media:rw
-  - share:rw
-  - ssl:rw
 ports:
   80/tcp: 80
   47808/udp: 47808
