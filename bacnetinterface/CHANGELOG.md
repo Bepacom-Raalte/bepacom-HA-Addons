@@ -1,5 +1,23 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 0.1.1
+
+15/02/2023
+- Bumped up FastAPI to version 0.92.0 for security reasons.
+- Restructured S6-overlay processes. One shots for initialisations, longruns for actual processes.
+- Discovery enabled for if it's possible to discovery integration in the future.
+- Added automatic ethernet adapter detection. Won't work in every case, but it'll help a lot of people out.
+- BACnet subscriptions now have a lifetime instead of none. Increases compatability.
+- BACnet subscriptions last maximum time and get resubscribed every 60 seconds along with a read request.
+- Websockets can handle multiple clients now.
+- Configuration of the add-on has been simplified.
+- Added some API tests internally.
+- Flask no longer included, FastAPI handles everything now, along with uvicorn.
+- WebUI gets updated over websocket. This means values are the same as in the API.
+- WebUI can write now as well.
+- WebUI has gotten a makeover in general.
+- This add-on runs on Raspberry Pi 3 as it would on an Intel NUC. This means Raspberry Pi is supported.
+
 
 # 0.1.0
 

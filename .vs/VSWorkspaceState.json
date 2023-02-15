@@ -6,10 +6,11 @@
     "\\bacnetinterface\\rootfs\\etc",
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay",
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\discovery",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\init-interface",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\init-interface\\dependencies.d",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\nginx"
+    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\interface",
+    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\interface\\dependencies.d",
+    "\\bacnetinterface\\rootfs\\usr",
+    "\\bacnetinterface\\rootfs\\usr\\bin"
   ],
+  "SelectedNode": "\\bacnetinterface\\config.yaml",
   "PreviewInSolutionExplorer": false
 }
