@@ -227,20 +227,18 @@ class BACnetIOHandler(
     ) -> bool:
         """Send a ReadPropertyRequest to designated address."""
         try:
-            # make request
             request = ReadPropertyRequest(
                 objectIdentifier=objectID,
                 propertyIdentifier=propertyID,
                 propertyArrayIndex=None,
             )
 
-            # Set destination address
             request.pduDestination = address
-            # make an IOCB
+
             iocb = IOCB(request)
-            # let us know when its complete
+
             iocb.add_callback(self.on_ReadResult)
-            # Send the request through
+
             self.request_io(iocb)
 
         except Exception as e:

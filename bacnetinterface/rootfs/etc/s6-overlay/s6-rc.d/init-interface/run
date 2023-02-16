@@ -77,12 +77,7 @@ else
 fi
 
 
-if [[ "$(bashio::config 'loglevel')" == "null" ]]; then
-	loglevel="loglevel: WARNING"
-else
-	loglevel="loglevel: $(bashio::config 'loglevel')"
-fi
-
+loglevel="loglevel: $(bashio::config 'loglevel')"
 
 # Generate INI file
 

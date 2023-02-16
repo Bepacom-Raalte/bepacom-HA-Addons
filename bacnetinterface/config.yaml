@@ -28,6 +28,7 @@ options:
   objectName: EcoPanel
   address: auto
   objectIdentifier: 420
+  loglevel: WARNING
 schema:
   objectName: str
   address: str
