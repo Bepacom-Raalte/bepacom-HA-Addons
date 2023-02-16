@@ -12,6 +12,6 @@
     "\\bacnetinterface\\rootfs\\usr\\bin\\templates",
     "\\bacnetinterface\\translations"
   ],
-  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\main.py",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\.pytest_cache",
   "PreviewInSolutionExplorer": false
 }
