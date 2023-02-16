@@ -20,7 +20,7 @@
 - WebUI Subscription page can actually subscribe
 - This add-on runs on Raspberry Pi 3 as it would on an Intel NUC. This means Raspberry Pi is supported.
 - Dutch translations added.
-- Log level can be adjusted. Defaults to WARNING now
+- Log level can be adjusted. Defaults to WARNING now.
 
 
 # 0.1.0

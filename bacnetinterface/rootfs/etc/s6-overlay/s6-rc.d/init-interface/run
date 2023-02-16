@@ -76,7 +76,13 @@ else
 	maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted')"
 fi
 
-loglevel="loglevel: $(bashio::config 'loglevel')"
+
+if [[ "$(bashio::config 'loglevel')" == "null" ]]; then
+	loglevel="loglevel: WARNING"
+else
+	loglevel="loglevel: $(bashio::config 'loglevel')"
+fi
+
 
 # Generate INI file
 

@@ -15,6 +15,7 @@ ingress: true
 ingress_entry: webapp/
 host_network: true
 panel_icon: mdi:router-wireless-settings
+startup: services
 map:
   - config:rw
 ports:
@@ -27,7 +28,6 @@ options:
   objectName: EcoPanel
   address: auto
   objectIdentifier: 420
-  loglevel: WARNING
 schema:
   objectName: str
   address: str
