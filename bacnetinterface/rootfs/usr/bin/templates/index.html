@@ -230,8 +230,8 @@
         }
 
         let url = window.location.href;
-        let url = url.replace("http", "ws")
-        let url = url.replace("webapp", "ws")
+        url = url.replace("http", "ws")
+        url = url.replace("webapp", "ws")
         var ws = new WebSocket(url);
         ws.onmessage = function (event) {
             event.JSON
