@@ -27,10 +27,12 @@ options:
   objectName: EcoPanel
   address: auto
   objectIdentifier: 420
+  loglevel: WARNING
 schema:
   objectName: str
   address: str
   objectIdentifier: int
+  loglevel: list(DEBUG|INFO|WARNING|ERROR|CRITICAL)?
   maxApduLenghtAccepted: int?
   segmentationSupported: str?
   vendorID: int?

@@ -8,6 +8,9 @@ configuration:
   objectIdentifier:
     name: Object ID
     description: The identifier (number) of the interface
+  loglevel:
+    name: Level of Logging
+    description: The severity of log messages being displayed.
   maxApduLenghtAccepted: 
     name: Maximum  APDU Length Accepted
     description: Maximum amount of Application Layer Protocol Data Units allowed

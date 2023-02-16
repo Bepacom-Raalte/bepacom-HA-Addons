@@ -24,14 +24,6 @@ devices = []
 rsvp = (True, None, None)
 
 _debug = 0
-logging.basicConfig(format="%(levelname)s:    %(message)s", level=logging.WARNING)
-
-
-class uviThread(Thread):
-    """Thread for Uvicorn."""
-
-    def run(self):
-        uvicorn.run(api.app, host=webserv, port=port)
 
 
 class EventWatcherTask(RecurringTask):
@@ -102,7 +94,7 @@ def sub_from_tuple(subTuple: tuple) -> None:
         address=this_application.dev_id_to_addr(subTuple[0]),
         confirmationType=subTuple[2],
         lifetime=subTuple[3],
-        )
+    )
 
 
 def get_key(dictionary: dict) -> str:
@@ -112,10 +104,19 @@ def get_key(dictionary: dict) -> str:
 
 
 def main():
-
+    """Main function of the application."""
     args = ConfigArgumentParser(description=__doc__).parse_args()
 
-    server = uviThread()
+    loglevel = args.ini.loglevel
+
+    logging.basicConfig(format="%(levelname)s:    %(message)s", level=loglevel)
+
+    server = Thread(
+        target=uvicorn.run,
+        name="UviThread",
+        args=(api.app,),
+        kwargs={"host": webserv, "port": port, "log_level": loglevel.lower()},
+    )
     server.start()
 
     global this_application

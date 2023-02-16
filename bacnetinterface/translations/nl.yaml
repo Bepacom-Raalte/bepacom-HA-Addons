@@ -8,6 +8,9 @@ configuration:
   objectIdentifier:
     name: Object ID
     description: De identifier die je apparaat mee krijgt.
+  loglevel:
+    name: Loggingsniveau
+    description: Het niveau waarop de gebeurtenissen gelogd worden.
   maxApduLenghtAccepted: 
     name: Maximum  APDU Lengte Geaccepteerd
     description: Maximum hoeveelheid Application Layer Protocol Data Units toegestaan.

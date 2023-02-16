@@ -89,7 +89,7 @@ def str_to_tuple(input_str: str) -> tuple:
 
 async def on_start():
     """Startup sequence of FastAPI."""
-    await asyncio.sleep(3)
+    await asyncio.sleep(4)
 
 
 description = """

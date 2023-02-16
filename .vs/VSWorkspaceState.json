@@ -1,8 +1,8 @@
 {
   "ExpandedNodes": [
     "",
-    "\\.github",
     "\\bacnetinterface",
+    "\\bacnetinterface\\rootfs",
     "\\bacnetinterface\\rootfs\\etc",
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay",
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d",
@@ -12,6 +12,6 @@
     "\\bacnetinterface\\rootfs\\usr\\bin\\templates",
     "\\bacnetinterface\\translations"
   ],
-  "SelectedNode": "\\bacnetinterface\\CHANGELOG.md",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\webAPI.py",
   "PreviewInSolutionExplorer": false
 }
