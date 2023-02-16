@@ -145,6 +145,18 @@ class BACnetIOHandler(
         PropertyReference(propertyIdentifier=PropertyIdentifier("maxPresValue").value),
     ]
 
+    nonStaticPropertyList = [
+        PropertyReference(propertyIdentifier=PropertyIdentifier("presentValue").value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier("statusFlags").value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier("outOfService").value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier("eventState").value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier("reliability").value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier("covIncrement").value),
+        PropertyReference(
+            propertyIdentifier=PropertyIdentifier("notificationClass").value
+        ),
+    ]
+
     id_to_object = {}
     object_to_id = {}
     available_ids = set()
@@ -218,7 +230,7 @@ class BACnetIOHandler(
                     objectlist.append(object)
             self.ReadPropertyMultiple(
                 objectList=objectlist,
-                propertyList=self.propertyList,
+                propertyList=self.nonStaticPropertyList,
                 address=self.dev_id_to_addr(device),
             )
 
