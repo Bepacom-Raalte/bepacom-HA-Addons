@@ -223,6 +223,7 @@ class BACnetIOHandler(
 
     def read_entire_dict(self) -> None:
         """Send a read request for every object in every device."""
+        logging.info("Updating all BACnet values")
         for device, devicedata in self.BACnetDeviceDict.items():
             objectlist = []
             for object, objectdata in devicedata.items():
@@ -257,7 +258,9 @@ class BACnetIOHandler(
             logging.error(str(e) + " from ReadProperty")
             return False
         else:
+            logging.debug("Read Request Succesfully Sent")
             return True
+            
 
     def ReadPropertyMultiple(
         self, objectList: list, propertyList: list, address: str
@@ -287,9 +290,10 @@ class BACnetIOHandler(
             logging.error(str(e) + " from ReadPropertyMultiple")
             return False
         else:
+            logging.debug("Read Multiple Request Succesfully Sent")
             return True
 
-    def WriteProperty(self, objectID: Any, propertyID: Any, value, address) -> None:
+    def WriteProperty(self, objectID: Any, propertyID: Any, value, address) -> bool:
         """Send a WritePropertyRequest to designated address."""
 
         try:
@@ -348,10 +352,13 @@ class BACnetIOHandler(
         except Exception as e:
             logging.error(str(e) + " from WriteProperty")
             return False
+        else:
+            logging.debug("Write Request Succesfully Sent")
+            return True
 
     def COVSubscribe(
         self, objectID, address, confirmationType=True, lifetime=28799
-    ) -> None:
+    ) -> bool:
         """Send a SubscribeCOVRequest to designated address."""
         try:
             request = SubscribeCOVRequest(
@@ -384,32 +391,11 @@ class BACnetIOHandler(
         except Exception as e:
             logging.error(str(e) + "from COVSubscribe")
             return False
+        else:
+            logging.debug("CoV Request Succesfully Sent")
+            return True
 
-    def COVUnsubscribe(self, objectID, address):
-        """Send a SubscribeCOVRequest to designated address with time 1 to stop notifications."""
-        try:
-            request = SubscribeCOVRequest(
-                subscriberProcessIdentifier=int(
-                    self.assign_id((objectID, self.addr_to_dev_id(address)))
-                ),
-                monitoredObjectIdentifier=objectID,
-            )
-
-            self.unsubscribe_id(objectID)
-
-            request.pduDestination = address
-
-            request.issueConfirmedNotifications = None
-
-            iocb = IOCB(request)
-            iocb.add_callback(self.on_Subscribed)
-            self.request_io(iocb)
-
-        except Exception as e:
-            logging.error(str(e) + " from COVUnsubscribe")
-            return False
-
-    def do_IAmRequest(self, apdu):
+    def do_IAmRequest(self, apdu) -> None:
         """ "Callback on detecting I Am response from other devices."""
 
         logging.info("I Am from " + str(apdu.iAmDeviceIdentifier))
@@ -459,7 +445,7 @@ class BACnetIOHandler(
             address=BACnetDevice["address"],
         )
 
-    def do_ConfirmedCOVNotificationRequest(self, apdu):
+    def do_ConfirmedCOVNotificationRequest(self, apdu) -> None:
         """Callback on receiving Confirmed COV Notification."""
 
         global rsvp
@@ -496,7 +482,7 @@ class BACnetIOHandler(
         # return the result
         self.response(response)
 
-    def do_UnconfirmedCOVNotificationRequest(self, apdu):
+    def do_UnconfirmedCOVNotificationRequest(self, apdu) -> None:
         """Callback on receiving Unconfirmed COV Notification."""
 
         global rsvp
@@ -525,7 +511,6 @@ class BACnetIOHandler(
 
     def on_ReadMultipleResult(self, iocb: IOCB) -> None:
         """Callback for result after reading single or multiple properties."""
-
         def return_value_read_multiple(response) -> dict:
             objectdict = {}
             for objects in response.listOfReadAccessResults:
@@ -776,7 +761,7 @@ class BACnetIOHandler(
                 )
                 return False
 
-    def on_WriteResult(self, iocb):
+    def on_WriteResult(self, iocb) -> None:
         """Response after writing to an object."""
         if iocb.ioError:
             logging.error(
@@ -803,11 +788,11 @@ class BACnetIOHandler(
                 iocb.args[0].pduDestination,
             )
 
-    def on_Subscribed(self, iocb):
+    def on_Subscribed(self, iocb) -> None:
         """Callback on whether subscribing was successful."""
         # do something for success
         if iocb.ioResponse:
-            logging.info(
+            logging.debug(
                 "Subscribed to "
                 + str(iocb.ioResponse.pduSource)
                 + " object "
