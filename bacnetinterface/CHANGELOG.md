@@ -1,5 +1,13 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 0.1.2
+
+16/02/2023
+- Dutch translations added.
+- Log level can be adjusted. Defaults to WARNING now.
+- Read request every 60 seconds asking for values that can change, instead of asking for static values. This reduces network traffic.
+- WebUI has tooltips now. Buttons or fields should explain what they do.
+
 ## 0.1.1
 
 15/02/2023
@@ -12,15 +20,13 @@
 - Websockets can handle multiple clients now.
 - Configuration of the add-on has been simplified.
 - Added some API tests internally.
-- API can subscribe now
+- API has an endpoint that let's you subscribe now.
 - Flask no longer included, FastAPI handles everything now, along with uvicorn.
 - WebUI gets updated over websocket. This means values are the same as in the API.
 - WebUI can write now as well.
 - WebUI has gotten a makeover in general.
-- WebUI Subscription page can actually subscribe
+- WebUI Subscription page can actually subscribe now.
 - This add-on runs on Raspberry Pi 3 as it would on an Intel NUC. This means Raspberry Pi is supported.
-- Dutch translations added.
-- Log level can be adjusted. Defaults to WARNING now.
 
 
 # 0.1.0

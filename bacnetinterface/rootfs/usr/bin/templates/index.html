@@ -166,15 +166,15 @@
             <h1>BACnet/IP Interface</h1>
         </div>
         <div class="div2">
-            <a href="./webapp">Main</a>
-            <a id="docs" href="#">API Docs</a>
-            <a href="./subscriptions">Manage Subscriptions</a>
-            <a href="https://www.bepacom.nl" style="float:right;">About</a>
+            <a href="./webapp" title="Main page where you can see all devices, objects and values.">Main</a>
+            <a id="docs" href="#" title="API documentation can be found here. Need an internet connection to load the page.">API Docs</a>
+            <a href="./subscriptions" title="Subscriptions page where you can see all subscriptions.">Manage Subscriptions</a>
+            <a href="https://www.bepacom.nl" style="float:right;" title="Bepacom, the company that made this possible.">About</a>
         </div>
         <div class="div3">
-            <button class="button" onclick="command('iam')">I Am Request</button>
-            <button class="button" onclick="command('whois')">Who Is Request</button>
-            <button class="button" onclick="command('readall')">Read All Devices</button>
+            <button class="button" onclick="command('iam')" title="Send I Am Request over the BACnet network.">I Am Request</button>
+            <button class="button" onclick="command('whois')" title="Send Who Is Request over the BACnet network.">Who Is Request</button>
+            <button class="button" onclick="command('readall')" title="Send Read Request to all devices over the BACnet network.">Read All Devices</button>
         </div>
         <div class="div4">
             <table id="table" style="width:100%">
@@ -184,18 +184,18 @@
         <div class="div5">
             <form id="form">
                 <label for="device">Select Device:</label>
-                <select id="device" name="device"></select>
+                <select id="device" name="device" title="Device you want to write to."></select>
                 <br>
                 <label for="object">Select Object:</label>
-                <select id="object" name="object"></select>
+                <select id="object" name="object" title="Object you want to write to."></select>
                 <br>
                 <label for="property">Property identifier:</label>
-                <input type="text" id="property" name="property">
+                <input type="text" id="property" name="property" title="Property to write to. Write in camelCase, i.e. presentValue or outOfService.">
                 <br>
                 <label for="value">Value:</label>
-                <input type="text" id="value" name="value">
+                <input type="text" id="value" name="value" title="Value to write to property.">
                 <br>
-                <input type="button" value="Write" onclick="submitForm()">
+                <input type="button" value="Write" onclick="submitForm()" title="Send Write Request.">
             </form>
         </div>
     </div>
@@ -228,8 +228,8 @@
             }
         }
 
-        let hostname = window.location.hostname;
-        let url = new URL("ws://" + hostname + "/ws");
+        let currentPage = window.location.host;
+        let url = new URL("ws://" + currentPage + "/ws");
         var ws = new WebSocket(url);
         ws.onmessage = function (event) {
             event.JSON
@@ -344,7 +344,7 @@
             }).then(response => response.json()).then(data => {
                 console.log(data);
             });
-            alert("Write Request Sent!")
+            alert("Write Request Processing! See logs whether it's succesful")
         }
     </script>
 </body>

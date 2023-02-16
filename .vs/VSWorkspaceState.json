@@ -12,6 +12,6 @@
     "\\bacnetinterface\\rootfs\\usr\\bin\\templates",
     "\\bacnetinterface\\translations"
   ],
-  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\BACnetIOHandler.py",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\main.py",
   "PreviewInSolutionExplorer": false
 }
