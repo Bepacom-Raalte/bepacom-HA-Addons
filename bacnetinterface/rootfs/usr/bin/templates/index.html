@@ -206,6 +206,7 @@
         var devicedict = null;
         link.href = "http://" + location.hostname + "/docs";
 
+
         function command(text) {
             if (refreshing) return; // if the page is already refreshing, return and don't call the function again
             let url = "./apiv1/command/" + text
@@ -228,8 +229,9 @@
             }
         }
 
-        let currentPage = window.location.host;
-        let url = new URL("ws://" + currentPage + "/ws");
+        let url = window.location.href;
+        let url = url.replace("http", "ws")
+        let url = url.replace("webapp", "ws")
         var ws = new WebSocket(url);
         ws.onmessage = function (event) {
             event.JSON
