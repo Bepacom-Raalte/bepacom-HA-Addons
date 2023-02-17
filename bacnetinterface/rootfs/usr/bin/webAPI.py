@@ -93,7 +93,7 @@ async def on_start():
 
 
 description = """
-The Bepacom EcoPanel BACnet/IP Interface is cool!
+The Bepacom EcoPanel BACnet/IP Interface is so cool!
 
 ## Things
 

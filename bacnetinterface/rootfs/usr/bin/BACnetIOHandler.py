@@ -260,7 +260,6 @@ class BACnetIOHandler(
         else:
             logging.debug("Read Request Succesfully Sent")
             return True
-            
 
     def ReadPropertyMultiple(
         self, objectList: list, propertyList: list, address: str
@@ -511,6 +510,7 @@ class BACnetIOHandler(
 
     def on_ReadMultipleResult(self, iocb: IOCB) -> None:
         """Callback for result after reading single or multiple properties."""
+
         def return_value_read_multiple(response) -> dict:
             objectdict = {}
             for objects in response.listOfReadAccessResults:

@@ -81,7 +81,7 @@ def write_from_dict(dict_to_write: dict) -> None:
     for object in dict_to_write[deviceID]:
         for property in dict_to_write[deviceID][object]:
             prop_value = dict_to_write[deviceID][object].get(property)
-            logging.info("Writing to " + str(object) + " + " + str(property))
+            logging.info("Writing to " + str(object) + str(property))
             this_application.WriteProperty(
                 object, property, prop_value, this_application.dev_id_to_addr(deviceID)
             )
@@ -109,7 +109,7 @@ def main():
 
     loglevel = args.ini.loglevel
 
-    logging.basicConfig(format="%(levelname)s:    %(message)s", level=loglevel)
+    logging.basicConfig(format="%(levelname)s:      %(message)s", level=loglevel)
 
     server = Thread(
         target=uvicorn.run,
@@ -155,8 +155,9 @@ def main():
     sub_queue_watcher = QueueWatcherTask(api.subQueue, sub_from_tuple, 1000)
     dict_refresher = RefreshDict(60000)
 
-    while True:
-        run()
+    enable_sleeping()
+
+    run()
 
 
 if __name__ == "__main__":
