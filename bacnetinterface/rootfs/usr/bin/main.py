@@ -81,7 +81,7 @@ def write_from_dict(dict_to_write: dict) -> None:
     for object in dict_to_write[deviceID]:
         for property in dict_to_write[deviceID][object]:
             prop_value = dict_to_write[deviceID][object].get(property)
-            logging.info("Writing to " + str(object) + str(property))
+            logging.info("Writing " + str(prop_value) + " to " + str(object) + " " + str(property))
             this_application.WriteProperty(
                 object, property, prop_value, this_application.dev_id_to_addr(deviceID)
             )
