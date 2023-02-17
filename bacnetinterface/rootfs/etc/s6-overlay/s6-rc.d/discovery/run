@@ -1,10 +1,12 @@
 #!/command/with-contenv bashio
 # shellcheck shell=bash
 
-declare payload
+# ==============================================================================
+# Do Home Assistant discovery (doesn't work)
+# s6-overlay docs: https://github.com/just-containers/s6-overlay
+# ==============================================================================
 
-# Wait for Z-Wave JS UI to be available
-bashio::net.wait_for 8099 127.0.0.1 300
+declare payload
 
 # Wait some more
 sleep 5

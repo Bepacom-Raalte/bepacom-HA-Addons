@@ -1,6 +1,11 @@
 #!/command/with-contenv bashio
 # shellcheck shell=bash
 
+# ==============================================================================
+# Initialize the Interface service
+# s6-overlay docs: https://github.com/just-containers/s6-overlay
+# ==============================================================================
+
 # Declaring variables
 
 declare header
