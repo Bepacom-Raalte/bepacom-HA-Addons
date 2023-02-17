@@ -250,7 +250,7 @@ async def write_property(
 
     dict_to_write = {deviceid: {objectid: property_dict}}
 
-    logging.debug("Received: " + dict_to_write + " in write_property()")
+    logging.debug("Received: " + str(dict_to_write) + " in write_property()")
 
     try:
         bacnet_dict = DictToBACnet(dict_to_write)
