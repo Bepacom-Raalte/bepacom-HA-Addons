@@ -21,16 +21,25 @@ declare maxSegmentsAccepted
 
 # Setting variables
 
+
+
+
 bashio::log.info "Generating BACpypes.ini"
 
+
+readarray -t eth_adapters < <(ifconfig -a | grep -oE '^(enp|eth|eno)[a-z0-9]+')
+
+
 { # Try
-	ipaddr=$(ifconfig enp2s0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
-} || { # or try this...
-	ipaddr=$(ifconfig enp0s3 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
-} || { # or try this...
-	ipaddr=$(ifconfig eth0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
-} || { # Catch
+
+	ipaddr=$(ifconfig ${eth_adapters[0]} | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
+	echo "Using adapter ${eth_adapters[0]}"
+
+} || {
+
+	echo "No suitable ethernet adapters found"
 	ipaddr=$(hostname -i)
+
 }
 
 
