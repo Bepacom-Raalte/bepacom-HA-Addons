@@ -21,7 +21,7 @@ declare maxSegmentsAccepted
 
 # Setting variables
 
- "Generating BACpypes.ini"
+bashio::log.info "Generating BACpypes.ini"
 
 readarray -t eth_adapters < <(ifconfig -a | grep -oE '^(enp|eth|eno)[a-z0-9]+')
 
