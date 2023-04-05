@@ -19,6 +19,7 @@ declare foreignBBMD
 declare foreignTTL
 declare maxSegmentsAccepted
 declare eth_adapters
+declare ipaddr
 
 
 bashio::log.info "Generating BACpypes.ini"
