@@ -18,26 +18,35 @@ declare vendorID
 declare foreignBBMD
 declare foreignTTL
 declare maxSegmentsAccepted
+declare eth_adapters
 
-# Setting variables
 
 bashio::log.info "Generating BACpypes.ini"
 
+
 readarray -t eth_adapters < <(ifconfig -a | grep -oE '^(enp|eth|eno)[a-z0-9]+')
 
-{ # Try
-	for adapter in "${eth_adapters[@]}"
-	do
-		ipaddr=$(ifconfig "$adapter" | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
-		if [ -n "$ipaddr" ]; then
-		  break			# Check if ipaddr is not empty
-		fi
-	done
-	echo "Using $adapter with $ipaddr..."
-} || {
+
+for adapter in "${eth_adapters[@]}"
+do
+	ipaddr=$(ifconfig "$adapter" | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
+	if [ -n "$ipaddr" ]; then
+		break			# Check if ipaddr is not empty
+	fi
+done
+if [ -z "$ipaddr" ]; then
 	echo "No suitable ethernet adapters found. You probably won't detect anything now."
 	ipaddr=$(hostname -i)
+fi
+echo "Using $adapter with $ipaddr..."
+
+
+{
+	#Try
+}	||	{
+	#Catch
 }
+
 
 header='[BACpypes]'
 objectname="objectName: $(bashio::config 'objectName')"
