@@ -34,18 +34,13 @@ do
 		break			# Check if ipaddr is not empty
 	fi
 done
+
+
 if [ -z "$ipaddr" ]; then
 	echo "No suitable ethernet adapters found. You probably won't detect anything now."
 	ipaddr=$(hostname -i)
 fi
 echo "Using $adapter with $ipaddr..."
-
-
-{
-	#Try
-}	||	{
-	#Catch
-}
 
 
 header='[BACpypes]'
