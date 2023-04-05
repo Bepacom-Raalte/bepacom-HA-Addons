@@ -11,6 +11,6 @@
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\interface",
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\nginx"
   ],
-  "SelectedNode": "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\nginx\\run",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\init-interface\\run",
   "PreviewInSolutionExplorer": false
 }
