@@ -34,7 +34,7 @@ readarray -t eth_adapters < <(ifconfig -a | grep -oE '^(enp|eth|eno)[a-z0-9]+')
 		fi
 	done
 	if [ -z "$ipaddr" ]; then
-		bashio::log.info "All adapters checked but found no suitable choice. Check whether you are connected through ethernet with a BACnet network. If this problem persists, contact the developer."
+		bashio::log.error "All adapters checked but found no suitable choice. Check whether you are connected through ethernet with a BACnet network. If this problem persists, contact the developer."
 		exit 1
 	fi
 	echo "Using $adapter with $ipaddr..."
