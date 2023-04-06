@@ -2,6 +2,10 @@
 
 _Bepacom BACnet/IP interface. It'll discover BACnet devices on your network. On the WebUI you'll be able to set up the devices to be used as Home Assistant Entities._
 
+_The accompanying integration can be found on Bepacom's Custom Component Components Repository!_
+
+## [Bepacom Custom Components Repository](https://github.com/Bepacom-Raalte/bepacom-custom_components)
+
 ![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]
 ![Supports armhf Architecture][armhf-shield]
