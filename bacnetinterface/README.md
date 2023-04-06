@@ -4,7 +4,7 @@ _Bepacom BACnet/IP interface. It'll discover BACnet devices on your network. On 
 
 The accompanying integration can be found on Bepacom's Custom Component Components Repository!
 
-## [Bepacom Custom Components Repository](https://github.com/Bepacom-Raalte/bepacom-custom_components)
+## [Bepacom Custom Integration Repository](https://github.com/Bepacom-Raalte/bepacom-custom_components)
 
 If you have any issues, please check the logs and contact the add-on developer.
 
