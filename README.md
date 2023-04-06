@@ -8,7 +8,7 @@ Add-on documentation: <https://developers.home-assistant.io/docs/add-ons>
 
 ## Add-ons
 
-This repository contains the following add-ons
+This repository contains the following add-ons:
 
 ### [BACnet Interface](./bacnetinterface)
 
@@ -18,7 +18,6 @@ This repository contains the following add-ons
 ![Supports armv7 Architecture][armv7-shield]
 ![Supports i386 Architecture][i386-shield]
 
-_All of Bepacom's cool addons are in here!!'._
 
 <!--
 
