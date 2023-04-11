@@ -63,7 +63,6 @@ def BACnetToDict(BACnetDict):
                         objectDict.update({propertyID: value})
                     else:
                         objectDict.update({propertyID: str(value)})
-
             deviceDict.update({objectIDstr: objectDict})
         devicesDict.update({deviceIDstr: deviceDict})
     return devicesDict
