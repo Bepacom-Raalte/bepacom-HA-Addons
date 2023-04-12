@@ -4,7 +4,6 @@
     "\\bacnetinterface",
     "\\bacnetinterface\\rootfs",
     "\\bacnetinterface\\rootfs\\etc",
-    "\\bacnetinterface\\rootfs\\etc\\apk",
     "\\bacnetinterface\\rootfs\\etc\\nginx",
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay",
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d",
@@ -12,6 +11,5 @@
     "\\bacnetinterface\\rootfs\\usr",
     "\\bacnetinterface\\rootfs\\usr\\bin"
   ],
-  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\webAPI.py",
   "PreviewInSolutionExplorer": false
 }

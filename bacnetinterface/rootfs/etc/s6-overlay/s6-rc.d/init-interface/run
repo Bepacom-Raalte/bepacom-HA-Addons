@@ -26,71 +26,37 @@ bashio::log.info "Generating BACpypes.ini"
 readarray -t eth_adapters < <(ifconfig -a | grep -oE '^(enp|eth|eno)[a-z0-9]+')
 
 { # Try
-	for adapter in "${eth_adapters[@]}"
-	do
-		ipaddr=$(ifconfig "$adapter" | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
-		if [ -n "$ipaddr" ]; then
-		  break			# Check if ipaddr is not empty
-		fi
-	done
-	if [ -z "$ipaddr" ]; then
-		bashio::log.error "All adapters checked but found no suitable choice. Check whether you are connected through ethernet with a BACnet network. If this problem persists, contact the developer."
-		exit 1
-	fi
-	echo "Using $adapter with $ipaddr..."
+    for adapter in "${eth_adapters[@]}"
+    do
+        ipaddr=$(ifconfig "$adapter" | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
+        if [ -n "$ipaddr" ]; then
+            break            # Check if ipaddr is not empty
+        fi
+    done
+    if [ -z "$ipaddr" ]; then
+        bashio::log.error "All adapters checked but found no suitable choice. Check whether you are connected through ethernet with a BACnet network. If this problem persists, contact the developer."
+        exit 1
+    fi
+    echo "Using $adapter with $ipaddr..."
 } || {
-	echo "No suitable ethernet adapters found. You probably won't detect anything now."
-	ipaddr=$(hostname -i)
+    echo "No suitable ethernet adapters found. You probably won't detect anything now."
+    ipaddr=$(hostname -i)
 }
 
 header='[BACpypes]'
 objectname="objectName: $(bashio::config 'objectName')"
-
 if [[ $(bashio::config 'address') == "auto" ]]; then
-	address="address: $ipaddr/24"
+    address="address: $ipaddr/24"
 else
-	address="address: $(bashio::config 'address')"
+    address="address: $(bashio::config 'address')"
 fi
-
 objectIdentifier="objectIdentifier: $(bashio::config 'objectIdentifier')"
-
-if [[ "$(bashio::config 'maxApduLenghtAccepted')" == "null" ]]; then
-	maxApduLenghtAccepted="maxApduLengthAccepted: 1024"
-else
-	maxApduLenghtAccepted="maxApduLengthAccepted: $(bashio::config 'maxApduLenghtAccepted')"
-fi
-
-if [[ "$(bashio::config 'segmentationSupported')" == "null" ]]; then
-	segmentationSupported="segmentationSupported: segmentedBoth"
-else
-	segmentationSupported="segmentationSupported: $(bashio::config 'segmentationSupported')"
-fi
-
-if [[ "$(bashio::config 'vendorID')" == "null" ]]; then
-	vendorID="vendorIdentifier: 15"
-else
-	vendorID="vendorIdentifier: $(bashio::config 'vendorID')"
-fi
-
-if [[ "$(bashio::config 'foreignBBMD')" == "null" ]]; then
-	foreignBBMD="foreignBBMD: -"
-else
-	foreignBBMD="foreignBBMD: $(bashio::config 'foreignBBMD')"
-fi
-
-if [[ "$(bashio::config 'foreignBBMD')" == "null" ]]; then
-	foreignTTL="foreignTTL: 255"
-else
-	foreignTTL="foreignTTL: $(bashio::config 'foreignTTL')"
-fi
-
-if [[ "$(bashio::config 'maxSegmentsAccepted')" == "null" ]]; then
-	maxSegmentsAccepted="maxSegmentsAccepted: 24"
-else
-	maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted')"
-fi
-
-
+maxApduLenghtAccepted="maxApduLengthAccepted: $(bashio::config 'maxApduLenghtAccepted' '1024')"
+segmentationSupported="segmentationSupported: $(bashio::config 'segmentationSupported' 'segmentedBoth')"
+vendorID="vendorIdentifier: $(bashio::config 'vendorID' '15')"
+foreignBBMD="foreignBBMD: $(bashio::config 'foreignBBMD' '-')"
+foreignTTL="foreignTTL: $(bashio::config 'foreignTTL' '255')"
+maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted' '24')"
 loglevel="loglevel: $(bashio::config 'loglevel')"
 
 # Generate INI file

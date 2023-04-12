@@ -4,6 +4,7 @@ import json
 import logging
 import sys
 import threading
+from contextlib import asynccontextmanager
 from queue import Queue
 from typing import Any, Union
 
@@ -86,9 +87,13 @@ def str_to_tuple(input_str: str) -> tuple:
     return (split_str[0], int(split_str[1]))
 
 
-async def on_start():
-    """Startup sequence of FastAPI."""
-    await asyncio.sleep(4)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan manager of FastAPI."""
+    # Do wait for 10 seconds on startup
+    asyncio.sleep(10)
+    yield
+    # Do nothing on shutdown
 
 
 description = """
@@ -106,10 +111,10 @@ We have these things!
 
 
 app = FastAPI(
-    on_startup=[on_start],
+    lifespan=lifespan,
     title="Bepacom EcoPanel BACnet/IP Interface API",
     description=description,
-    version="0.0.1",
+    version="0.1.3",
     contact={
         "name": "Bepacom B.V.",
         "url": "https://www.bepacom.nl/contact/",

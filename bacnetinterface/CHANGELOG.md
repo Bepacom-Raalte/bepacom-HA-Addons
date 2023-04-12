@@ -1,5 +1,11 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+
+## 0.1.3
+
+12/4/2023
+-	
+
 ## 0.1.2
 
 16/02/2023
