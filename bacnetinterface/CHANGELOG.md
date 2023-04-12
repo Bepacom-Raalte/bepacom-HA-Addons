@@ -4,7 +4,12 @@
 ## 0.1.3
 
 12/4/2023
--	
+- Readme updated to include integration.
+- NGINX now blocks everything from outside.
+- Trying to automatically get the ethernet adapter from the host device.
+- FastAPI to include lifetime now instead of on_startup().
+- API becomes available now after a delay of 10 seconds to give all devices enough time to start up.
+
 
 ## 0.1.2
 
