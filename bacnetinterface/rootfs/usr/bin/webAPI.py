@@ -91,7 +91,7 @@ def str_to_tuple(input_str: str) -> tuple:
 async def lifespan(app: FastAPI):
     """Lifespan manager of FastAPI."""
     # Do wait for 10 seconds on startup
-    await asyncio.sleep(10)
+    await asyncio.sleep(5)
     yield
     # Do nothing on shutdown
 
