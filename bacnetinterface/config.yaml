@@ -20,10 +20,8 @@ startup: services
 map:
   - config:rw
 ports:
-  80/tcp: 80
   47808/udp: 47808
 ports_description:
-  80/tcp: Default webserver port
   47808/udp: BACnet port
 options:
   objectName: EcoPanel

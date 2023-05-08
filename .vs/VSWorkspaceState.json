@@ -1,15 +1,7 @@
 {
   "ExpandedNodes": [
-    "",
-    "\\bacnetinterface",
-    "\\bacnetinterface\\rootfs",
-    "\\bacnetinterface\\rootfs\\etc",
-    "\\bacnetinterface\\rootfs\\etc\\nginx",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\init-interface",
-    "\\bacnetinterface\\rootfs\\usr",
-    "\\bacnetinterface\\rootfs\\usr\\bin"
+    ""
   ],
+  "SelectedNode": "\\C:\\Users\\luuk-\\Source\\Repos\\Bepacom-Raalte\\bepacom-HA-Addons",
   "PreviewInSolutionExplorer": false
 }

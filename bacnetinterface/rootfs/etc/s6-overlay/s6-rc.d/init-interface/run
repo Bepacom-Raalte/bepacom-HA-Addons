@@ -48,7 +48,7 @@ objectname="objectName: $(bashio::config 'objectName')"
 if [[ $(bashio::config 'address') == "auto" ]]; then
     address="address: $ipaddr/24"
 else
-    address="address: $(bashio::config 'address')"
+    address="address: $(bashio::config 'address')/24"
 fi
 objectIdentifier="objectIdentifier: $(bashio::config 'objectIdentifier')"
 maxApduLenghtAccepted="maxApduLengthAccepted: $(bashio::config 'maxApduLenghtAccepted' '1024')"
