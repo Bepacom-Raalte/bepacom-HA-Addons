@@ -58,7 +58,7 @@ foreignBBMD="foreignBBMD: $(bashio::config 'foreignBBMD' '-')"
 foreignTTL="foreignTTL: $(bashio::config 'foreignTTL' '255')"
 maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted' '24')"
 loglevel="loglevel: $(bashio::config 'loglevel')"
-defaultPriority="defaultPriority: $(bashio::config 'defaultPriority', 15)"
+defaultPriority="defaultPriority: $(bashio::config 'defaultPriority', '15')"
 
 # Generate INI file
 
