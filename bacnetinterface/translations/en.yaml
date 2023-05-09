@@ -8,6 +8,9 @@ configuration:
   objectIdentifier:
     name: Object ID
     description: The identifier (number) of the interface
+  defaultPriority:
+    name: BACnet write priority
+    description: Priority of the BACnet write request. Priority 1 is highest, priority 16 is lowest it can go.
   loglevel:
     name: Level of Logging
     description: The severity of log messages being displayed.

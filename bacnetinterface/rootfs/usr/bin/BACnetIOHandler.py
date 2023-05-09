@@ -162,6 +162,7 @@ class BACnetIOHandler(
     available_ids = set()
     next_id = 1
     updateEvent = threading.Event()
+    defaultPriority = int()
 
     def __init__(self, *args) -> None:
         BIPSimpleApplication.__init__(self, *args)
@@ -302,7 +303,7 @@ class BACnetIOHandler(
                 propertyIdentifier=propertyID,
                 propertyArrayIndex=None,
                 propertyValue=None,
-                priority=None,
+                priority=self.defaultPriority,
             )
 
             datatype = get_datatype(objectID[0], propertyID)

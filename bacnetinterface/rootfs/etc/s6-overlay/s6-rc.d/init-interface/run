@@ -58,8 +58,9 @@ foreignBBMD="foreignBBMD: $(bashio::config 'foreignBBMD' '-')"
 foreignTTL="foreignTTL: $(bashio::config 'foreignTTL' '255')"
 maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted' '24')"
 loglevel="loglevel: $(bashio::config 'loglevel')"
+defaultPriority="defaultPriority: $(bashio::config 'defaultPriority', 15)"
 
 # Generate INI file
 
-printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" "$loglevel" > /usr/bin/BACpypes.ini
+printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" "$loglevel" "$defaultPriority" > /usr/bin/BACpypes.ini
 cat /usr/bin/BACpypes.ini

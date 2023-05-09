@@ -1,6 +1,13 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
 
+## 0.1.4
+
+09/05/2023
+- Updated configuration to include Write Request Priority.
+- Updated DOCS to reflect the change.
+- We appreciate the feedback!!
+
 ## 0.1.3
 
 12/4/2023

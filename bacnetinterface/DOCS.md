@@ -62,6 +62,8 @@ Example add-on configuration:
 objectName: EcoPanel
 address: 0.0.0.0/24
 objectIdentifier: 420
+defaultPriority: 15
+loglevel: WARNING
 maxApduLenghtAccepted: 1024
 segmentationSupported: segmentedBoth
 vendorID: 15
@@ -77,6 +79,12 @@ Best is to write the IP of the Ethernet port connected to the BACneet network. I
 
 ### Option: `objectIdentifier`
 The Object Identifier that this device will get. This will be seen by other devices on the BACnet network. **Make sure it's unique!**
+
+### Option: 'defaultPriority'
+The priority your write requests get. Low number means high priority. High number means low priority. Recommended to keep at 15 or 16 unless you know what higher priority can do to your BACnet devices.
+
+### Option: "loglevel"
+The verbosity of the logs in the add-on. Usually WARNING is alright, INFO gets a little chatty.
 
 ### Option: `maxApduLenghtAccepted`
 The max length an APDU can be before it'll be rejected. Recommended to leave the default value if you don't know what it does.

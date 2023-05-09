@@ -145,6 +145,7 @@ def main():
 
     # make a simple application
     this_application = BACnetIOHandler(this_device, args.ini.address)
+    this_application.defaultPriority = int(args.ini.defaultpriority)
     logging.info("Starting BACnet device on " + args.ini.address + "\n")
 
     # Coupling of FastAPI and BACnetIOHandler

@@ -1,6 +1,6 @@
 configuration:
   objectName:
-    name: Objecten Naam
+    name: Object Naam
     description: Naam van het BACnet apparaat op het netwerk.
   address:
     name: Interface IP
@@ -8,6 +8,9 @@ configuration:
   objectIdentifier:
     name: Object ID
     description: De identifier die je apparaat mee krijgt.
+  defaultPriority:
+    name: BACnet write priority
+    description: Prioriteit van een BACnet schrijf request. 1 is hoogste en 16 is laagste prioriteit.
   loglevel:
     name: Loggingsniveau
     description: Het niveau waarop de gebeurtenissen gelogd worden.
