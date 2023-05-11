@@ -133,7 +133,6 @@ app = FastAPI(
         "url": "https://www.bepacom.nl/contact/",
     },
     root_path=get_ingress_url(),
-    root_path_in_servers=False,
 )
 
 
