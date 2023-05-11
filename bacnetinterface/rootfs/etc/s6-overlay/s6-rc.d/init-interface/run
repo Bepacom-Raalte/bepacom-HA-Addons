@@ -65,3 +65,5 @@ defaultPriority="defaultPriority: $(bashio::config 'defaultPriority')"
 
 printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" "$loglevel" "$defaultPriority" > /usr/bin/BACpypes.ini
 cat /usr/bin/BACpypes.ini
+
+printf "$(bashio::addon.ingress_url)" > /usr/bin/ingress.ini

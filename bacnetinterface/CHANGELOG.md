@@ -3,10 +3,20 @@
 
 ## 0.1.4
 
+11/05/2023
+- Updated web UI page to include Redoc API documentation.
+- Viewing API documentation works now.
+- API documentation now uses ingress.
+- Made loglevel a mandatory configuration.
+
+
+## 0.1.4
+
 09/05/2023
 - Updated configuration to include Write Request Priority.
 - Updated DOCS to reflect the change.
 - We appreciate the feedback!!
+
 
 ## 0.1.3
 
@@ -24,6 +34,7 @@
 - Log level can be adjusted. Defaults to WARNING now.
 - Read request every 60 seconds asking for values that can change, instead of asking for static values. This reduces network traffic.
 - WebUI has tooltips now. Buttons or fields should explain what they do.
+
 
 ## 0.1.1
 

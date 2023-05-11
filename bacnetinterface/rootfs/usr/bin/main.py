@@ -110,6 +110,17 @@ def get_key(dictionary: dict) -> str:
         return key
 
 
+def get_ingress_url() -> str:
+    """Return Home Assistant Ingress URL"""
+    try:
+        with open("ingress.ini", "r") as ingress:
+            url = ingress.read()
+            newURL = url.replace("/webapp", "")
+            return newURL
+    except:
+        return ""
+
+
 def main():
     """Main function of the application."""
     args = ConfigArgumentParser(description=__doc__).parse_args()

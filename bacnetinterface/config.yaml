@@ -1,9 +1,9 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: Bepacom EcoPanel BACnet/IP Interface
-version: "0.1.4"
+version: "0.1.5"
 slug: bacnetinterface
 description: Bepacom BACnet/IP interface for the Bepacom EcoPanel.
-url: "https://github.com/GravySeal/bepacom-repo/"
+url: "https://github.com/Bepacom-Raalte/bepacom-HA-Addons/tree/main/bacnetinterface"
 arch:
   - armhf
   - armv7
@@ -36,7 +36,7 @@ schema:
   address: str
   objectIdentifier: int
   defaultPriority: "int(1,16)"
-  loglevel: list(DEBUG|INFO|WARNING|ERROR|CRITICAL)?
+  loglevel: list(DEBUG|INFO|WARNING|ERROR|CRITICAL)
   maxApduLenghtAccepted: int?
   segmentationSupported: str?
   vendorID: int?

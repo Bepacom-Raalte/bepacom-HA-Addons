@@ -11,6 +11,7 @@ from typing import Any, Union
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from main import get_ingress_url
 
 # ===================================================
 # Global variables
@@ -119,6 +120,20 @@ app = FastAPI(
         "name": "Bepacom B.V.",
         "url": "https://www.bepacom.nl/contact/",
     },
+)
+
+
+app = FastAPI(
+    lifespan=lifespan,
+    title="Bepacom EcoPanel BACnet/IP Interface API",
+    description=description,
+    version="0.1.5",
+    contact={
+        "name": "Bepacom B.V.",
+        "url": "https://www.bepacom.nl/contact/",
+    },
+    root_path=get_ingress_url(),
+    root_path_in_servers=False,
 )
 
 
