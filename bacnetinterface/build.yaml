@@ -1,5 +1,4 @@
 ---
-image: Bepacom-Raalte/{arch}-bacnet-interface
 build_from:
   aarch64: ghcr.io/home-assistant/aarch64-base-python:3.11-alpine3.18
   armhf: ghcr.io/home-assistant/armhf-base-python:3.11-alpine3.18
