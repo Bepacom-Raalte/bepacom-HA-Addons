@@ -5,7 +5,7 @@
 30/05/2023
 - Bumped Alpine base image to 3.18.
 - Python version is now 3.11.
-- Packages on GitHub _should_ speed up installation.
+- Packages on GitHub renamed to bacnet-interface instead of null.
 
 
 ## 0.1.5
