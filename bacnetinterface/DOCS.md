@@ -23,7 +23,10 @@ This add-on works on Home Assistant OS as well as Home Assistant Supervised.
 
 ## API Points
 
-You'll be able to find all API points at "homeassistant.local/docs" whereas homeassistant.local is your host name.
+You'll be able to find all API points in the Web UI. All outside access to the API and Web UI is blocked. 
+Only through Home Assistant the API can be accessed. 
+This means the integration is allowed to communicate while the rest is not.
+
 These points will allow you to GET data:
 
 - /apiv1/json								- Return a full list of all device data.
@@ -38,11 +41,6 @@ These points will allow you to POST data:
 - /apiv1/{deviceid}{objectid}				- Write to an object from a specific device.
 - /apiv1/subscribe/{deviceid}{objectid}		- Subscribe to an object from a specific device.
 
-
-These API points will be used as follows:
-"homeassistant.local/apiv1/json"
-
-You can find the Web UI on /webapp
 
 **Device Identifiers** get written as "device:number", so if a device has an identifier of 100, the notation for API will be "device:100".
 

@@ -1,7 +1,14 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 0.1.6
 
-## 0.1.4
+30/05/2023
+- Bumped Alpine base image to 3.18.
+- Python version is now 3.11.
+- Packages on GitHub _should_ speed up installation.
+
+
+## 0.1.5
 
 11/05/2023
 - Updated web UI page to include Redoc API documentation.

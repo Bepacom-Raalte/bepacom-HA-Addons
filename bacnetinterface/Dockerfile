@@ -1,5 +1,4 @@
-ARG BUILD_FROM=ghcr.io/hassio-addons/base:13.0.0
-# hadolint ignore=DL3006
+ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
 # Install requirements for add-on

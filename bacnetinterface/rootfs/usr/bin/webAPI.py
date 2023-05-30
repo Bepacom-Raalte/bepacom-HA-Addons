@@ -115,18 +115,6 @@ app = FastAPI(
     lifespan=lifespan,
     title="Bepacom EcoPanel BACnet/IP Interface API",
     description=description,
-    version="0.1.3",
-    contact={
-        "name": "Bepacom B.V.",
-        "url": "https://www.bepacom.nl/contact/",
-    },
-)
-
-
-app = FastAPI(
-    lifespan=lifespan,
-    title="Bepacom EcoPanel BACnet/IP Interface API",
-    description=description,
     version="0.1.5",
     contact={
         "name": "Bepacom B.V.",
