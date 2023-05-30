@@ -43,4 +43,4 @@ schema:
   foreignBBMD: str?
   foreignTTL: int?
   maxSegmentsAccepted: int?
-image: "bepacom-raalte/{arch}-bacnet-interface"
+image: "ghcr.io/bepacom-raalte/{arch}-bacnet-interface"
