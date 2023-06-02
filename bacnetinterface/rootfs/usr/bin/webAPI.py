@@ -10,7 +10,7 @@ import threading
 from contextlib import asynccontextmanager
 from io import StringIO
 from queue import Queue
-from random import randint
+from random import randint, choice
 from typing import Annotated, Any, Union
 
 from BACnetIOHandler import BACnetIOHandler
@@ -245,10 +245,11 @@ async def upload_ede_files(
             obj_instance = row[4]
             desc = row[5]
 
-            try:
-                present_value = row[6]
-            except:
+            if "binary" in obj_type:
+                present_value = choice(['active', 'inactive'])
+            else:
                 present_value = randint(0, 10)
+
             try:
                 state_text = row[13]
             except:
@@ -290,7 +291,7 @@ async def upload_ede_files(
                 obj_dict["vendorName"] = "Bepacom EcoPanel BACnet/IP Interface"
                 obj_dict["description"] = "Placeholder"
             else:
-                obj_dict["presentValue"]: present_value
+                obj_dict["presentValue"] = present_value
 
             if obj_type in BACnetIOHandler.objectFilter or obj_type == "device":
                 deviceDict = deep_update(

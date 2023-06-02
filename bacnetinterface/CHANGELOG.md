@@ -1,5 +1,14 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 0.2.1 quickfix
+
+01/06/2023
+- Rounding of long float values. It's now rounding at the first decimal.
+- LAN IP detection still works automatically, and only shuts down if it's automatic in config. If it's not auto, you can manually write an IP and not shut down.
+- Add-on uses image from GitHub now, decreasing install time.
+- fixed presentvalue not doing anything for EDE files
+
+
 ## 0.2.0
 
 01/06/2023
@@ -9,8 +18,6 @@
 - EDE files that have been loaded can be deleted.
 - A restart of the add-on will remove the EDE files from the add-on.
 - Web UI pages allow easy adding and removing.
-- Rounding of long float values. It's now rounding at the first decimal.
-- LAN IP detection still works automatically, and only shuts down if it's automatic in config. If it's not auto, you can manually write an IP and not shut down.
 
 
 ## 0.1.6
