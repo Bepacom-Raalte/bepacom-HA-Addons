@@ -10,6 +10,7 @@
 - A restart of the add-on will remove the EDE files from the add-on.
 - Web UI pages allow easy adding and removing.
 - Rounding of long float values. It's now rounding at the first decimal.
+- LAN IP detection still works automatically, and only shuts down if it's automatic in config. If it's not auto, you can manually write an IP and not shut down.
 
 
 ## 0.1.6

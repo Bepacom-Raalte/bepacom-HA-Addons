@@ -4,7 +4,7 @@ configuration:
     description: The name of the interface in the BACnet network
   address:
     name: Interface IP
-    description: BACnet/IP host address. "auto" tries to automatically get your IP. x.x.x.x/24 format.
+    description: BACnet/IP host address. "auto" tries to automatically get your LAN IP. {interface IP}/24 format.
   objectIdentifier:
     name: Object ID
     description: The identifier (number) of the interface

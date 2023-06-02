@@ -2,7 +2,7 @@
 name: Bepacom EcoPanel BACnet/IP Interface
 version: "0.2.0"
 slug: bacnetinterface
-description: Bepacom BACnet/IP interface for the Bepacom EcoPanel.
+description: Bepacom BACnet/IP interface for the Bepacom EcoPanel
 url: "https://github.com/Bepacom-Raalte/bepacom-HA-Addons/tree/main/bacnetinterface"
 arch:
   - armhf
