@@ -83,6 +83,9 @@ from bacpypes.primitivedata import (Atomic, BitString, Boolean,
 from bacpypes.service.cov import ChangeOfValueServices
 from bacpypes.service.object import ReadWritePropertyMultipleServices
 
+from pydantic.utils import deep_update
+
+
 rsvp = (True, None, None)
 
 
@@ -143,6 +146,8 @@ class BACnetIOHandler(
         ),
         PropertyReference(propertyIdentifier=PropertyIdentifier("minPresValue").value),
         PropertyReference(propertyIdentifier=PropertyIdentifier("maxPresValue").value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier("activeText").value),
+        PropertyReference(propertyIdentifier=PropertyIdentifier("inactiveText").value),
     ]
 
     nonStaticPropertyList = [
@@ -176,6 +181,10 @@ class BACnetIOHandler(
             if device == deviceID:
                 self.updateEvent.set()
                 try:
+                    if new_val.get('presentValue') == "active":
+                        new_val['presentValue'] = 1
+                    elif new_val.get('presentValue') == "inactive":
+                        new_val['presentValue'] = 0
                     self.BACnetDeviceDict[deviceID][objectID].update(new_val)
                 except:
                     self.BACnetDeviceDict[deviceID][objectID] = new_val
@@ -457,7 +466,9 @@ class BACnetIOHandler(
                 )
 
                 value = listvalue.value.cast_out(datatype)
+
                 property_dict.update({listvalue.propertyIdentifier: value})
+
             self.update_object(
                 apdu.monitoredObjectIdentifier,
                 apdu.initiatingDeviceIdentifier,

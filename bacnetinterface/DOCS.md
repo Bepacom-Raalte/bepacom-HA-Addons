@@ -32,7 +32,8 @@ These points will allow you to GET data:
 - /apiv1/json								- Return a full list of all device data.
 - /apiv1/command/whois						- Make the add-on do a Who Is request.
 - /apiv1/command/iam						- Make the add-on do an I Am request.
-- /apiv1/command/readall					- Make the add-on read everything
+- /apiv1/command/readall					- Make the add-on read everything.
+- /apiv1/commission/ede					    - Read uploaded EDE files.
 - /apiv1/{deviceid}							- Retrieve all data from a specific device.
 - /apiv1/{deviceid}{objectid}				- Retrieve all data from an object from a specific device.
 - /apiv1/{deviceid}{objectid}{propertyid}	- Retrieve a property value from an object in a specific device.
@@ -40,6 +41,7 @@ These points will allow you to GET data:
 These points will allow you to POST data:
 - /apiv1/{deviceid}{objectid}				- Write to an object from a specific device.
 - /apiv1/subscribe/{deviceid}{objectid}		- Subscribe to an object from a specific device.
+- /apiv1/commission/ede					    - Upload/delete EDE files.
 
 
 **Device Identifiers** get written as "device:number", so if a device has an identifier of 100, the notation for API will be "device:100".

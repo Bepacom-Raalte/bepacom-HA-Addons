@@ -2,16 +2,27 @@
 import asyncio
 import json
 import logging
+import random
 import sys
 import threading
+import csv
+import codecs
 from contextlib import asynccontextmanager
 from queue import Queue
-from typing import Any, Union
+from typing import Any, Union, Annotated
+from io import StringIO
+from random import randint
 
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from pydantic.utils import deep_update
+
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, File, UploadFile, Query, status, Response
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from main import get_ingress_url
+
+from bacpypes.basetypes import ObjectTypesSupported, EngineeringUnits
+
+from BACnetIOHandler import BACnetIOHandler
 
 # ===================================================
 # Global variables
@@ -26,6 +37,7 @@ threadingReadAllEvent: threading.Event = threading.Event()
 writeQueue: Queue = Queue()
 subQueue: Queue = Queue()
 activeSockets: list = []
+EDE_files : list = []
 
 
 def BACnetToDict(BACnetDict):
@@ -47,6 +59,8 @@ def BACnetToDict(BACnetDict):
         "stateText",
         "numberOfStates",
         "notificationClass",
+        "activeText",
+        "inactiveText",
     )
     devicesDict = {}
     for deviceID in BACnetDict.keys():
@@ -115,7 +129,7 @@ app = FastAPI(
     lifespan=lifespan,
     title="Bepacom EcoPanel BACnet/IP Interface API",
     description=description,
-    version="0.1.5",
+    version="0.2.0",
     contact={
         "name": "Bepacom B.V.",
         "url": "https://www.bepacom.nl/contact/",
@@ -129,24 +143,37 @@ templates = Jinja2Templates(directory="/usr/bin/templates")
 
 @app.get("/webapp", response_class=HTMLResponse)
 async def webapp(request: Request):
-    """Index and main page of the add-on"""
+    """Index and main page of the add-on."""
     return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.get("/subscriptions", response_class=HTMLResponse)
 async def subscriptions(request: Request):
-    """Page to see subscription ID's"""
+    """Page to see subscription ID's."""
     return templates.TemplateResponse(
         "subscriptions.html",
         {"request": request, "subscriptions": subscription_id_to_object},
     )
 
 
+@app.get("/ede", response_class=HTMLResponse)
+async def subscriptions(request: Request):
+    """Page to see EDE files uploaded."""
+    return templates.TemplateResponse(
+        "ede.html",
+        {"request": request, "files": EDE_files},
+    )
+
+
 @app.get("/apiv1/json")
 async def get_entire_dict():
     """Return all devices and their values."""
-    global BACnetDeviceDict
-    return BACnetToDict(BACnetDeviceDict)
+
+    dict_to_send = BACnetToDict(BACnetDeviceDict)
+    if EDE_files:
+        for file in EDE_files:
+            dict_to_send = deep_update(dict_to_send, file)
+    return dict_to_send
 
 
 @app.get("/apiv1/command/whois")
@@ -169,6 +196,130 @@ async def read_all_command():
     threadingReadAllEvent.set()
     return "Command queued"
 
+
+@app.get("/apiv1/commissioning/ede")
+async def read_ede_files():
+    """Read currently uploaded EDE files."""
+    return EDE_files
+
+
+@app.post("/apiv1/commissioning/ede", status_code=status.HTTP_200_OK)
+async def upload_ede_files(response: Response, EDE: UploadFile | None, stateTexts: UploadFile | None = None):
+    """Upload EDE files to show up as placeholder in the object lists."""
+
+    object_keys = ObjectTypesSupported.bitNames
+    bacnet_units = EngineeringUnits.enumerations
+    deviceDict = {}
+    liststart = False
+    stateTextsList = []
+    statecounter = 0
+
+
+    if stateTexts:
+        csvStateText = csv.reader(codecs.iterdecode(stateTexts.file, 'utf-8'), delimiter=';')
+        for row in csvStateText:
+            if statecounter >=2:
+                row.pop(0)
+                stateTextsList.append(row)
+            statecounter += 1
+
+    csvEDE = csv.reader(codecs.iterdecode(EDE.file, 'utf-8'), delimiter=';')
+
+    for row in csvEDE:
+        if liststart:
+            dev_instance = row[1]
+            obj_name = row[2]
+            obj_type = None
+
+            for key, value in object_keys.items():
+                if int(value) == int(row[3]):
+                    obj_type = key
+                    break
+                else:
+                    continue
+
+            if obj_type is None:
+                continue
+
+            obj_instance = row[4]
+            desc = row[5]
+
+            try:
+                present_value = row[6]
+            except:
+                present_value = randint(0,10)
+            try:
+                state_text = row[13]
+            except:
+                state_text = None
+
+            try:
+                for key, value in bacnet_units.items():
+                    if row[14]:
+                        pass
+                    else:
+                        unit = None
+                        continue
+                    if int(value) == int(row[14]):
+                        unit = key
+                        break
+            except:
+                unit = None
+
+            obj_dict = {}
+            obj_dict = {
+                "objectIdentifier": [obj_type, obj_instance],
+                "objectType": obj_type,
+                "objectName": obj_name,
+                "description": desc,
+                }
+
+            if stateTextsList and "binary" in obj_type:
+                obj_dict["inactiveText"] = stateTextsList[int(state_text)][0]
+                obj_dict["activeText"] = stateTextsList[int(state_text)][1]
+            elif stateTextsList and state_text:
+                obj_dict["stateText"] = stateTextsList[int(state_text)-1]
+                obj_dict["numberOfStates"] = len(stateTextsList[int(state_text)-1])
+
+            if unit:
+                obj_dict["units"] = unit
+
+            if obj_type == 'device':
+                obj_dict["modelName"] = "EDE File"
+                obj_dict["vendorName"] = "Bepacom EcoPanel BACnet/IP Interface"
+                obj_dict["description"] = "Placeholder"
+            else:
+                obj_dict["presentValue"]: present_value
+
+            if obj_type in BACnetIOHandler.objectFilter or obj_type == 'device':
+                deviceDict = deep_update(deviceDict, {f"device:{dev_instance}": {f"{obj_type}:{obj_instance}": obj_dict}})
+
+        if row[0] == "# keyname":
+            liststart = True
+
+    if list(deviceDict)[0] in list(BACnetToDict(BACnetDeviceDict)):
+        logging.warning("Device ID already in use.")
+        response.status_code=status.HTTP_409_CONFLICT
+        return "This device already exists as a device in the BACnet/IP network"
+
+    for file in EDE_files:
+        if file.keys() in deviceDict.keys():
+            logging.warning("EDE already loaded.")
+            response.status_code=status.HTTP_409_CONFLICT
+            return "This device already exists as EDE file"
+
+    EDE_files.append(deviceDict)
+
+    return deviceDict
+
+
+@app.delete("/apiv1/commissioning/ede")
+async def delete_ede_file(device_ids: Annotated[list[str] | None, Query()] = None):
+    """Delete EDE files to stop letting them show up in API calls."""
+    logging.error(len(EDE_files))
+    EDE_files[:] = [dictionary for dictionary in EDE_files if all(device not in dictionary for device in device_ids)]
+    logging.error(len(EDE_files))
+    return True
 
 # Any commands or not variable paths should go above here... FastAPI will use it as a variable if you make a new path below this.
 
@@ -346,8 +497,12 @@ async def websocket_writer(websocket: WebSocket):
     while True:
         if threadingUpdateEvent.is_set():
             try:
+                dict_to_send = BACnetToDict(BACnetDeviceDict)
+                if EDE_files:
+                    for file in EDE_files:
+                        dict_to_send = deep_update(dict_to_send, file)
                 for websocket in activeSockets:
-                    await websocket.send_json(BACnetToDict(BACnetDeviceDict))
+                    await websocket.send_json(dict_to_send)
                 threadingUpdateEvent.clear()
             except (RuntimeError, asyncio.CancelledError) as error:
                 logging.error(str(error))

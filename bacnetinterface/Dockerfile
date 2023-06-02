@@ -15,7 +15,8 @@ RUN \
     fastapi>=0.92.0 \
     jinja2>=3.1.2 \
     uvicorn>=0.20.0 \
-    websockets>=10.4
+    websockets>=10.4 \
+    python-multipart
 
 WORKDIR /
 

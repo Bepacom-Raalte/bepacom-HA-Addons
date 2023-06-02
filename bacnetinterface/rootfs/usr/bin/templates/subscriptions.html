@@ -21,7 +21,6 @@
             grid-template-rows: 0.8fr 0.2fr repeat(3, 1fr);
             grid-column-gap: 0px;
             grid-row-gap: 0px;
-            border: 2px solid #f60000;
             width: 100vw;
             height: 100vh;
             background-color: white;
@@ -40,6 +39,7 @@
             border: 2px solid #f60000;
             grid-area: 2 / 1 / 3 / 6;
             background-color: #f60000;
+            border-bottom-color: white;
         }
 
             .div2 a {
@@ -51,6 +51,7 @@
                 padding-right: 10px;
                 height: 100%;
                 line-height: 300%;
+                width: 12%;
             }
 
                 .div2 a:hover {
@@ -162,14 +163,15 @@
 <body>
     <div class="parent">
         <div class="div1">
-            <img src="https://www.bepacom.nl/wp-content/uploads/2018/09/logo-bepacom-besturingstechniek.jpg" alt="Bepacom B.V. Raalte" style="float: left; justify-content: center; align-items: center; height:40px;">
+            <img src="https://www.bepacom.nl/wp-content/uploads/2018/09/logo-bepacom-besturingstechniek.jpg" alt="Bepacom B.V. Raalte" style="margin:1%; justify-content: center; align-items: center; height:40px;">
             <h1>BACnet/IP Interface</h1>
         </div>
         <div class="div2">
             <a href="./webapp" title="Main page where you can see all devices, objects and values.">Main</a>
+            <a href="./subscriptions" title="Page where you can see all subscriptions.">Subscriptions</a>
+            <a href="./ede" title="Page where you can see manage EDE files.">EDE</a>
             <a id="docs" href="./docs" title="API documentation can be found here. Need an internet connection to load the page.">Swagger API Docs</a>
             <a id="docs" href="./redoc" title="API documentation can be found here. Need an internet connection to load the page.">Redoc API Docs</a>
-            <a href="./subscriptions" title="Page where you can see all subscriptions.">Manage Subscriptions</a>
             <a href="https://www.bepacom.nl" style="float:right;" title="Bepacom, the company that made this possible.">About</a>
         </div>
         <div class="div3">
@@ -214,10 +216,8 @@
     </div>
     <script>
         const API_URL = './apiv1/json';
-        var refreshing = false; // flag to check if the page is already
-        var link = document.getElementById("docs");
+        var refreshing = false; // flag to check if the page is ready
         var devicedict = null;
-        link.href = "http://" + location.hostname + "/docs";
 
         function command(text) {
             if (refreshing) return; // if the page is already refreshing, return and don't call the function again

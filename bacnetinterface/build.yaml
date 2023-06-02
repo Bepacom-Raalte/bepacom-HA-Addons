@@ -7,7 +7,7 @@ build_from:
   i386: ghcr.io/home-assistant/i386-base-python:3.11-alpine3.18
 labels:
   org.opencontainers.image.title: "Home Assistant Add-on: Bepacom BACnet/IP interface"
-  org.opencontainers.image.description: "Example add-on to use as a blueprint for new add-ons."
+  org.opencontainers.image.description: "Bepacom add-on for Home Assistant. It can act as a virtual BACnet device and read data."
   org.opencontainers.image.source: "https://github.com/Bepacom-Raalte/bepacom-HA-Addons"
   org.opencontainers.image.licenses: "Apache License 2.0"
 args:

@@ -1,5 +1,17 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 0.2.0
+
+01/06/2023
+- Added commissioning API points!
+- Now it's possible to load EDE files in the add-on.
+- This allows the integration generate placeholder entities in Home Assistant until the real device gets connected to the network.
+- EDE files that have been loaded can be deleted.
+- A restart of the add-on will remove the EDE files from the add-on.
+- Web UI pages allow easy adding and removing.
+- Binary objects now return 0 and 1, as well as their active- and inactiveText properties. This may break some things in the integration
+
+
 ## 0.1.6
 
 30/05/2023

@@ -9,7 +9,8 @@
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user",
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user\\contents.d",
     "\\bacnetinterface\\rootfs\\usr",
-    "\\bacnetinterface\\rootfs\\usr\\bin"
+    "\\bacnetinterface\\rootfs\\usr\\bin",
+    "\\bacnetinterface\\rootfs\\usr\\bin\\templates"
   ],
   "PreviewInSolutionExplorer": false
 }
