@@ -1,28 +1,26 @@
 """API script for BACnet add-on."""
 import asyncio
+import codecs
+import csv
 import json
 import logging
 import random
 import sys
 import threading
-import csv
-import codecs
 from contextlib import asynccontextmanager
-from queue import Queue
-from typing import Any, Union, Annotated
 from io import StringIO
+from queue import Queue
 from random import randint
+from typing import Annotated, Any, Union
 
-from pydantic.utils import deep_update
-
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, File, UploadFile, Query, status, Response
+from BACnetIOHandler import BACnetIOHandler
+from bacpypes.basetypes import EngineeringUnits, ObjectTypesSupported
+from fastapi import (FastAPI, File, Query, Request, Response, UploadFile,
+                     WebSocket, WebSocketDisconnect, status)
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from main import get_ingress_url
-
-from bacpypes.basetypes import ObjectTypesSupported, EngineeringUnits
-
-from BACnetIOHandler import BACnetIOHandler
+from pydantic.utils import deep_update
 
 # ===================================================
 # Global variables
@@ -37,7 +35,7 @@ threadingReadAllEvent: threading.Event = threading.Event()
 writeQueue: Queue = Queue()
 subQueue: Queue = Queue()
 activeSockets: list = []
-EDE_files : list = []
+EDE_files: list = []
 
 
 def BACnetToDict(BACnetDict):
@@ -204,7 +202,9 @@ async def read_ede_files():
 
 
 @app.post("/apiv1/commissioning/ede", status_code=status.HTTP_200_OK)
-async def upload_ede_files(response: Response, EDE: UploadFile | None, stateTexts: UploadFile | None = None):
+async def upload_ede_files(
+    response: Response, EDE: UploadFile | None, stateTexts: UploadFile | None = None
+):
     """Upload EDE files to show up as placeholder in the object lists."""
 
     object_keys = ObjectTypesSupported.bitNames
@@ -214,16 +214,17 @@ async def upload_ede_files(response: Response, EDE: UploadFile | None, stateText
     stateTextsList = []
     statecounter = 0
 
-
     if stateTexts:
-        csvStateText = csv.reader(codecs.iterdecode(stateTexts.file, 'utf-8'), delimiter=';')
+        csvStateText = csv.reader(
+            codecs.iterdecode(stateTexts.file, "utf-8"), delimiter=";"
+        )
         for row in csvStateText:
-            if statecounter >=2:
+            if statecounter >= 2:
                 row.pop(0)
                 stateTextsList.append(row)
             statecounter += 1
 
-    csvEDE = csv.reader(codecs.iterdecode(EDE.file, 'utf-8'), delimiter=';')
+    csvEDE = csv.reader(codecs.iterdecode(EDE.file, "utf-8"), delimiter=";")
 
     for row in csvEDE:
         if liststart:
@@ -247,7 +248,7 @@ async def upload_ede_files(response: Response, EDE: UploadFile | None, stateText
             try:
                 present_value = row[6]
             except:
-                present_value = randint(0,10)
+                present_value = randint(0, 10)
             try:
                 state_text = row[13]
             except:
@@ -272,40 +273,47 @@ async def upload_ede_files(response: Response, EDE: UploadFile | None, stateText
                 "objectType": obj_type,
                 "objectName": obj_name,
                 "description": desc,
-                }
+            }
 
             if stateTextsList and "binary" in obj_type:
                 obj_dict["inactiveText"] = stateTextsList[int(state_text)][0]
                 obj_dict["activeText"] = stateTextsList[int(state_text)][1]
             elif stateTextsList and state_text:
-                obj_dict["stateText"] = stateTextsList[int(state_text)-1]
-                obj_dict["numberOfStates"] = len(stateTextsList[int(state_text)-1])
+                obj_dict["stateText"] = stateTextsList[int(state_text) - 1]
+                obj_dict["numberOfStates"] = len(stateTextsList[int(state_text) - 1])
 
             if unit:
                 obj_dict["units"] = unit
 
-            if obj_type == 'device':
+            if obj_type == "device":
                 obj_dict["modelName"] = "EDE File"
                 obj_dict["vendorName"] = "Bepacom EcoPanel BACnet/IP Interface"
                 obj_dict["description"] = "Placeholder"
             else:
                 obj_dict["presentValue"]: present_value
 
-            if obj_type in BACnetIOHandler.objectFilter or obj_type == 'device':
-                deviceDict = deep_update(deviceDict, {f"device:{dev_instance}": {f"{obj_type}:{obj_instance}": obj_dict}})
+            if obj_type in BACnetIOHandler.objectFilter or obj_type == "device":
+                deviceDict = deep_update(
+                    deviceDict,
+                    {
+                        f"device:{dev_instance}": {
+                            f"{obj_type}:{obj_instance}": obj_dict
+                        }
+                    },
+                )
 
         if row[0] == "# keyname":
             liststart = True
 
     if list(deviceDict)[0] in list(BACnetToDict(BACnetDeviceDict)):
         logging.warning("Device ID already in use.")
-        response.status_code=status.HTTP_409_CONFLICT
+        response.status_code = status.HTTP_409_CONFLICT
         return "This device already exists as a device in the BACnet/IP network"
 
     for file in EDE_files:
         if file.keys() in deviceDict.keys():
             logging.warning("EDE already loaded.")
-            response.status_code=status.HTTP_409_CONFLICT
+            response.status_code = status.HTTP_409_CONFLICT
             return "This device already exists as EDE file"
 
     EDE_files.append(deviceDict)
@@ -317,9 +325,14 @@ async def upload_ede_files(response: Response, EDE: UploadFile | None, stateText
 async def delete_ede_file(device_ids: Annotated[list[str] | None, Query()] = None):
     """Delete EDE files to stop letting them show up in API calls."""
     logging.error(len(EDE_files))
-    EDE_files[:] = [dictionary for dictionary in EDE_files if all(device not in dictionary for device in device_ids)]
+    EDE_files[:] = [
+        dictionary
+        for dictionary in EDE_files
+        if all(device not in dictionary for device in device_ids)
+    ]
     logging.error(len(EDE_files))
     return True
+
 
 # Any commands or not variable paths should go above here... FastAPI will use it as a variable if you make a new path below this.
 

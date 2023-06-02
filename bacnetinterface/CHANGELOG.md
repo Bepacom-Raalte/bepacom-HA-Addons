@@ -9,6 +9,7 @@
 - EDE files that have been loaded can be deleted.
 - A restart of the add-on will remove the EDE files from the add-on.
 - Web UI pages allow easy adding and removing.
+- Rounding of long float values. It's now rounding at the first decimal.
 
 
 ## 0.1.6
