@@ -9,7 +9,6 @@
 - EDE files that have been loaded can be deleted.
 - A restart of the add-on will remove the EDE files from the add-on.
 - Web UI pages allow easy adding and removing.
-- Binary objects now return 0 and 1, as well as their active- and inactiveText properties. This may break some things in the integration
 
 
 ## 0.1.6

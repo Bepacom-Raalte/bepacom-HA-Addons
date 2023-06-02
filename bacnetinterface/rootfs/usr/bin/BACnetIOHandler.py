@@ -181,10 +181,10 @@ class BACnetIOHandler(
             if device == deviceID:
                 self.updateEvent.set()
                 try:
-                    if new_val.get('presentValue') == "active":
-                        new_val['presentValue'] = 1
-                    elif new_val.get('presentValue') == "inactive":
-                        new_val['presentValue'] = 0
+                    #if new_val.get('presentValue') == "active":
+                    #    new_val['presentValue'] = 1
+                    #elif new_val.get('presentValue') == "inactive":
+                    #    new_val['presentValue'] = 0
                     self.BACnetDeviceDict[deviceID][objectID].update(new_val)
                 except:
                     self.BACnetDeviceDict[deviceID][objectID] = new_val

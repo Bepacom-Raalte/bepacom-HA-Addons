@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: Bepacom EcoPanel BACnet/IP Interface
-version: "0.1.6"
+version: "0.2.0"
 slug: bacnetinterface
 description: Bepacom BACnet/IP interface for the Bepacom EcoPanel.
 url: "https://github.com/Bepacom-Raalte/bepacom-HA-Addons/tree/main/bacnetinterface"
