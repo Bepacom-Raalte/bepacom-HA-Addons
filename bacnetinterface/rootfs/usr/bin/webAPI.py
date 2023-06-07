@@ -248,7 +248,7 @@ async def upload_ede_files(
             if "binary" in obj_type:
                 present_value = choice(['active', 'inactive'])
             else:
-                present_value = randint(0, 10)
+                present_value = randint(0, 4)
 
             try:
                 state_text = row[13]

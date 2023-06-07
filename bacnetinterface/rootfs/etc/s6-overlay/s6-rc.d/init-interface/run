@@ -51,6 +51,8 @@ if [[ $(bashio::config 'address') == "auto" ]]; then
 elif [[ -z "$(bashio::config 'objectName')" ]]; then
     echo "Address is empty and didn't detect any suitable devices!"
     exit 1
+elif [[ $(bashio::config 'address') == *"/*"* ]]; then
+    address="address: $(bashio::config 'address')"
 else
     address="address: $(bashio::config 'address')/24"
 fi
