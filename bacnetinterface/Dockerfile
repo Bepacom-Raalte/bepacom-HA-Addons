@@ -11,7 +11,7 @@ RUN \
     py3-setuptools \
     py3-wheel \
   && pip3 install --no-cache-dir --upgrade pip\
-    bacpypes>=0.18.6 \
+    bacpypes3==0.0.72 \
     fastapi>=0.92.0 \
     jinja2>=3.1.2 \
     uvicorn>=0.20.0 \
