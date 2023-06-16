@@ -1,835 +1,413 @@
-""" BACnet Add-on IO Handler"""
-
-# IOHandler includes these functions as well
-
-#    From Application class:
-#    add_object()
-#    delete_object()
-#    get_object_id()
-#    get_object_name()
-#    iter_objects()
-#    get_services_supported()
-#    request()
-#    indication()
-
-#    From IOController class:
-#    abort()
-#    request_io()
-#    process_io()
-#    active_io()
-#    complete_io()
-#    abort_io()
-
-#    From ReadWritePropertyServices:
-#    do_ReadPropertyRequest()
-#    do_WritePropertyRequest()
-#    read_property_to_any()
-#    read_property_to_result_element()
-
-#    From ApplicationIOController class:
-#    process_io()
-#    request()
-#    confirmation()
-
-#    From WhoIsIAmServices:
-#    startup()
-#    who_is()
-#    do_WhoIsRequest()
-#    i_am()
-#    do_IAmRequest()
-
-#    From ReadWritePropertyMultipleServices:
-#    do_ReadPropertyMultipleRequest
-
-#    From BIPSimpleApplication class:
-#    close_socket()
-
-#    From ChangeOfValueServices:
-#    add_subscription()
-#    cancel_subscription()
-#    subscription()
-#    cov_notification()
-#    cov_confirmation()
-#    do_SubscribeCOVRequest()
-#    do_SubscribeCOVPropertyRequest()
-
-
+import asyncio
 import logging
-# Importing libraries
-import sys
-import threading
-from typing import Any
+from typing import Any, Dict, TypeVar
 
-import bacpypes.constructeddata
-from bacpypes.apdu import (AbortPDU, PropertyReference,
-                           ReadAccessSpecification, ReadPropertyACK,
-                           ReadPropertyMultipleACK,
-                           ReadPropertyMultipleRequest, ReadPropertyRequest,
-                           RejectPDU, SimpleAckPDU, SubscribeCOVRequest,
-                           WritePropertyRequest)
-from bacpypes.app import BIPSimpleApplication
-from bacpypes.basetypes import (EventType, PropertyIdentifier,
-                                PropertyReference, PropertyValue, Recipient,
-                                RecipientProcess, ServicesSupported)
-from bacpypes.constructeddata import AnyAtomic, Array
-from bacpypes.errors import (ExecutionError, InconsistentParameters,
-                             MissingRequiredParameter, ParameterOutOfRange)
-from bacpypes.iocb import IOCB
-from bacpypes.object import get_datatype
-from bacpypes.primitivedata import (Atomic, BitString, Boolean,
-                                    CharacterString, Date, Double, Integer,
-                                    Null, ObjectIdentifier, OctetString, Real,
-                                    Time, Unsigned)
-from bacpypes.service.cov import ChangeOfValueServices
-from bacpypes.service.object import ReadWritePropertyMultipleServices
-from pydantic.utils import deep_update
+from bacpypes3.apdu import (AbortPDU, ConfirmedCOVNotificationRequest,
+                            ErrorPDU, ErrorRejectAbortNack,
+                            ReadPropertyRequest, SubscribeCOVRequest)
+from bacpypes3.basetypes import (BinaryPV, DeviceStatus, EngineeringUnits,
+                                 ErrorType, EventState, PropertyIdentifier,
+                                 Reliability)
+from bacpypes3.constructeddata import AnyAtomic
+from bacpypes3.errors import *
+from bacpypes3.ipv4.app import NormalApplication
+from bacpypes3.object import get_vendor_info
+from bacpypes3.pdu import Address
+from bacpypes3.primitivedata import BitString, ObjectIdentifier, ObjectType
+from const import (device_properties_to_read, object_properties_to_read_once,
+                   object_properties_to_read_periodically,
+                   subscribable_objects)
 
-rsvp = (True, None, None)
+KeyType = TypeVar("KeyType")
 
 
-class BACnetIOHandler(
-    BIPSimpleApplication, ReadWritePropertyMultipleServices, ChangeOfValueServices
-):
-    """The class to handle BACnet communication."""
-
-    # The following functions can be called from this class:
-    # ReadProperty(Object ID, Prop ID, Address)                                   ->          Send a ReadPropertyRequest to designated address
-    # ReadPropertyMultiple(ObjectID, PropIDList, Address)                         ->          Send a ReadPropertyMultipleRequest to designated address
-    # WriteProperty(Object ID, Prop ID, Value, Address)                           ->          Send a WritePropertyRequest to designated address
-    # COVSubscribe(SubscriptionID, Object ID, Confirmed/Unconfirmed, Address)     ->          Send a SubscribeCOVRequest to designated address
-    # COVUnsubscribe(SubscriptionID, Object ID, Confirmed/Unconfirmed, Address)   ->          Send a SubscribeCOVRequest to designated address with time 1 to stop notifications
-    # do_ConfirmedCOVNotificationRequest(apdu)                                    ->          Callback for Confirmed COV Notification
-    # do_UnconfirmedCOVNotificationRequest(apdu)                                  ->          Callback for Unconfirmed COV Notification
-
-    BACnetDeviceDict = {}
-    objectFilter = [
-        "accumulator",
-        "analogInput",
-        "analogOutput",
-        "analogValue",
-        "averaging",
-        "binaryInput",
-        "binaryOutput",
-        "binaryValue",
-        "multiStateInput",
-        "multiStateOutput",
-        "multiStateValue",
-        "largeAnalogValue",
-        "integerValue",
-        "positiveIntegerValue",
-        "lightingOutput",
-        "notificationClass",
-    ]
-    propertyList = [
-        PropertyReference(
-            propertyIdentifier=PropertyIdentifier("objectIdentifier").value
-        ),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("objectName").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("description").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("presentValue").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("statusFlags").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("outOfService").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("units").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("eventState").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("reliability").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("covIncrement").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("vendorName").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("modelName").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("stateText").value),
-        PropertyReference(
-            propertyIdentifier=PropertyIdentifier("numberOfStates").value
-        ),
-        PropertyReference(
-            propertyIdentifier=PropertyIdentifier("notificationClass").value
-        ),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("minPresValue").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("maxPresValue").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("activeText").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("inactiveText").value),
-    ]
-
-    nonStaticPropertyList = [
-        PropertyReference(propertyIdentifier=PropertyIdentifier("presentValue").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("statusFlags").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("outOfService").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("eventState").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("reliability").value),
-        PropertyReference(propertyIdentifier=PropertyIdentifier("covIncrement").value),
-        PropertyReference(
-            propertyIdentifier=PropertyIdentifier("notificationClass").value
-        ),
-    ]
-
-    id_to_object = {}
-    object_to_id = {}
-    available_ids = set()
-    next_id = 1
-    updateEvent = threading.Event()
-    defaultPriority = int()
+class BACnetIOHandler(NormalApplication):
+    bacnet_device_dict: dict = {}
+    subscription_tasks: list = []
+    update_event: asyncio.Event = asyncio.Event()
 
     def __init__(self, *args) -> None:
-        BIPSimpleApplication.__init__(self, *args)
-        self.startup()
-        self._request = None
-        self.who_is()
+        NormalApplication.__init__(self, *args)
+        super().i_am()
+        super().who_is()
+        self.vendor_info = get_vendor_info(0)
+        logging.debug("Initialised application")
 
-    def update_object(self, objectID: tuple, deviceID: tuple, new_val: dict) -> None:
-        """Update the object using both object ID and device ID."""
-        for device in self.BACnetDeviceDict:
-            if device == deviceID:
-                self.updateEvent.set()
-                try:
-                    # if new_val.get('presentValue') == "active":
-                    #    new_val['presentValue'] = 1
-                    # elif new_val.get('presentValue') == "inactive":
-                    #    new_val['presentValue'] = 0
-
-                    if isinstance(new_val.get("presentValue"), float):
-                        new_val["presentValue"] = round(new_val.get("presentValue"), 1)
-
-                    if isinstance(new_val.get("covIncrement"), float):
-                        new_val["covIncrement"] = round(new_val.get("covIncrement"), 1)
-
-                    self.BACnetDeviceDict[deviceID][objectID].update(new_val)
-                except:
-                    self.BACnetDeviceDict[deviceID][objectID] = new_val
-
-    def addr_to_dev_id(self, address: Any) -> tuple:
-        """Convert address to corresponding device ID."""
-        for key, value in self.BACnetDeviceDict.items():
-            if value["address"] == address:
-                return key
-
-    def dev_id_to_addr(self, deviceID: tuple):
-        """Convert address to corresponding device ID."""
-        for key, value in self.BACnetDeviceDict.items():
-            if key == deviceID:
-                return value["address"]
-
-    def assign_id(self, obj: tuple) -> int:
-        """Assign an ID to the given object and return it."""
-        if obj in self.object_to_id:
-            # The object already has an ID, return it
-            return self.object_to_id[obj]
-
-        # Assign a new ID to the object
-        if self.available_ids:
-            # Use an available ID if there is one
-            new_id = self.available_ids.pop()
-        else:
-            # Assign a new ID if there are no available IDs
-            new_id = self.next_id
-            self.next_id += 1
-
-        self.id_to_object[new_id] = obj
-        self.object_to_id[obj] = new_id
-        return new_id
-
-    def unassign_id(self, obj: tuple) -> None:
-        """Remove the ID assignment for the given object."""
-        if obj not in self.object_to_id:
-            return
-
-        # Remove the ID assignment for the object and add the ID to the available IDs set
-        obj_id = self.object_to_id[obj]
-        del self.id_to_object[obj_id]
-        del self.object_to_id[obj]
-        self.available_ids.add(obj_id)
-
-    def read_entire_dict(self) -> None:
-        """Send a read request for every object in every device."""
-        logging.info("Updating all BACnet values")
-        for device, devicedata in self.BACnetDeviceDict.items():
-            objectlist = []
-            for object, objectdata in devicedata.items():
-                if isinstance(objectdata, dict):
-                    objectlist.append(object)
-            self.ReadPropertyMultiple(
-                objectList=objectlist,
-                propertyList=self.nonStaticPropertyList,
-                address=self.dev_id_to_addr(device),
-            )
-
-    def ReadProperty(
-        self, objectID: ObjectIdentifier, propertyID: PropertyIdentifier, address: str
-    ) -> bool:
-        """Send a ReadPropertyRequest to designated address."""
-        try:
-            request = ReadPropertyRequest(
-                objectIdentifier=objectID,
-                propertyIdentifier=propertyID,
-                propertyArrayIndex=None,
-            )
-
-            request.pduDestination = address
-
-            iocb = IOCB(request)
-
-            iocb.add_callback(self.on_ReadResult)
-
-            self.request_io(iocb)
-
-        except Exception as e:
-            logging.error(str(e) + " from ReadProperty")
-            return False
-        else:
-            logging.debug("Read Request Succesfully Sent")
-            return True
-
-    def ReadPropertyMultiple(
-        self, objectList: list, propertyList: list, address: str
-    ) -> None:
-        """Send a ReadPropertyMultipleRequest to designated address."""
-        try:
-            readAccessList = []
-            # List of properties for a certain object
-            for objects in objectList:
-                ReadAccess = ReadAccessSpecification(
-                    objectIdentifier=objects, listOfPropertyReferences=propertyList
-                )
-                readAccessList.append(ReadAccess)
-
-            request = ReadPropertyMultipleRequest(listOfReadAccessSpecs=readAccessList)
-
-            # Set destination address
-            request.pduDestination = address
-            # make an IOCB
-            iocb = IOCB(request)
-            # let us know when its complete
-            iocb.add_callback(self.on_ReadMultipleResult)
-            # Send the request through
-            self.request_io(iocb)
-
-        except Exception as e:
-            logging.error(str(e) + " from ReadPropertyMultiple")
-            return False
-        else:
-            logging.debug("Read Multiple Request Succesfully Sent")
-            return True
-
-    def WriteProperty(self, objectID: Any, propertyID: Any, value, address) -> bool:
-        """Send a WritePropertyRequest to designated address."""
-
-        try:
-            # make the request
-            request = WritePropertyRequest(
-                objectIdentifier=objectID,
-                propertyIdentifier=propertyID,
-                propertyArrayIndex=None,
-                propertyValue=None,
-                priority=self.defaultPriority,
-            )
-
-            datatype = get_datatype(objectID[0], propertyID)
-
-            if issubclass(datatype, AnyAtomic):
-                dtype, dvalue = value.split(":", 1)
-                datatype = {
-                    "b": Boolean,
-                    "u": lambda x: Unsigned(int(x)),
-                    "i": lambda x: Integer(int(x)),
-                    "r": lambda x: Real(float(x)),
-                    "d": lambda x: Double(float(x)),
-                    "o": OctetString,
-                    "c": CharacterString,
-                    "bs": BitString,
-                    "date": Date,
-                    "time": Time,
-                    "id": ObjectIdentifier,
-                }[dtype]
-                value = datatype(dvalue)
-
-            elif issubclass(datatype, Atomic):
-                if datatype is Integer:
-                    value = int(value)
-                elif datatype is Real:
-                    value = float(value)
-                elif datatype is Unsigned:
-                    value = int(value)
-                value = datatype(value)
-
-            request.propertyValue = bacpypes.constructeddata.Any()
-            request.propertyValue.cast_in(value)
-
-            # Set destination address
-            request.pduDestination = address
-
-            # make an IOCB
-            iocb = IOCB(request)
-
-            # let us know when its complete
-            iocb.add_callback(self.on_WriteResult)
-
-            # Send the request through
-            self.request_io(iocb)
-
-        except Exception as e:
-            logging.error(str(e) + " from WriteProperty")
-            return False
-        else:
-            logging.debug("Write Request Succesfully Sent")
-            return True
-
-    def COVSubscribe(
-        self, objectID, address, confirmationType=True, lifetime=28799
-    ) -> bool:
-        """Send a SubscribeCOVRequest to designated address."""
-        try:
-            request = SubscribeCOVRequest(
-                monitoredObjectIdentifier=ObjectIdentifier(objectID),
-            )
-
-            request.subscriberProcessIdentifier = self.assign_id(
-                (objectID, self.addr_to_dev_id(address))
-            )
-
-            request.pduDestination = address
-
-            if confirmationType == True:
-                request.issueConfirmedNotifications = "true"
-            elif confirmationType == False:
-                request.issueConfirmedNotifications = "false"
-            else:
-                request.issueConfirmedNotifications = None
-
-            if confirmationType == "false" and lifetime == 0:
-                self.unassign_id((objectID, self.addr_to_dev_id(address)))
-                logging.warning(
-                    "Unsubscribing from " + str(objectID) + " " + str(address)
-                )
-
-            request.lifetime = lifetime
-            iocb = IOCB(request)
-            iocb.add_callback(self.on_Subscribed)
-            self.request_io(iocb)
-        except Exception as e:
-            logging.error(str(e) + "from COVSubscribe")
-            return False
-        else:
-            logging.debug("CoV Request Succesfully Sent")
-            return True
-
-    def do_IAmRequest(self, apdu) -> None:
-        """ "Callback on detecting I Am response from other devices."""
-
-        logging.info("I Am from " + str(apdu.iAmDeviceIdentifier))
-
-        if self.localDevice.objectIdentifier == apdu.iAmDeviceIdentifier:
-            return
-
-        BACnetDevice = {
-            "address": apdu.pduSource,
-            "deviceIdentifier": apdu.iAmDeviceIdentifier,
-        }
-
-        self.BACnetDeviceDict.update({apdu.iAmDeviceIdentifier: BACnetDevice})
-
-        # Get device info
-        self.ReadPropertyMultiple(
-            objectList=[BACnetDevice["deviceIdentifier"]],
-            propertyList=[
-                PropertyReference(
-                    propertyIdentifier=PropertyIdentifier("objectIdentifier").value
-                ),
-                PropertyReference(
-                    propertyIdentifier=PropertyIdentifier("objectType").value
-                ),
-                PropertyReference(
-                    propertyIdentifier=PropertyIdentifier("objectName").value
-                ),
-                PropertyReference(
-                    propertyIdentifier=PropertyIdentifier("systemStatus").value
-                ),
-                PropertyReference(
-                    propertyIdentifier=PropertyIdentifier("vendorName").value
-                ),
-                PropertyReference(
-                    propertyIdentifier=PropertyIdentifier("vendorIdentifier").value
-                ),
-                PropertyReference(
-                    propertyIdentifier=PropertyIdentifier("objectList").value
-                ),
-                PropertyReference(
-                    propertyIdentifier=PropertyIdentifier("description").value
-                ),
-                PropertyReference(
-                    propertyIdentifier=PropertyIdentifier("modelName").value
-                ),
-            ],
-            address=BACnetDevice["address"],
-        )
-
-    def do_ConfirmedCOVNotificationRequest(self, apdu) -> None:
-        """Callback on receiving Confirmed COV Notification."""
-
-        global rsvp
-        property_dict = {}
-        try:
-            for listvalue in apdu.listOfValues:
-                datatype = get_datatype(
-                    apdu.monitoredObjectIdentifier[0], listvalue.propertyIdentifier
-                )
-
-                value = listvalue.value.cast_out(datatype)
-
-                property_dict.update({listvalue.propertyIdentifier: value})
-
-            self.update_object(
-                apdu.monitoredObjectIdentifier,
-                apdu.initiatingDeviceIdentifier,
-                property_dict,
-            )
-
-        except Exception as e:
-            logging.error("Confirmed CoV Notification: " + str(e))
-
-        if rsvp[0]:
-            # success
-            response = SimpleAckPDU(context=apdu)
-
-        elif rsvp[1]:
-            # reject
-            response = RejectPDU(reason=rsvp[1], context=apdu)
-
-        elif rsvp[2]:
-            # abort
-            response = AbortPDU(reason=rsvp[2], context=apdu)
-
-        # return the result
-        self.response(response)
-
-    def do_UnconfirmedCOVNotificationRequest(self, apdu) -> None:
-        """Callback on receiving Unconfirmed COV Notification."""
-
-        global rsvp
-        property_dict = {}
-        for listvalue in apdu.listOfValues:
-            datatype = get_datatype(
-                apdu.monitoredObjectIdentifier[0], listvalue.propertyIdentifier
-            )
-
-            # Array things
-            if issubclass(datatype, Array) and (
-                listvalue.propertyArrayIndex is not None
-            ):
-                if listvalue.propertyArrayIndex == 0:
-                    value = listvalue.value.cast_out(Unsigned)
+    def deep_update(
+        self, mapping: Dict[KeyType, Any], *updating_mappings: Dict[KeyType, Any]
+    ) -> Dict[KeyType, Any]:
+        for updating_mapping in updating_mappings:
+            for k, v in updating_mapping.items():
+                if (
+                    k in mapping
+                    and isinstance(mapping[k], dict)
+                    and isinstance(v, dict)
+                ):
+                    mapping[k] = self.deep_update(mapping[k], v)
                 else:
-                    value = listvalue.value.cast_out(datatype.subtype)
-            else:
-                value = listvalue.value.cast_out(datatype)
-            property_dict.update({listvalue.propertyIdentifier: value})
-        self.update_object(
-            apdu.monitoredObjectIdentifier,
-            apdu.initiatingDeviceIdentifier,
-            property_dict,
-        )
+                    mapping[k] = v
+        self.update_event.set()
+        logging.debug(f"Updating {updating_mapping}")
+        return mapping
 
-    def on_ReadMultipleResult(self, iocb: IOCB) -> None:
-        """Callback for result after reading single or multiple properties."""
+    def dev_to_addr(self, dev: ObjectIdentifier) -> Address | None:
+        for instance in self.device_info_cache.instance_cache:
+            if instance == dev[1]:
+                return self.device_info_cache.instance_cache[instance].address
+        return None
 
-        def return_value_read_multiple(response) -> dict:
-            objectdict = {}
-            for objects in response.listOfReadAccessResults:
-                object_id = objects.objectIdentifier
-                propertydict = {}
-                for properties in objects.listOfResults:
-                    datatype = get_datatype(object_id[0], properties.propertyIdentifier)
-                    # Check if datatype is valid
-                    if datatype is None:
-                        continue
-                        # raise Exception('Invalid datatype')
-                    if properties.readResult.propertyAccessError != None:
-                        value = "-"
-                    else:
-                        # Array things
-                        if issubclass(datatype, Array) and (
-                            properties.propertyArrayIndex is not None
-                        ):
-                            if properties.propertyArrayIndex == 0:
-                                value = properties.readResult.propertyValue.cast_out(
-                                    Unsigned
-                                )
-                            else:
-                                value = properties.readResult.propertyValue.cast_out(
-                                    datatype.subtype
-                                )
-                        else:
-                            value = properties.readResult.propertyValue.cast_out(
-                                datatype
+    def addr_to_dev(self, addr: Address) -> ObjectIdentifier | None:
+        for address in self.device_info_cache.address_cache:
+            if addr == address:
+                return ObjectIdentifier(
+                    f"device:{self.device_info_cache.address_cache[address].device_instance}"
+                )
+        return None
+
+    async def do_IAmRequest(self, apdu) -> None:
+        if apdu.iAmDeviceIdentifier[1] in self.device_info_cache.instance_cache:
+            return
+        await super().do_IAmRequest(apdu)
+        logging.info(f"I Am from {apdu.iAmDeviceIdentifier}")
+
+        await self.read_device_props(apdu=apdu)
+        await self.read_object_list(device_identifier=apdu.iAmDeviceIdentifier)
+        await self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
+
+    def dict_updater(
+        self,
+        device_identifier: ObjectIdentifier,
+        object_identifier: ObjectIdentifier,
+        property_identifier: PropertyIdentifier,
+        property_value,
+    ):
+        if isinstance(property_value, ErrorType):
+            return
+        elif isinstance(property_value, float):
+            property_value = round(property_value, 2)
+        elif isinstance(property_value, AnyAtomic):
+            return
+
+        if isinstance(property_value, list):
+            prop_list: list = []
+            for val in property_value:
+                if isinstance(val, ObjectIdentifier):
+                    prop_list.append(
+                        [
+                            val[0].attr,
+                            val[1],
+                        ]
+                    )
+            pass
+
+        if isinstance(property_value, ObjectIdentifier):
+            self.deep_update(
+                self.bacnet_device_dict,
+                {
+                    f"{device_identifier[0]}:{device_identifier[1]}": {
+                        f"{object_identifier[0].attr}:{object_identifier[1]}": {
+                            property_identifier.attr: (
+                                property_value[0].attr,
+                                property_value[1],
                             )
-                        val_dict = {properties.propertyIdentifier: value}
-                        propertydict.update(val_dict)
-                objectdict.update({object_id: propertydict})
-            return objectdict
-
-        if iocb.ioError:
-            logging.error(
-                str(iocb.ioError)
-                + " from "
-                + str(iocb.ioError.pduSource)
-                + " on read multiple result"
+                        }
+                    }
+                },
             )
+        elif isinstance(
+            property_value,
+            EventState | DeviceStatus | EngineeringUnits | Reliability | BinaryPV,
+        ):
+            self.deep_update(
+                self.bacnet_device_dict,
+                {
+                    f"{device_identifier[0]}:{device_identifier[1]}": {
+                        f"{object_identifier[0].attr}:{object_identifier[1]}": {
+                            property_identifier.attr: property_value.attr,
+                        }
+                    }
+                },
+            )
+        else:
+            self.deep_update(
+                self.bacnet_device_dict,
+                {
+                    f"{device_identifier[0]}:{device_identifier[1]}": {
+                        f"{object_identifier[0].attr}:{object_identifier[1]}": {
+                            property_identifier.attr: property_value
+                        }
+                    }
+                },
+            )
+
+    async def read_device_props(self, apdu):
+        try:  # Send readPropertyMultiple and get response
+            device_identifier = ObjectIdentifier(apdu.iAmDeviceIdentifier)
+            parameter_list = [device_identifier] + device_properties_to_read
+
+            logging.debug(f"Exploring Device info of {device_identifier}")
+
+            response = await self.read_property_multiple(
+                address=apdu.pduSource, parameter_list=parameter_list
+            )
+
+        except AbortPDU as err:
+            logging.error(f"Abort PDU error: {device_identifier}: {err}")
+
+        except ErrorRejectAbortNack as err:
+            logging.error(f"Nack error: {device_identifier}: {err}")
+        except AttributeError as err:
+            logging.error(f"Attribute error: {obj_id}: {err}")
+        else:
+            for (
+                object_identifier,
+                property_identifier,
+                property_array_index,
+                property_value,
+            ) in response:
+                self.dict_updater(
+                    device_identifier=device_identifier,
+                    object_identifier=object_identifier,
+                    property_identifier=property_identifier,
+                    property_value=property_value,
+                )
+
+    async def read_object_list(self, device_identifier):
+        for obj_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"][
+            f"device:{device_identifier[1]}"
+        ]["objectList"]:
+            if not isinstance(obj_id, ObjectIdentifier):
+                obj_id = ObjectIdentifier(obj_id)
+
             if (
-                iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier[0] == "device"
-                and len(iocb.args[0].listOfReadAccessSpecs) == 1
+                ObjectType(obj_id[0]) == ObjectType("device")
+                or ObjectType(obj_id[0])
+                not in self.vendor_info.registered_object_classes
             ):
-                # self.ReadProperty(iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier,PropertyIdentifier('objectList'),iocb.ioError.pduSource)
-                self.ReadPropertyMultiple(
-                    objectList=[iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier],
-                    propertyList=self.propertyList,
-                    address=iocb.ioError.pduSource,
+                continue
+
+            parameter_list = [obj_id]
+            parameter_list.extend(object_properties_to_read_once)
+
+            try:  # Send readPropertyMultiple and get response
+                logging.debug(
+                    f"Reading object {obj_id} of {device_identifier} during read_object_list"
                 )
+
+                response = await self.read_property_multiple(
+                    address=self.dev_to_addr(ObjectIdentifier(device_identifier)),
+                    parameter_list=parameter_list,
+                )
+            except AbortPDU as err:
+                logging.error(f"Abort PDU Error: {obj_id}: {err}")
+
+            except ErrorRejectAbortNack as err:
+                logging.error(f"Nack error: {obj_id}: {err}")
+
+            except AttributeError as err:
+                logging.error(f"Attribute error: {obj_id}: {err}")
             else:
-                objectList = []
-                for spec in iocb.args[0].listOfReadAccessSpecs:
-                    self.ReadPropertyMultiple(
-                        objectList=[spec.objectIdentifier],
-                        propertyList=self.propertyList,
-                        address=iocb.ioError.pduSource,
-                    )
-            return
-        # do something for success
-        elif iocb.ioResponse:
-            # should be a read property or read property multiple ack
-            if not isinstance(iocb.ioResponse, ReadPropertyMultipleACK):
-                logging.warning(str(iocb.ioResponse.apduAbortRejectReason))
-                return
-
-            response = iocb.ioResponse
-            obj_dict = return_value_read_multiple(response)
-            try:
-                for result in response.listOfReadAccessResults:
-                    if result.objectIdentifier[0] == "device":
-                        if (
-                            not result.objectIdentifier
-                            in self.BACnetDeviceDict[result.objectIdentifier]
-                        ):
-                            self.update_object(
-                                result.objectIdentifier,
-                                self.addr_to_dev_id(response.pduSource),
-                                obj_dict[result.objectIdentifier],
-                            )
-
-                            objectList = []
-                            for object in self.BACnetDeviceDict[
-                                result.objectIdentifier
-                            ][result.objectIdentifier]["objectList"]:
-                                if object[0] in self.objectFilter:
-                                    objectList.append(object)
-
-                            self.ReadPropertyMultiple(
-                                objectList=objectList,
-                                propertyList=[
-                                    PropertyReference(
-                                        propertyIdentifier=PropertyIdentifier(
-                                            "all"
-                                        ).value
-                                    )
-                                ],
-                                address=self.BACnetDeviceDict[result.objectIdentifier][
-                                    "address"
-                                ],
-                            )
-                        else:
-                            self.update_object(
-                                result.objectIdentifier,
-                                self.addr_to_dev_id(response.pduSource),
-                                obj_dict[result.objectIdentifier],
-                            )
-                    else:
-                        self.update_object(
-                            result.objectIdentifier,
-                            self.addr_to_dev_id(response.pduSource),
-                            obj_dict[result.objectIdentifier],
-                        )
-
-                        if (
-                            # (
-                            #    result.objectIdentifier,
-                            #    self.addr_to_dev_id(response.pduSource),
-                            # )
-                            # not in self.object_to_id
-                            # and
-                            result.objectIdentifier[0] in self.objectFilter
-                            and result.objectIdentifier[0] != "notificationClass"
-                        ):
-                            self.COVSubscribe(
-                                objectID=result.objectIdentifier,
-                                address=response.pduSource,
-                            )
-            except Exception as e:
-                logging.error(
-                    str(e)
-                    + " from "
-                    + str(iocb.ioError.pduSource)
-                    + " on read multiple result"
-                )
-                return False
-
-    def on_ReadResult(self, iocb: IOCB) -> None:
-        """Callback for result after reading single or multiple properties."""
-
-        def return_value_read(response) -> dict:
-            datatype = get_datatype(
-                response.objectIdentifier[0], response.propertyIdentifier
-            )
-            # Check if datatype is valid
-            if datatype is None:
-                raise Exception("Invalid datatype")
-            # Array things
-            if issubclass(datatype, Array) and (
-                response.propertyArrayIndex is not None
-            ):
-                if response.propertyArrayIndex == 0:
-                    value = response.propertyValue.cast_out(Unsigned)
-                else:
-                    value = response.propertyValue.cast_out(datatype.subtype)
-            else:
-                value = response.propertyValue.cast_out(datatype)
-            # Check for response.pduSource against dict to update value
-            val_dict = {response.propertyIdentifier: value}
-            return val_dict
-
-        if iocb.ioError:
-            logging.error(
-                str(iocb.ioError)
-                + " from "
-                + str(iocb.ioError.pduSource)
-                + " on read result"
-            )
-            if iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier[0] == "device":
-                self.ReadProperty(
-                    iocb.args[0].listOfReadAccessSpecs[0].objectIdentifier,
-                    PropertyIdentifier("objectList"),
-                    iocb.ioError.pduSource,
-                )
-            return
-
-        # do something for success
-        elif iocb.ioResponse:
-            # should be a read property or read property multiple ack
-            if not isinstance(iocb.ioResponse, ReadPropertyACK) and not isinstance(
-                iocb.ioResponse, ReadPropertyMultipleACK
-            ):
-                logging.warning(
-                    "No ACKs... " + iocb.ioResponse.apduAbortRejectReason + "\n"
-                )
-                return
-
-            response = iocb.ioResponse
-            try:
-                val_dict = return_value_read(response)
-                if response.objectIdentifier[0] == "device":
-                    if (
-                        not response.objectIdentifier
-                        in self.BACnetDeviceDict[response.objectIdentifier]
-                    ):
-                        self.update_object(
-                            response.objectIdentifier,
-                            response.objectIdentifier,
-                            val_dict,
-                        )
-                        objectList = []
-                        for object in self.BACnetDeviceDict[response.objectIdentifier][
-                            response.objectIdentifier
-                        ]["objectList"]:
-                            objectList.append(object)
-                        self.ReadPropertyMultiple(
-                            objectList=objectList,
-                            propertyList=self.propertyList,
-                            address=self.BACnetDeviceDict[response.objectIdentifier][
-                                "address"
-                            ],
-                        )
-                    else:
-                        self.update_object(
-                            response.objectIdentifier,
-                            self.addr_to_dev_id(response.pduSource),
-                            val_dict,
-                        )
-                else:
-                    self.update_object(
-                        response.objectIdentifier,
-                        self.addr_to_dev_id(response.pduSource),
-                        val_dict,
+                for (
+                    object_identifier,
+                    property_identifier,
+                    property_array_index,
+                    property_value,
+                ) in response:
+                    self.dict_updater(
+                        device_identifier=device_identifier,
+                        object_identifier=object_identifier,
+                        property_identifier=property_identifier,
+                        property_value=property_value,
                     )
 
-                    if (
-                        # (
-                        #    response.objectIdentifier,
-                        #    self.addr_to_dev_id(response.pduSource),
-                        # )
-                        # not in self.object_to_id
-                        # and
-                        response.objectIdentifier[0] in self.objectFilter
-                        and response.objectIdentifier[0] != "notificationClass"
-                    ):
-                        self.COVSubscribe(
-                            objectID=response.objectIdentifier,
-                            address=response.pduSource,
+    async def read_objects_periodically(self):
+        for dev_id in self.bacnet_device_dict:
+            for obj_id in self.bacnet_device_dict[dev_id]:
+                if not isinstance(obj_id, ObjectIdentifier):
+                    obj_id = ObjectIdentifier(obj_id)
+                    device_identifier = ObjectIdentifier(dev_id)
+
+                if (
+                    ObjectType(obj_id[0]) == ObjectType("device")
+                    or ObjectType(obj_id[0])
+                    not in self.vendor_info.registered_object_classes
+                ):
+                    continue
+
+                parameter_list = [obj_id]
+                parameter_list.extend(object_properties_to_read_periodically)
+
+                try:  # Send readPropertyMultiple and get response
+                    logging.debug(
+                        f"Reading object {obj_id} of {device_identifier} during read_objects_periodically"
+                    )
+
+                    response = await self.read_property_multiple(
+                        address=self.dev_to_addr(ObjectIdentifier(dev_id)),
+                        parameter_list=parameter_list,
+                    )
+                except AbortPDU as err:
+                    logging.error(f"Abort PDU Error: {obj_id}: {err}")
+
+                except ErrorRejectAbortNack as err:
+                    logging.error(f"Nack error: {obj_id}: {err}")
+
+                except AttributeError as err:
+                    logging.error(f"Attribute error: {obj_id}: {err}")
+
+                else:
+                    for (
+                        object_identifier,
+                        property_identifier,
+                        property_array_index,
+                        property_value,
+                    ) in response:
+                        self.dict_updater(
+                            device_identifier=device_identifier,
+                            object_identifier=object_identifier,
+                            property_identifier=property_identifier,
+                            property_value=property_value,
                         )
-            except Exception as e:
-                logging.error(
-                    str(e)
-                    + " from "
-                    + str(iocb.ioResponse.pduSource)
-                    + "on read response"
-                )
-                return False
 
-    def on_WriteResult(self, iocb) -> None:
-        """Response after writing to an object."""
-        if iocb.ioError:
+    async def subscribe_object_list(self, device_identifier):
+        for object_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"]:
+            if ObjectIdentifier(object_id)[0] in subscribable_objects:
+                await self.create_subscription_task(
+                    device_identifier=device_identifier,
+                    object_identifier=ObjectIdentifier(object_id),
+                    confirmed_notifications=True,
+                    lifetime=28799,
+                )
+
+    async def create_subscription_task(
+        self,
+        device_identifier: ObjectIdentifier,
+        object_identifier: ObjectIdentifier,
+        confirmed_notifications: bool,
+        lifetime: int,
+    ):
+        device_address = self.dev_to_addr(ObjectIdentifier(device_identifier))
+        if confirmed_notifications:
+            notifications = "confirmed"
+        else:
+            notifications = "unconfirmed"
+
+        logging.debug(
+            f"Creating {notifications} subscription task {object_identifier} of {device_identifier}"
+        )
+
+        task = asyncio.create_task(
+            self.subscription_task(
+                device_address=device_address,
+                object_identifier=ObjectIdentifier(object_identifier),
+                confirmed_notification=confirmed_notifications,
+                lifetime=lifetime,
+            ),
+            name=f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]},{notifications}",
+        )
+        self.subscription_tasks.append(task)
+
+    async def do_ConfirmedCOVNotificationRequest(
+        self, apdu: ConfirmedCOVNotificationRequest
+    ) -> None:
+        await super().do_ConfirmedCOVNotificationRequest(apdu)
+
+    async def do_ReadPropertyRequest(self, apdu: ReadPropertyRequest) -> None:
+        try:
+            await super().do_ReadPropertyRequest(apdu)
+        except (Exception, AttributeError) as err:
             logging.error(
-                str(iocb.ioError)
-                + " from "
-                + str(iocb.ioError.pduSource)
-                + " while writing"
+                f"{self.addr_to_dev(apdu.pduSource)} tried to read {apdu.objectIdentifier} {apdu.propertyIdentifier}: {err}"
             )
-            return
 
-        if iocb.ioResponse:
-            # should be a read property or read property multiple ack
-            if not isinstance(iocb.ioResponse, SimpleAckPDU):
-                logging.error(
-                    str(iocb.ioResponse.apduAbortRejectReason)
-                    + " from "
-                    + str(iocb.ioResponse.pduSource)
+    async def subscription_task(
+        self,
+        device_address: Address,
+        object_identifier: ObjectIdentifier,
+        confirmed_notification: bool,
+        lifetime: int,
+    ) -> None:
+        try:
+            subscription = await self.change_of_value(
+                address=device_address,
+                monitored_object_identifier=object_identifier,
+                subscriber_process_identifier=None,
+                issue_confirmed_notifications=confirmed_notification,
+                lifetime=lifetime,
+            ).__aenter__()
+            subscription.create_refresh_task()
+            dev_id = self.addr_to_dev(addr=device_address)
+            task_name = f"{dev_id[0].attr}:{dev_id[1]},{object_identifier[0].attr}:{object_identifier[1]}"
+            logging.debug(f"Created {task_name} subscription task successfully")
+            while True:
+                property_identifier, property_value = await subscription.get_value()
+
+                if isinstance(property_value, BitString):
+                    property_value = property_value.cast(list())
+                elif isinstance(property_value, int | float):
+                    property_value = round(property_value, 2)
+
+                self.dict_updater(
+                    device_identifier=dev_id,
+                    object_identifier=object_identifier,
+                    property_identifier=property_identifier,
+                    property_value=property_value,
                 )
-                return
-            # Another read to update the dictionary value... CoV doesn't update every single thing.
-            self.ReadProperty(
-                iocb.args[0].objectIdentifier,
-                iocb.args[0].propertyIdentifier,
-                iocb.args[0].pduDestination,
+
+                logging.debug(
+                    f"Subscription: {object_identifier}, {property_identifier} = {property_value}"
+                )
+
+            await subscription.__aexit__()
+
+            # create a request to cancel the subscription
+            unsubscribe_cov_request = SubscribeCOVRequest(
+                subscriberProcessIdentifier=subscription.subscriber_process_identifier,
+                monitoredObjectIdentifier=subscription.monitored_object_identifier,
+                destination=subscription.address,
+                issueConfirmedNotifications=False,
+                lifetime=0,
             )
 
-    def on_Subscribed(self, iocb) -> None:
-        """Callback on whether subscribing was successful."""
-        # do something for success
-        if iocb.ioResponse:
-            logging.debug(
-                "Subscribed to "
-                + str(iocb.ioResponse.pduSource)
-                + " object "
-                + str(iocb.args[0].monitoredObjectIdentifier.value)
-                + " with ID "
-                + str(iocb.args[0].subscriberProcessIdentifier)
-            )
-            return
+            # send the request, wait for the response
+            response = await self.app.request(unsubscribe_cov_request)
 
-        # do something for error/reject/abort
-        if iocb.ioError:
+        except (
+            ServicesError,
+            AbortException,
+            ConfigurationError,
+            AttributeError,
+        ) as err:
             logging.error(
-                str(iocb.ioError)
-                + " from "
-                + str(iocb.ioError.pduSource)
-                + "while subscribing"
+                f"ServicesError, AbortException or ConfigurationError for: {object_identifier}: {err}"
             )
-            self.unassign_id(
-                (
-                    iocb.args[0].monitoredObjectIdentifier.value,
-                    self.addr_to_dev_id(iocb.args[0].pduDestination),
-                )
+
+            await subscription.__aexit__()
+            for task in self.subscription_tasks:
+                if task_name in task.get_name():
+                    index = self.subscription_tasks.index(task)
+                    self.subscription_tasks.pop(index)
+
+        except (Exception, InvalidTag, RejectException, ErrorPDU) as err:
+            logging.error(
+                f"InvalidTag, Reject or ErrorPDU for: {object_identifier}: {err}"
             )
+
+            dev_id = self.addr_to_dev(addr=device_address)
+            task_name = f"{dev_id[0].attr}:{dev_id[1]},{object_identifier[0].attr}:{object_identifier[1]}"
+
+            for task in self.subscription_tasks:
+                if task_name in task.get_name():
+                    index = self.subscription_tasks.index(task)
+                    self.subscription_tasks.pop(index)
+
+        except asyncio.CancelledError:
+            logging.error(
+                f"Cancelled subscription task for: {device_address}, {object_identifier}"
+            )
+
+            await subscription.__aexit__()
+            for task in self.subscription_tasks:
+                if task_name in task.get_name():
+                    index = self.subscription_tasks.index(task)
+                    self.subscription_tasks.pop(index)

@@ -1,6 +1,20 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-## 0.2.1 quickfix
+
+# 1.0.0
+
+20/06/2023
+- Rewrote the backbones of the program. Now using BACpypes3 instead of BACpypes.
+- Removed certain configuration options that have no effect.
+- New API points!
+- Subscription page on the web UI now functions like the EDE page where you can add or remove subscriptions easily.
+- CIDR notation gets discovered when using "auto" as ip address setting.
+- Can configure the rate at which all objects get updated.
+- Catching more errors so the logs don't get spammed with trace logs.
+- This update _may_ break a thing or two. Please make an Issue on GitHub to get it solved.
+
+
+## 0.2.1
 
 01/06/2023
 - Rounding of long float values. It's now rounding at the first decimal.

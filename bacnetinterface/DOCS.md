@@ -27,22 +27,7 @@ You'll be able to find all API points in the Web UI. All outside access to the A
 Only through Home Assistant the API can be accessed. 
 This means the integration is allowed to communicate while the rest is not.
 
-These points will allow you to GET data:
-
-- /apiv1/json								- Return a full list of all device data.
-- /apiv1/command/whois						- Make the add-on do a Who Is request.
-- /apiv1/command/iam						- Make the add-on do an I Am request.
-- /apiv1/command/readall					- Make the add-on read everything.
-- /apiv1/commission/ede					    - Read uploaded EDE files.
-- /apiv1/{deviceid}							- Retrieve all data from a specific device.
-- /apiv1/{deviceid}{objectid}				- Retrieve all data from an object from a specific device.
-- /apiv1/{deviceid}{objectid}{propertyid}	- Retrieve a property value from an object in a specific device.
-
-These points will allow you to POST data:
-- /apiv1/{deviceid}{objectid}				- Write to an object from a specific device.
-- /apiv1/subscribe/{deviceid}{objectid}		- Subscribe to an object from a specific device.
-- /apiv1/commission/ede					    - Upload/delete EDE files.
-
+### API V1
 
 **Device Identifiers** get written as "device:number", so if a device has an identifier of 100, the notation for API will be "device:100".
 
@@ -50,6 +35,28 @@ These points will allow you to POST data:
 
 **Property Identifiers** also apply camelCase logic. An object identifier will be written as "objectIdentifier". 
 Fortunately, you only need to write the value for writing properties.
+
+#### GET
+
+- /apiv1/json								- Return a full list of all device data.
+- /apiv1/command/whois						- Make the add-on do a Who Is request.
+- /apiv1/command/iam						- Make the add-on do an I Am request.
+- /apiv1/command/readall					- Make the add-on read everything.
+- /apiv1/commission/ede					    - Read uploaded EDE files.
+- /apiv1/{deviceid}							- Retrieve all data from a specific device.
+- /apiv1/{deviceid}/{objectid}				- Retrieve all data from an object from a specific device.
+- /apiv1/{deviceid}/{objectid}/{propertyid}	- Retrieve a property value from an object in a specific device.
+
+#### POST
+
+- /apiv1/commission/ede						- Post EDE files
+- /apiv1/{deviceid}/{objectid}				- Write data to be written to a BACnet object
+- /apiv1/subscribe/{deviceid}/{objectid}	- Upload an EDE file
+
+#### DELETE
+
+- /apiv1/commission/ede						- Remove an EDE file with the corresponding device identifier
+- /apiv1/subscribe/{deviceid}/{objectid}	- Remove a CoV subscription
 
 
 ## Configuration
@@ -63,11 +70,9 @@ objectName: EcoPanel
 address: 0.0.0.0/24
 objectIdentifier: 420
 defaultPriority: 15
-loglevel: WARNING
-maxApduLenghtAccepted: 1024
-segmentationSupported: segmentedBoth
+loglevel: INFO
 vendorID: 15
-maxSegmentsAccepted: 16
+updateInterval: 60
 ```
 
 ### Option: `objectName`
@@ -80,29 +85,17 @@ Best is to write the IP of the Ethernet port connected to the BACneet network. I
 ### Option: `objectIdentifier`
 The Object Identifier that this device will get. This will be seen by other devices on the BACnet network. **Make sure it's unique!**
 
-### Option: 'defaultPriority'
+### Option: `defaultPriority`
 The priority your write requests get. Low number means high priority. High number means low priority. Recommended to keep at 15 or 16 unless you know what higher priority can do to your BACnet devices.
 
-### Option: "loglevel"
+### Option: `loglevel`
 The verbosity of the logs in the add-on. Usually WARNING is alright, INFO gets a little chatty.
-
-### Option: `maxApduLenghtAccepted`
-The max length an APDU can be before it'll be rejected. Recommended to leave the default value if you don't know what it does.
-
-### Option: `segmentationSupported`
-Whether segmentation is supported by the interface. Recommended to leave as is, because there's a lot of data from most devices that can't be received in one message.
 
 ### Option: `vendorID`
 Identifier of the vendor of the interface. As we don't have an official identifier, put anything you want in here.
 
-### Option: `foreignBBMD`
-The address of a BBMD device. Not implemented.
-
-### Option: `foreignTTL`
-The Time To Live for BBMD packets. Not implemented.
-
-### Option: `maxSegmentsAccepted`
-The maximum amount of segments that'll be accepted by the interface.
+### Option: `updateInterval`
+The time after which the interface will try to read all object properties of each detected device again.
 
 
 ## Credits

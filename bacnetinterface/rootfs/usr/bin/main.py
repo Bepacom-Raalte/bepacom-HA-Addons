@@ -1,20 +1,22 @@
 """Main script for EcoPanel BACnet add-on."""
 
-
+import asyncio
+import configparser
+import json
 import logging
-import sys
-from collections.abc import Callable
-from queue import Queue
-from threading import Event, Thread
-from typing import Any
+from typing import TypeVar
 
 import uvicorn
-import webAPI as api
+import webAPI
 from BACnetIOHandler import BACnetIOHandler
-from bacpypes.consolelogging import ConfigArgumentParser, ConsoleLogHandler
-from bacpypes.core import deferred, enable_sleeping, run, stop
-from bacpypes.local.device import LocalDeviceObject
-from bacpypes.task import RecurringTask
+from bacpypes3.argparse import INIArgumentParser
+from bacpypes3.ipv4.app import Application
+from bacpypes3.local.device import DeviceObject
+from bacpypes3.pdu import Address, IPv4Address
+from bacpypes3.primitivedata import ObjectIdentifier
+from webAPI import app as fastapi_app
+
+KeyType = TypeVar("KeyType")
 
 webserv: str = "127.0.0.1"
 port = 7813
@@ -26,158 +28,194 @@ rsvp = (True, None, None)
 _debug = 0
 
 
-class EventWatcherTask(RecurringTask):
-    """Checks if event is true. When it is, do callback."""
-
-    def __init__(self, event: Event(), callback: Callable, interval):
-        RecurringTask.__init__(self, interval)
-        self.event = event
-        self.callback = callback
-
-        # install it
-        self.install_task()
-
-    def process_task(self):
-        if self.event.is_set():
-            self.callback()
-            self.event.clear()
+def exception_handler(loop, context):
+    """Handle uncaught exceptions"""
+    logging.error(f"An error occurred:", {str(context["exception"])})
 
 
-class QueueWatcherTask(RecurringTask):
-    """Checks if queue has items. When it has, do callback."""
-
-    def __init__(self, queue: Queue(), callback: Callable, interval):
-        RecurringTask.__init__(self, interval)
-        self.queue = queue
-        self.callback = callback
-
-        # install it
-        self.install_task()
-
-    def process_task(self):
-        while not self.queue.empty():
-            queue_item = self.queue.get()
-            self.callback(queue_item)
-        else:
-            return
-
-
-class RefreshDict(RecurringTask):
-    """Checks if queue has items. When it has, do callback."""
-
-    def __init__(self, interval):
-        RecurringTask.__init__(self, interval)
-
-        # install it
-        self.install_task()
-
-    def process_task(self):
-        this_application.read_entire_dict()
-
-
-def write_from_dict(dict_to_write: dict) -> None:
-    """Write to object from a dict received by API"""
-    deviceID = get_key(dict_to_write)
-    for object in dict_to_write[deviceID]:
-        for property in dict_to_write[deviceID][object]:
-            prop_value = dict_to_write[deviceID][object].get(property)
-            logging.info(
-                "Writing "
-                + str(prop_value)
-                + " to "
-                + str(object)
-                + " "
-                + str(property)
-            )
-            this_application.WriteProperty(
-                object, property, prop_value, this_application.dev_id_to_addr(deviceID)
-            )
-
-
-def sub_from_tuple(subTuple: tuple) -> None:
-    """Receives a tuple with deviceID, objectID, confirmationType and lifetime."""
-    this_application.COVSubscribe(
-        objectID=subTuple[1],
-        address=this_application.dev_id_to_addr(subTuple[0]),
-        confirmationType=subTuple[2],
-        lifetime=subTuple[3],
-    )
-
-
-def get_key(dictionary: dict) -> str:
-    """Return the first key."""
-    for key, value in dictionary.items():
-        return key
-
-
-def get_ingress_url() -> str:
-    """Return Home Assistant Ingress URL"""
+async def updater_task(app: Application, interval: int, event: asyncio.Event) -> None:
+    """Task to handle periodic updates to the BACnet dictionary"""
     try:
-        with open("ingress.ini", "r") as ingress:
-            url = ingress.read()
-            newURL = url.replace("/webapp", "")
-            return newURL
-    except:
-        return ""
+        while True:
+            try:
+                await asyncio.wait_for(event.wait(), interval)
+                event.clear()
+            except asyncio.TimeoutError:
+                await app.read_objects_periodically()
+
+    except asyncio.CancelledError as err:
+        logging.error(f"Updater task cancelled: {err}")
 
 
-def main():
+async def writer_task(app: Application, write_queue: asyncio.Queue) -> None:
+    """Task to handle the write queue"""
+    try:
+        global default_write_prio
+        while True:
+            queue_result = await write_queue.get()
+            device_id = queue_result[0]
+            object_id = queue_result[1]
+            property_id = queue_result[2]
+            property_val = queue_result[3]
+            array_index = queue_result[4]
+            priority = queue_result[5]
+
+            if queue_result[5] is None:
+                queue_result[5] = default_write_prio
+            await app.write_property(
+                address=app.dev_to_addr(device_id),
+                objid=object_id,
+                prop=property_id,
+                value=property_val,
+                array_index=array_index,
+                priority=priority,
+            )
+            read = await app.read_property(
+                address=app.dev_to_addr(device_id),
+                objid=object_id,
+                prop=property_id,
+                array_index=array_index,
+            )
+            logging.info(f"Write result: {read}")
+
+            app.dict_updater(
+                device_identifier=device_id,
+                object_identifier=object_id,
+                property_identifier=property_id,
+                property_value=property_val,
+            )
+
+    except Exception as err:
+        print(err)
+    except asyncio.CancelledError as err:
+        logging.error(f"Writer task cancelled: {err}")
+
+
+async def subscribe_handler_task(app: Application, sub_queue: asyncio.Queue) -> None:
+    """Task to handle the subscribe queue"""
+    try:
+        while True:
+            queue_result = await sub_queue.get()
+            device_identifier = queue_result[0]
+            object_identifier = queue_result[1]
+            notifications = queue_result[2]
+            lifetime = queue_result[3]
+
+            task_name = f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]}"
+
+            for task in app.subscription_tasks:
+                if task_name in task.get_name():
+                    logging.error(
+                        f"Subscription for {device_identifier}, {object_identifier} already exists"
+                    )
+                    break
+            else:
+                await app.create_subscription_task(
+                    device_identifier=device_identifier,
+                    object_identifier=object_identifier,
+                    confirmed_notifications=notifications,
+                    lifetime=lifetime,
+                )
+
+    except asyncio.CancelledError as err:
+        logging.error(f"Subscribe task cancelled: {err}")
+
+
+async def unsubscribe_handler_task(
+    app: Application, unsub_queue: asyncio.Queue
+) -> None:
+    """Task to handle the unsubscribe queue"""
+    try:
+        while True:
+            queue_result = await unsub_queue.get()
+            device_identifier = queue_result[0]
+            object_identifier = queue_result[1]
+
+            task_name = f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]}"
+
+            for task in app.subscription_tasks:
+                if task_name in task.get_name():
+                    task.cancel()
+                    break
+            else:
+                logging.error("Subscription task does not exist")
+
+    except asyncio.CancelledError as err:
+        logging.error(f"Unsubscribe task cancelled: {err}")
+
+
+async def main():
     """Main function of the application."""
-    args = ConfigArgumentParser(description=__doc__).parse_args()
 
-    loglevel = args.ini.loglevel
+    loop = asyncio.get_event_loop()
 
-    logging.basicConfig(format="%(levelname)s:      %(message)s", level=loglevel)
+    loop.set_exception_handler(exception_handler)
 
-    server = Thread(
-        target=uvicorn.run,
-        name="UviThread",
-        args=(api.app,),
-        kwargs={"host": webserv, "port": port, "log_level": loglevel.lower()},
-    )
-    server.start()
+    config = configparser.ConfigParser()
 
-    global this_application
-    global this_device
+    config.read("/usr/bin/BACpypes.ini")
 
-    # make a device object
-    this_device = LocalDeviceObject(
-        objectName=args.ini.objectname,
-        objectIdentifier=int(args.ini.objectidentifier),
-        maxApduLengthAccepted=int(args.ini.maxapdulengthaccepted),
-        segmentationSupported=args.ini.segmentationsupported,
-        vendorIdentifier=int(args.ini.vendoridentifier),
+    global default_write_prio
+
+    default_write_prio = config.get("BACpypes", "defaultPriority")
+
+    loglevel = config.get("BACpypes", "loglevel")
+
+    logging.basicConfig(format="%(levelname)s:    %(message)s", level=loglevel)
+
+    ipv4_address = IPv4Address(config.get("BACpypes", "address"))
+
+    this_device = DeviceObject(
+        objectIdentifier=ObjectIdentifier(
+            f"device,{config.get('BACpypes', 'objectIdentifier')}"
+        ),
+        objectName=config.get("BACpypes", "objectName"),
         description="BACnet Add-on for Home Assistant",
+        vendorIdentifier=int(config.get("BACpypes", "vendorIdentifier")),
     )
 
-    # provide max segments accepted if any kind of segmentation supported
-    if args.ini.segmentationsupported != "noSegmentation":
-        this_device.maxSegmentsAccepted = int(args.ini.maxsegmentsaccepted)
+    app = BACnetIOHandler(this_device, ipv4_address)
 
-    # make a simple application
-    this_application = BACnetIOHandler(this_device, args.ini.address)
-    this_application.defaultPriority = int(args.ini.defaultpriority)
-    logging.info("Starting BACnet device on " + args.ini.address + "\n")
-
-    # Coupling of FastAPI and BACnetIOHandler
-    api.BACnetDeviceDict = this_application.BACnetDeviceDict
-    api.threadingUpdateEvent = this_application.updateEvent
-    api.subscription_id_to_object = this_application.id_to_object
-    who_is_watcher = EventWatcherTask(
-        api.threadingWhoIsEvent, this_application.who_is, 2000
+    update_task = asyncio.create_task(
+        updater_task(
+            app=app,
+            interval=config.get("BACpypes", "updateInterval"),
+            event=webAPI.events.read_event,
+        )
     )
-    i_am_watcher = EventWatcherTask(api.threadingIAmEvent, this_application.i_am, 2000)
-    read_watcher = EventWatcherTask(
-        api.threadingReadAllEvent, this_application.read_entire_dict, 2000
+
+    write_task = asyncio.create_task(
+        writer_task(app=app, write_queue=webAPI.events.write_queue)
     )
-    write_queue_watcher = QueueWatcherTask(api.writeQueue, write_from_dict, 1000)
-    sub_queue_watcher = QueueWatcherTask(api.subQueue, sub_from_tuple, 1000)
-    dict_refresher = RefreshDict(60000)
 
-    enable_sleeping()
+    sub_task = asyncio.create_task(
+        subscribe_handler_task(app=app, sub_queue=webAPI.events.sub_queue)
+    )
 
-    run()
+    unsub_task = asyncio.create_task(
+        unsubscribe_handler_task(app=app, unsub_queue=webAPI.events.unsub_queue)
+    )
+
+    webAPI.sub_list = app.subscription_tasks
+    webAPI.bacnet_device_dict = app.bacnet_device_dict
+    webAPI.who_is_func = app.who_is
+    webAPI.i_am_func = app.i_am
+    webAPI.events.val_updated_event = app.update_event
+
+    config = uvicorn.Config(
+        app=fastapi_app, host="127.0.0.1", port=7813, log_level=loglevel.lower()
+    )
+    server = uvicorn.Server(config)
+
+    await server.serve()
+
+    if app:
+        update_task.cancel()
+        write_task.cancel()
+        sub_task.cancel()
+        unsub_task.cancel()
+        app.close()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

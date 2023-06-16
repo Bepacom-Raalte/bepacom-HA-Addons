@@ -8,153 +8,150 @@ import random
 import sys
 import threading
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from io import StringIO
+from pathlib import Path
 from queue import Queue
-from random import randint, choice
-from typing import Annotated, Any, Union
+from random import choice, randint
+from typing import Annotated, Any, Callable, Union
 
 from BACnetIOHandler import BACnetIOHandler
-from bacpypes.basetypes import EngineeringUnits, ObjectTypesSupported
-from fastapi import (FastAPI, File, Query, Request, Response, UploadFile,
+from bacpypes3.basetypes import (EngineeringUnits, ObjectIdentifier,
+                                 ObjectType, ObjectTypesSupported,
+                                 PropertyIdentifier)
+from bacpypes3.ipv4.app import Application
+from fastapi import (FastAPI, File, Path, Query, Request, Response, UploadFile,
                      WebSocket, WebSocketDisconnect, status)
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from main import get_ingress_url
 from pydantic.utils import deep_update
 
 # ===================================================
 # Global variables
 # ===================================================
 
-BACnetDeviceDict = dict()
-subscription_id_to_object: dict
-threadingUpdateEvent: threading.Event = threading.Event()
-threadingWhoIsEvent: threading.Event = threading.Event()
-threadingIAmEvent: threading.Event = threading.Event()
-threadingReadAllEvent: threading.Event = threading.Event()
-writeQueue: Queue = Queue()
-subQueue: Queue = Queue()
+bacnet_device_dict: dict
+bacnet_application: Application
 activeSockets: list = []
 EDE_files: list = []
+sub_list: list = []
+
+who_is_func: Callable
+i_am_func: Callable
+ingress: str
 
 
-def BACnetToDict(BACnetDict):
-    """Convert the BACnet dict to something that can be converted to JSON."""
-    propertyFilter = (
-        "objectIdentifier",
-        "objectName",
-        "objectType",
-        "description",
-        "presentValue",
-        "outOfService",
-        "eventState",
-        "reliability",
-        "statusFlags",
-        "units",
-        "covIncrement",
-        "vendorName",
-        "modelName",
-        "stateText",
-        "numberOfStates",
-        "notificationClass",
-        "activeText",
-        "inactiveText",
-    )
-    devicesDict = {}
-    for deviceID in BACnetDict.keys():
-        deviceDict = {}
-        deviceIDstr = ":".join(map(str, deviceID))
-        for objectID in BACnetDict[deviceID].keys():
-            objectDict = {}
-            if objectID in ("address", "deviceIdentifier"):
-                continue
-            objectIDstr = ":".join(map(str, objectID))
-            for propertyID, value in BACnetDict[deviceID][objectID].items():
-                if propertyID in propertyFilter:
-                    if isinstance(
-                        value, (int, float, bool, str, list, dict, tuple, None)
-                    ):
-                        objectDict.update({propertyID: value})
-                    else:
-                        objectDict.update({propertyID: str(value)})
-            deviceDict.update({objectIDstr: objectDict})
-        devicesDict.update({deviceIDstr: deviceDict})
-    return devicesDict
+@dataclass
+class EventStruct:
+    """Events and Queue's for BACnetIOHandler"""
+
+    write_queue: asyncio.Queue = asyncio.Queue()
+    sub_queue: asyncio.Queue = asyncio.Queue()
+    unsub_queue: asyncio.Queue = asyncio.Queue()
+    val_updated_event: asyncio.Event = asyncio.Event()
+    read_event: asyncio.Event = asyncio.Event()
+    who_is_event: asyncio.Event = asyncio.Event()
+    i_am_event: asyncio.Event = asyncio.Event()
 
 
-def DictToBACnet(dictionary: dict) -> dict:
-    """Create a new dictionary with the converted keys."""
-    converted_dict = {str_to_tuple(k): v for k, v in dictionary.items()}
-    # Recursively convert the keys in any inner dictionaries
-    for k, v in converted_dict.items():
-        if isinstance(v, dict):
-            # If any more keys are in : format, please convert
-            if any(":" in key for key in converted_dict[k]):
-                converted_dict[k] = DictToBACnet(v)
-    return converted_dict
-
-
-def str_to_tuple(input_str: str) -> tuple:
-    """Convert ObjectIdentifier string to tuple."""
-    split_str = input_str.split(":")
-    return (split_str[0], int(split_str[1]))
+events = EventStruct()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan manager of FastAPI."""
-    # Do wait for 10 seconds on startup
-    await asyncio.sleep(5)
+    # Do nothing on startup
     yield
     # Do nothing on shutdown
 
 
 description = """
-The Bepacom EcoPanel BACnet/IP Interface is so cool!
+The Bepacom EcoPanel BACnet/IP Interface API
 
-## Things
+## Use
 
-You can do things!
+This API can be used within Home Assistant. Outside connections are blocked unless they connect through the ingress link.
+The BACnet integration will use the websocket and API points to receive and write data for the corresponding entities.
 
-## More things
+## Why?
 
-We have these things!
+Because we noticed a severe lack of BACnet support in Home Assistant. We took it upon ourselves to create a way to get BACnet devices working in it.
+That is why we created this add-on. It is basically a virtual BACnet/IP device with an API running above it with very basic functionality.
+
+## Future
+
+In the future, it might be cool to add certain commandable objects so devices in the BACnet network could also write to Home Assistant.
+This could be in the form of entities being transformed into objects of the virtual device.
+
+## Suggestions
+
+Please drop your suggestions in the [GitHub repository](https://github.com/Bepacom-Raalte/bepacom-HA-Addons), or on the Home Assistant community forums @gravyseal.
 
 """
+
+tags_metadata = [
+    {"name": "Webpages", "description": "Accessible web pages."},
+    {
+        "name": "apiv1",
+        "description": "Legacy API meant to be replaced by V2 in the future.",
+    },
+    {"name": "apiv2", "description": "API V2."},
+]
+
+
+def get_ingress_url() -> str:
+    """Return Home Assistant Ingress URL"""
+    try:
+        with open("ingress.ini", "r") as ingress:
+            url = ingress.read()
+            newURL = url.replace("/webapp", "")
+            return newURL
+    except:
+        return ""
 
 
 app = FastAPI(
     lifespan=lifespan,
     title="Bepacom EcoPanel BACnet/IP Interface API",
     description=description,
-    version="0.2.0",
+    version="1.0.0",
     contact={
-        "name": "Bepacom B.V.",
+        "name": "Bepacom B.V. Contact",
         "url": "https://www.bepacom.nl/contact/",
     },
     root_path=get_ingress_url(),
+    openapi_tags=tags_metadata,
 )
 
+app.mount(
+    "/static",
+    StaticFiles(directory=str("/usr/bin/static")),
+    name="static",
+)
 
 templates = Jinja2Templates(directory="/usr/bin/templates")
 
 
-@app.get("/webapp", response_class=HTMLResponse)
+@app.get("/webapp", response_class=HTMLResponse, tags=["Webpages"])
 async def webapp(request: Request):
     """Index and main page of the add-on."""
     return templates.TemplateResponse("index.html", {"request": request})
 
 
-@app.get("/subscriptions", response_class=HTMLResponse)
+@app.get("/subscriptions", response_class=HTMLResponse, tags=["Webpages"])
 async def subscriptions(request: Request):
     """Page to see subscription ID's."""
+    subs_as_string: list = []
+    global sub_list
+
     return templates.TemplateResponse(
         "subscriptions.html",
-        {"request": request, "subscriptions": subscription_id_to_object},
+        {"request": request, "subs": sub_list},
     )
 
 
-@app.get("/ede", response_class=HTMLResponse)
+@app.get("/ede", response_class=HTMLResponse, tags=["Webpages"])
 async def subscriptions(request: Request):
     """Page to see EDE files uploaded."""
     return templates.TemplateResponse(
@@ -163,52 +160,56 @@ async def subscriptions(request: Request):
     )
 
 
-@app.get("/apiv1/json")
+@app.get("/apiv1/json", tags=["apiv1"])
 async def get_entire_dict():
     """Return all devices and their values."""
-
-    dict_to_send = BACnetToDict(BACnetDeviceDict)
+    dict_to_send = bacnet_device_dict
     if EDE_files:
         for file in EDE_files:
             dict_to_send = deep_update(dict_to_send, file)
     return dict_to_send
 
 
-@app.get("/apiv1/command/whois")
+@app.get("/apiv1/command/whois", status_code=status.HTTP_200_OK, tags=["apiv1"])
 async def whois_command():
     """Send a Who Is Request over the BACnet network."""
-    threadingWhoIsEvent.set()
-    return "Command queued"
+    response = await who_is_func()
+
+    if response:
+        return status.HTTP_200_OK
+    return status.HTTP_400_BAD_REQUEST
 
 
-@app.get("/apiv1/command/iam")
+@app.get("/apiv1/command/iam", tags=["apiv1"])
 async def iam_command():
     """Send an I Am Request over the BACnet network."""
-    threadingIAmEvent.set()
-    return "Command queued"
+
+    response = i_am_func()
+
+    return status.HTTP_200_OK
 
 
-@app.get("/apiv1/command/readall")
+@app.get("/apiv1/command/readall", tags=["apiv1"])
 async def read_all_command():
     """Send a Read Request to all devices on the BACnet network."""
-    threadingReadAllEvent.set()
-    return "Command queued"
+    events.read_event.set()
+    return status.HTTP_200_OK
 
 
-@app.get("/apiv1/commissioning/ede")
+@app.get("/apiv1/commissioning/ede", tags=["apiv1"])
 async def read_ede_files():
     """Read currently uploaded EDE files."""
     return EDE_files
 
 
-@app.post("/apiv1/commissioning/ede", status_code=status.HTTP_200_OK)
+@app.post("/apiv1/commissioning/ede", status_code=status.HTTP_200_OK, tags=["apiv1"])
 async def upload_ede_files(
     response: Response, EDE: UploadFile | None, stateTexts: UploadFile | None = None
 ):
     """Upload EDE files to show up as placeholder in the object lists."""
 
-    object_keys = ObjectTypesSupported.bitNames
-    bacnet_units = EngineeringUnits.enumerations
+    object_keys = ObjectTypesSupported
+    bacnet_units = EngineeringUnits
     deviceDict = {}
     liststart = False
     stateTextsList = []
@@ -230,23 +231,13 @@ async def upload_ede_files(
         if liststart:
             dev_instance = row[1]
             obj_name = row[2]
-            obj_type = None
-
-            for key, value in object_keys.items():
-                if int(value) == int(row[3]):
-                    obj_type = key
-                    break
-                else:
-                    continue
-
-            if obj_type is None:
-                continue
+            obj_type = ObjectType(row[3])
 
             obj_instance = row[4]
             desc = row[5]
 
-            if "binary" in obj_type:
-                present_value = choice(['active', 'inactive'])
+            if "binary" in str(obj_type):
+                present_value = choice(["active", "inactive"])
             else:
                 present_value = randint(0, 4)
 
@@ -256,15 +247,7 @@ async def upload_ede_files(
                 state_text = None
 
             try:
-                for key, value in bacnet_units.items():
-                    if row[14]:
-                        pass
-                    else:
-                        unit = None
-                        continue
-                    if int(value) == int(row[14]):
-                        unit = key
-                        break
+                unit = EngineeringUnits(row[14])
             except:
                 unit = None
 
@@ -276,7 +259,7 @@ async def upload_ede_files(
                 "description": desc,
             }
 
-            if stateTextsList and "binary" in obj_type:
+            if stateTextsList and "binary" in str(obj_type):
                 obj_dict["inactiveText"] = stateTextsList[int(state_text)][0]
                 obj_dict["activeText"] = stateTextsList[int(state_text)][1]
             elif stateTextsList and state_text:
@@ -286,27 +269,22 @@ async def upload_ede_files(
             if unit:
                 obj_dict["units"] = unit
 
-            if obj_type == "device":
+            if obj_type == ObjectType("device"):
                 obj_dict["modelName"] = "EDE File"
                 obj_dict["vendorName"] = "Bepacom EcoPanel BACnet/IP Interface"
                 obj_dict["description"] = "Placeholder"
             else:
                 obj_dict["presentValue"] = present_value
 
-            if obj_type in BACnetIOHandler.objectFilter or obj_type == "device":
-                deviceDict = deep_update(
-                    deviceDict,
-                    {
-                        f"device:{dev_instance}": {
-                            f"{obj_type}:{obj_instance}": obj_dict
-                        }
-                    },
-                )
+            deviceDict = deep_update(
+                deviceDict,
+                {f"device:{dev_instance}": {f"{obj_type}:{obj_instance}": obj_dict}},
+            )
 
         if row[0] == "# keyname":
             liststart = True
 
-    if list(deviceDict)[0] in list(BACnetToDict(BACnetDeviceDict)):
+    if list(deviceDict)[0] in list(bacnet_device_dict):
         logging.warning("Device ID already in use.")
         response.status_code = status.HTTP_409_CONFLICT
         return "This device already exists as a device in the BACnet/IP network"
@@ -322,7 +300,7 @@ async def upload_ede_files(
     return deviceDict
 
 
-@app.delete("/apiv1/commissioning/ede")
+@app.delete("/apiv1/commissioning/ede", tags=["apiv1"])
 async def delete_ede_file(device_ids: Annotated[list[str] | None, Query()] = None):
     """Delete EDE files to stop letting them show up in API calls."""
     logging.error(len(EDE_files))
@@ -338,23 +316,23 @@ async def delete_ede_file(device_ids: Annotated[list[str] | None, Query()] = Non
 # Any commands or not variable paths should go above here... FastAPI will use it as a variable if you make a new path below this.
 
 
-@app.get("/apiv1/{deviceid}")
+@app.get("/apiv1/{deviceid}", tags=["apiv1"])
 async def read_deviceid_dict(deviceid: str):
     """Read a device."""
-    global BACnetDeviceDict
-    var = BACnetToDict(BACnetDeviceDict)
+    global bacnet_device_dict
+    var = bacnet_device_dict
     try:
         return var[deviceid]
     except Exception as e:
         return "Error: " + str(e)
 
 
-@app.get("/apiv1/{deviceid}/{objectid}")
+@app.get("/apiv1/{deviceid}/{objectid}", tags=["apiv1"])
 async def read_objectid_dict(deviceid: str, objectid: str):
     """Read an object from a device."""
     try:
-        global BACnetDeviceDict
-        var = BACnetToDict(BACnetDeviceDict)
+        global bacnet_device_dict
+        var = bacnet_device_dict
         for key in var[deviceid].keys():
             if key.lower() == objectid:
                 objectid = key
@@ -363,100 +341,106 @@ async def read_objectid_dict(deviceid: str, objectid: str):
         return "Error: " + str(e)
 
 
-@app.get("/apiv1/{deviceid}/{objectid}/{propertyid}")
+@app.get("/apiv1/{deviceid}/{objectid}/{propertyid}", tags=["apiv1"])
 async def read_objectid_property(deviceid: str, objectid: str, propertyid: str):
     """Read a property of an object from a device."""
-    global BACnetDeviceDict
-    var = BACnetToDict(BACnetDeviceDict)
+    global bacnet_device_dict
+    var = bacnet_device_dict
     try:
         return var[deviceid][objectid][propertyid]
     except Exception as e:
         return "Error: " + str(e)
 
 
-@app.post("/apiv1/{deviceid}/{objectid}")
+@app.post("/apiv1/{deviceid}/{objectid}", tags=["apiv1"])
 async def write_property(
-    deviceid: str,
-    objectid: str,
-    objectIdentifier: Union[str, None] = None,
+    deviceid: str = Path(description="device:instance"),
+    objectid: str = Path(description="object:instance"),
     objectName: Union[str, None] = None,
-    objectType: Union[str, None] = None,
     description: Union[str, None] = None,
     presentValue: Union[int, float, str, None] = None,
     outOfService: Union[bool, None] = None,
-    eventState: Union[str, None] = None,
-    reliability: Union[str, None] = None,
-    statusFlags: Union[str, None] = None,
-    units: Union[str, None] = None,
     covIncrement: Union[int, float, None] = None,
 ):
     """Write to a property of an object from a device."""
     property_dict: dict[dict, Any] = {}
-    dict_to_write: dict[dict, Any] = {}
-    if objectIdentifier != None:
-        property_dict.update({"objectIdentifier": objectIdentifier})
+    global writeQueue
+
     if objectName != None:
         property_dict.update({"objectName": objectName})
-    if objectType != None:
-        property_dict.update({"objectType": objectType})
     if description != None:
         property_dict.update({"description": description})
     if presentValue != None:
         property_dict.update({"presentValue": presentValue})
     if outOfService != None:
         property_dict.update({"outOfService": outOfService})
-    if eventState != None:
-        property_dict.update({"eventState": eventState})
-    if reliability != None:
-        property_dict.update({"reliability": reliability})
-    if statusFlags != None:
-        property_dict.update({"statusFlags": statusFlags})
-    if units != None:
-        property_dict.update({"units": units})
     if covIncrement != None:
         property_dict.update({"covIncrement": covIncrement})
 
     if property_dict == {}:
         return "No property values"
 
-    dict_to_write = {deviceid: {objectid: property_dict}}
+    for key, val in property_dict.items():
+        await events.write_queue.put(
+            [
+                ObjectIdentifier(deviceid),
+                ObjectIdentifier(objectid),
+                PropertyIdentifier(key),
+                val,
+                None,
+                None,
+            ]
+        )
 
-    logging.debug("Received: " + str(dict_to_write) + " in write_property()")
-
-    try:
-        bacnet_dict = DictToBACnet(dict_to_write)
-    except Exception as e:
-        return "Error: " + str(e)
-
-    global writeQueue
-    # Send this dict to threading queue for processing and making a request through BACnet
-    writeQueue.put(bacnet_dict)
     return "Successfully put in Write Queue"
 
 
-@app.post("/apiv1/subscribe/{deviceid}/{objectid}")
+@app.post("/apiv1/subscribe/{deviceid}/{objectid}", tags=["apiv1"])
 async def subscribe_objectid(
     deviceid: str, objectid: str, confirmationType: str, lifetime: int
 ):
     """Subscribe to an object of a device."""
     try:
-        subTuple = (
-            str_to_tuple(deviceid),
-            str_to_tuple(objectid),
-            confirmationType,
+        deviceid = ObjectIdentifier(deviceid)
+        objectid = ObjectIdentifier(objectid)
+        if confirmationType.lower() in ("confirmed", "true"):
+            notifications = True
+        elif confirmationType.lower() in ("unconfirmed", "false"):
+            notifications = False
+        else:
+            return status.HTTP_400_BAD_REQUEST
+
+        sub_tuple = (
+            deviceid,
+            objectid,
+            notifications,
             lifetime,
         )
-        if not "device" in subTuple[0][0]:
-            raise Exception("Device value is not a device")
+
+        await events.sub_queue.put(sub_tuple)
 
     except Exception as e:
         logging.error(e + " on subscribe from API POST request")
+        return status.HTTP_400_BAD_REQUEST
 
-    global subQueue
-    # Send this tuple to threading queue for processing and making a request through BACnet
-    subQueue.put(subTuple)
 
-    return "Successfully put in Subscription Queue"
+@app.delete("/apiv1/subscribe/{deviceid}/{objectid}", tags=["apiv1"])
+async def unsubscribe_objectid(deviceid: str, objectid: str):
+    """Subscribe to an object of a device."""
+    try:
+        deviceid = ObjectIdentifier(deviceid)
+        objectid = ObjectIdentifier(objectid)
+
+        sub_tuple = (
+            deviceid,
+            objectid,
+        )
+
+        await events.unsub_queue.put(sub_tuple)
+
+    except Exception as e:
+        logging.error(e + " on subscribe from API POST request")
+        return status.HTTP_400_BAD_REQUEST
 
 
 @app.websocket("/ws")
@@ -481,12 +465,44 @@ async def websocket_endpoint(websocket: WebSocket):
                 message = data["text"]
                 try:
                     message = json.loads(message)
-                    bacnet_dict = DictToBACnet(message)
-                    global writeQueue
-                    # Send this dict to threading queue for processing and making a request through BACnet
-                    writeQueue.put(bacnet_dict)
                 except:
-                    pass
+                    logging.warning(
+                        f"message: {message} is not processed as it's not valid JSON"
+                    )
+                    logging.warning(
+                        'Do it as the following example: {"device:100":{"analogInput:1":{"presentValue":1}}}'
+                    )
+                    continue
+                if isinstance(message, dict):
+                    device_identifier = next(iter(message.keys()))
+                    object_identifier = next(iter(message[device_identifier].keys()))
+                    property_identifier = next(
+                        iter(message[device_identifier][object_identifier].keys())
+                    )
+                    value = message[device_identifier][object_identifier][
+                        property_identifier
+                    ]
+
+                    if not isinstance(device_identifier, ObjectIdentifier):
+                        device_identifier = ObjectIdentifier(device_identifier)
+                    if not isinstance(object_identifier, ObjectIdentifier):
+                        object_identifier = ObjectIdentifier(object_identifier)
+                    if not isinstance(property_identifier, PropertyIdentifier):
+                        property_identifier = PropertyIdentifier(property_identifier)
+
+                    await events.write_queue.put(
+                        [
+                            device_identifier,
+                            object_identifier,
+                            property_identifier,
+                            value,
+                            None,
+                            None,
+                        ]
+                    )
+
+                else:
+                    logging.warning(f"message: {message} is not processed")
 
         except (RuntimeError, asyncio.CancelledError) as error:
             write_task.cancel
@@ -506,23 +522,45 @@ async def websocket_endpoint(websocket: WebSocket):
 
 async def websocket_writer(websocket: WebSocket):
     """Writer task for when a websocket is opened"""
-    global BACnetDeviceDict
-    await websocket.send_json(BACnetToDict(BACnetDeviceDict))
-    while True:
-        if threadingUpdateEvent.is_set():
-            try:
-                dict_to_send = BACnetToDict(BACnetDeviceDict)
+    try:
+        await websocket.send_json(bacnet_device_dict)
+        while True:
+            if events.val_updated_event.is_set():
+                dict_to_send = bacnet_device_dict
                 if EDE_files:
                     for file in EDE_files:
                         dict_to_send = deep_update(dict_to_send, file)
                 for websocket in activeSockets:
                     await websocket.send_json(dict_to_send)
-                threadingUpdateEvent.clear()
-            except (RuntimeError, asyncio.CancelledError) as error:
-                logging.error(str(error))
-                return
-            except WebSocketDisconnect:
-                logging.error("Exception Disconnect for writer")
-                return
-        else:
-            await asyncio.sleep(1)
+                events.val_updated_event.clear()
+            else:
+                await asyncio.sleep(0.5)
+
+    except (RuntimeError, asyncio.CancelledError) as error:
+        logging.error(str(error))
+        return
+    except WebSocketDisconnect:
+        logging.error("Exception Disconnect for writer")
+        return
+
+
+@app.post("/apiv2/{deviceid}/{objectid}/{property}", tags=["apiv2"])
+async def write_property(
+    deviceid: str = Path(description="device:instance"),
+    objectid: str = Path(description="object:instance"),
+    property: str = Path(description="property"),
+    value: str | int | float = Query(description="Property value"),
+    priority: int | None = Query(default=None, description="Write priority"),
+):
+    """Write to a property of an object from a device."""
+    property_dict: dict[dict, Any] = {}
+    dict_to_write: dict[dict, Any] = {}
+
+    try:
+        deviceid = ObjectIdentifier(deviceid)
+        objectid = ObjectIdentifier(objectid)
+        property = PropertyIdentifier(property)
+    except Exception:
+        return status.HTTP_400_BAD_REQUEST
+
+    await events.write_queue.put([deviceid, objectid, property, value, None, priority])
