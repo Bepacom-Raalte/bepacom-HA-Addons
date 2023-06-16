@@ -18,20 +18,17 @@ from webAPI import app as fastapi_app
 
 KeyType = TypeVar("KeyType")
 
-webserv: str = "127.0.0.1"
-port = 7813
-
-this_application = None
-devices = []
-rsvp = (True, None, None)
-
-_debug = 0
-
 
 def exception_handler(loop, context):
     """Handle uncaught exceptions"""
-    logging.error(f"An error occurred:", {str(context["exception"])})
-
+    try:
+        if isinstance(context["exception"], list|tuple):
+            logging.error(f"An error occurred:", {context["exception"][0]})
+        else:
+            logging.error(f"An error occurred:", {context["exception"]})
+    except:
+        logging.error("Tried to log error, but something went horribly wrong!!!")
+    
 
 async def updater_task(app: Application, interval: int, event: asyncio.Event) -> None:
     """Task to handle periodic updates to the BACnet dictionary"""
