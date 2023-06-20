@@ -6,7 +6,8 @@
 - Updated web UI main page to make navigation a little easier.
 - Unsubscribing now gets done when the add-on closes.
 - All errors now really should be caught instead of dumping tracelogs.
-- Updated translations
+- Updated translations.
+- EDE files show up on the web UI now once uploaded.
 
 # 1.0.0
 

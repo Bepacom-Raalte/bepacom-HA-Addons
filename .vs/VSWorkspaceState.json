@@ -8,9 +8,11 @@
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d",
     "\\bacnetinterface\\rootfs\\usr",
     "\\bacnetinterface\\rootfs\\usr\\bin",
+    "\\bacnetinterface\\rootfs\\usr\\bin\\static",
+    "\\bacnetinterface\\rootfs\\usr\\bin\\static\\css",
     "\\bacnetinterface\\rootfs\\usr\\bin\\templates",
     "\\bacnetinterface\\translations"
   ],
-  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\templates\\index.html",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\main.py",
   "PreviewInSolutionExplorer": false
 }

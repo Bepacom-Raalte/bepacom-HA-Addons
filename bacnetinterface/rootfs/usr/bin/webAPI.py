@@ -138,8 +138,13 @@ templates = Jinja2Templates(directory="/usr/bin/templates")
 @app.get("/webapp", response_class=HTMLResponse, tags=["Webpages"])
 async def webapp(request: Request):
     """Index and main page of the add-on."""
+    dict_to_send = bacnet_device_dict
+    if EDE_files:
+        for file in EDE_files:
+            dict_to_send = deep_update(dict_to_send, file)
+
     return templates.TemplateResponse(
-        "index.html", {"request": request, "bacnet_devices": bacnet_device_dict}
+        "index.html", {"request": request, "bacnet_devices": dict_to_send}
     )
 
 
