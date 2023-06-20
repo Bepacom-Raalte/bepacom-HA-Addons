@@ -36,14 +36,14 @@
                     <label for="checkbox-{{ device }}" class="device_select">{{ device }}</label>
                     <ul>
                         {% for object in bacnet_devices[device] %}
-                        <li id={{ device }} -{{ object }} class="object-tree">
+                        <li id="{{ device }}-{{ object }}" class="object-tree">
                             <input type="checkbox" id="checkbox-{{ device }}-{{object}}" onclick="cool(event)">
                             <label for="checkbox-{{ device }}-{{object}}" class="object_select">{{ object }}</label>
 
                             <ul>
                                 {% for property in bacnet_devices[device][object] %}
                                 <li class="properties">
-                                    <label id={{ device }} -{{ object }}-{{ property }} class="property">{{ property }} : {{ bacnet_devices[device][object][property] }}</label>
+                                    <label id="{{device}}-{{ object }}-{{ property }}" class="property">{{ property }} : {{ bacnet_devices[device][object][property] }}</label>
                                 </li>
                                 {% endfor %}
                             </ul>
