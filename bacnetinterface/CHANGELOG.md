@@ -6,6 +6,7 @@
 - Updated web UI main page to make navigation a little easier.
 - Unsubscribing now gets done when the add-on closes.
 - All errors now really should be caught instead of dumping tracelogs.
+- Updated translations
 
 # 1.0.0
 

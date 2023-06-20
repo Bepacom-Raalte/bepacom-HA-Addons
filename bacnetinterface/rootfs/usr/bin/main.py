@@ -32,7 +32,7 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
     try:
         while True:
             try:
-                await asyncio.wait_for(event.wait(), interval)
+                await asyncio.wait_for(event.wait(), timeout=interval)
                 event.clear()
             except asyncio.TimeoutError:
                 await app.read_objects_periodically()
@@ -80,7 +80,7 @@ async def writer_task(app: Application, write_queue: asyncio.Queue) -> None:
             )
 
     except Exception as err:
-        logging.error(err)
+        logging.error(f" Writer task error: {err}")
     except asyncio.CancelledError as err:
         logging.warning(f"Writer task cancelled: {err}")
 
@@ -173,7 +173,7 @@ async def main():
     update_task = asyncio.create_task(
         updater_task(
             app=app,
-            interval=config.get("BACpypes", "updateInterval"),
+            interval=int(config.get("BACpypes", "updateInterval")),
             event=webAPI.events.read_event,
         )
     )

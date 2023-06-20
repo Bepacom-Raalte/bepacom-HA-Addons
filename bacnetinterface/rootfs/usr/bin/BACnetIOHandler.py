@@ -159,7 +159,7 @@ class BACnetIOHandler(NormalApplication):
         except ErrorRejectAbortNack as err:
             logging.error(f"Nack error: {device_identifier}: {err}")
         except AttributeError as err:
-            logging.error(f"Attribute error: {obj_id}: {err}")
+            logging.error(f"Attribute error: {err}")
         else:
             for (
                 object_identifier,

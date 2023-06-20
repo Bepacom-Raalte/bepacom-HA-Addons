@@ -34,6 +34,6 @@ configuration:
     description: The maximum amount of segments accepted in a message
   updateInterval:
     name: Update Interval
-    description: Time between periodic updates
+    description: Time between periodic updates in seconds
 network:
   47808/udp: Used for BACnet devices

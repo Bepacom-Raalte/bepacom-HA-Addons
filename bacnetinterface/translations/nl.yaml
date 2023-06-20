@@ -32,5 +32,8 @@ configuration:
   maxSegmentsAccepted:
     name: Maximum Segmenten Geaccepted
     description: De maximale hoeveelheid segmenten er in een BACnet bericht mogen zitten.
+  updateInterval:
+    name: Update Interval
+    description: Tijd tussen periodieke updates in seconden
 network:
   47808/udp: BACnet poort
