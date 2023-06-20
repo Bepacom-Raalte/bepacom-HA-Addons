@@ -1,9 +1,15 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.0.1
+
+20/6/2023
+- Updated web UI main page to make navigation a little easier.
+- Unsubscribing now gets done when the add-on closes.
+- All errors now really should be caught instead of dumping tracelogs.
 
 # 1.0.0
 
-20/06/2023
+16/06/2023
 - Rewrote the backbones of the program. Now using BACpypes3 instead of BACpypes.
 - Removed certain configuration options that have no effect.
 - New API points!

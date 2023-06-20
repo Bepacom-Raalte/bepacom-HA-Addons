@@ -22,13 +22,10 @@ KeyType = TypeVar("KeyType")
 def exception_handler(loop, context):
     """Handle uncaught exceptions"""
     try:
-        if isinstance(context["exception"], list|tuple):
-            logging.error(f"An error occurred:", {context["exception"][0]})
-        else:
-            logging.error(f"An error occurred:", {context["exception"]})
+        logging.error(f'An error occurred: {context["exception"]}')
     except:
         logging.error("Tried to log error, but something went horribly wrong!!!")
-    
+
 
 async def updater_task(app: Application, interval: int, event: asyncio.Event) -> None:
     """Task to handle periodic updates to the BACnet dictionary"""
@@ -41,7 +38,7 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
                 await app.read_objects_periodically()
 
     except asyncio.CancelledError as err:
-        logging.error(f"Updater task cancelled: {err}")
+        logging.warning(f"Updater task cancelled: {err}")
 
 
 async def writer_task(app: Application, write_queue: asyncio.Queue) -> None:
@@ -83,9 +80,9 @@ async def writer_task(app: Application, write_queue: asyncio.Queue) -> None:
             )
 
     except Exception as err:
-        print(err)
+        logging.error(err)
     except asyncio.CancelledError as err:
-        logging.error(f"Writer task cancelled: {err}")
+        logging.warning(f"Writer task cancelled: {err}")
 
 
 async def subscribe_handler_task(app: Application, sub_queue: asyncio.Queue) -> None:
@@ -115,7 +112,7 @@ async def subscribe_handler_task(app: Application, sub_queue: asyncio.Queue) -> 
                 )
 
     except asyncio.CancelledError as err:
-        logging.error(f"Subscribe task cancelled: {err}")
+        logging.warning(f"Subscribe task cancelled: {err}")
 
 
 async def unsubscribe_handler_task(
@@ -138,7 +135,7 @@ async def unsubscribe_handler_task(
                 logging.error("Subscription task does not exist")
 
     except asyncio.CancelledError as err:
-        logging.error(f"Unsubscribe task cancelled: {err}")
+        logging.warning(f"Unsubscribe task cancelled: {err}")
 
 
 async def main():
@@ -198,6 +195,7 @@ async def main():
     webAPI.who_is_func = app.who_is
     webAPI.i_am_func = app.i_am
     webAPI.events.val_updated_event = app.update_event
+    webAPI.events.startup_complete_event = app.startup_complete
 
     config = uvicorn.Config(
         app=fastapi_app, host="127.0.0.1", port=7813, log_level=loglevel.lower()
@@ -211,6 +209,7 @@ async def main():
         write_task.cancel()
         sub_task.cancel()
         unsub_task.cancel()
+        await app.end_subscription_tasks()
         app.close()
 
 

@@ -25,12 +25,14 @@ class BACnetIOHandler(NormalApplication):
     bacnet_device_dict: dict = {}
     subscription_tasks: list = []
     update_event: asyncio.Event = asyncio.Event()
+    startup_complete: asyncio.Event = asyncio.Event()
 
     def __init__(self, *args) -> None:
         NormalApplication.__init__(self, *args)
         super().i_am()
         super().who_is()
         self.vendor_info = get_vendor_info(0)
+        self.startup_complete.set()
         logging.debug("Initialised application")
 
     def deep_update(
@@ -307,6 +309,13 @@ class BACnetIOHandler(NormalApplication):
         )
         self.subscription_tasks.append(task)
 
+    async def end_subscription_tasks(self):
+        for task in self.subscription_tasks:
+            task.cancel()
+        while self.subscription_tasks:
+            await asyncio.sleep(1)
+        logging.info("Cancelled all subscriptions")
+
     async def do_ConfirmedCOVNotificationRequest(
         self, apdu: ConfirmedCOVNotificationRequest
     ) -> None:
@@ -335,6 +344,14 @@ class BACnetIOHandler(NormalApplication):
                 issue_confirmed_notifications=confirmed_notification,
                 lifetime=lifetime,
             ).__aenter__()
+            # create a request to cancel the subscription
+            unsubscribe_cov_request = SubscribeCOVRequest(
+                subscriberProcessIdentifier=subscription.subscriber_process_identifier,
+                monitoredObjectIdentifier=subscription.monitored_object_identifier,
+                destination=subscription.address,
+            )
+
+            unsubscribe_cov_request.pduDestination = device_address
             subscription.create_refresh_task()
             dev_id = self.addr_to_dev(addr=device_address)
             task_name = f"{dev_id[0].attr}:{dev_id[1]},{object_identifier[0].attr}:{object_identifier[1]}"
@@ -357,20 +374,6 @@ class BACnetIOHandler(NormalApplication):
                 logging.debug(
                     f"Subscription: {object_identifier}, {property_identifier} = {property_value}"
                 )
-
-            await subscription.__aexit__()
-
-            # create a request to cancel the subscription
-            unsubscribe_cov_request = SubscribeCOVRequest(
-                subscriberProcessIdentifier=subscription.subscriber_process_identifier,
-                monitoredObjectIdentifier=subscription.monitored_object_identifier,
-                destination=subscription.address,
-                issueConfirmedNotifications=False,
-                lifetime=0,
-            )
-
-            # send the request, wait for the response
-            response = await self.app.request(unsubscribe_cov_request)
 
         except (
             ServicesError,
@@ -405,6 +408,9 @@ class BACnetIOHandler(NormalApplication):
             logging.error(
                 f"Cancelled subscription task for: {device_address}, {object_identifier}"
             )
+
+            # send the request, wait for the response
+            response = await self.request(unsubscribe_cov_request)
 
             await subscription.__aexit__()
             for task in self.subscription_tasks:

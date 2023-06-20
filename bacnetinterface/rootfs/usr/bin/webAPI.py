@@ -53,6 +53,7 @@ class EventStruct:
     read_event: asyncio.Event = asyncio.Event()
     who_is_event: asyncio.Event = asyncio.Event()
     i_am_event: asyncio.Event = asyncio.Event()
+    startup_complete_event: asyncio.Event = asyncio.Event()
 
 
 events = EventStruct()
@@ -62,6 +63,7 @@ events = EventStruct()
 async def lifespan(app: FastAPI):
     """Lifespan manager of FastAPI."""
     # Do nothing on startup
+    await events.startup_complete_event.wait()
     yield
     # Do nothing on shutdown
 
@@ -136,7 +138,9 @@ templates = Jinja2Templates(directory="/usr/bin/templates")
 @app.get("/webapp", response_class=HTMLResponse, tags=["Webpages"])
 async def webapp(request: Request):
     """Index and main page of the add-on."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(
+        "index.html", {"request": request, "bacnet_devices": bacnet_device_dict}
+    )
 
 
 @app.get("/subscriptions", response_class=HTMLResponse, tags=["Webpages"])
@@ -540,7 +544,7 @@ async def websocket_writer(websocket: WebSocket):
         logging.error(str(error))
         return
     except WebSocketDisconnect:
-        logging.error("Exception Disconnect for writer")
+        logging.warning("Exception Disconnect for writer")
         return
 
 
