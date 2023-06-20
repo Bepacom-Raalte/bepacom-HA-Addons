@@ -262,13 +262,13 @@ async def upload_ede_files(
 
             obj_dict = {}
             obj_dict = {
-                "objectIdentifier": [obj_type, obj_instance],
+                "objectIdentifier": [obj_type.attr, obj_instance],
                 "objectType": obj_type,
                 "objectName": obj_name,
                 "description": desc,
             }
 
-            if stateTextsList and "binary" in str(obj_type):
+            if stateTextsList and "binary" in str(obj_type.attr):
                 obj_dict["inactiveText"] = stateTextsList[int(state_text)][0]
                 obj_dict["activeText"] = stateTextsList[int(state_text)][1]
             elif stateTextsList and state_text:
@@ -287,7 +287,7 @@ async def upload_ede_files(
 
             deviceDict = deep_update(
                 deviceDict,
-                {f"device:{dev_instance}": {f"{obj_type}:{obj_instance}": obj_dict}},
+                {f"device:{dev_instance}": {f"{obj_type.attr}:{obj_instance}": obj_dict}},
             )
 
         if row[0] == "# keyname":
