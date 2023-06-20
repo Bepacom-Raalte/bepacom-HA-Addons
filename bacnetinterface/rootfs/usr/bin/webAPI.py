@@ -546,10 +546,10 @@ async def websocket_writer(websocket: WebSocket):
                 await asyncio.sleep(0.5)
 
     except (RuntimeError, asyncio.CancelledError) as error:
-        logging.error(str(error))
+        logging.warning(f"Websocket writer error: {error}")
         return
     except WebSocketDisconnect:
-        logging.warning("Exception Disconnect for writer")
+        logging.warning("Websocket disconnected")
         return
 
 
