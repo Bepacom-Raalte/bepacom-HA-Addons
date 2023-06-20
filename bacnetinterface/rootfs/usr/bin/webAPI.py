@@ -312,13 +312,13 @@ async def upload_ede_files(
 @app.delete("/apiv1/commissioning/ede", tags=["apiv1"])
 async def delete_ede_file(device_ids: Annotated[list[str] | None, Query()] = None):
     """Delete EDE files to stop letting them show up in API calls."""
-    logging.error(len(EDE_files))
+    logging.debug(f"EDE Files loaded: {len(EDE_files)}")
     EDE_files[:] = [
         dictionary
         for dictionary in EDE_files
         if all(device not in dictionary for device in device_ids)
     ]
-    logging.error(len(EDE_files))
+    logging.debug(f"EDE Files loaded: {len(EDE_files)}")
     return True
 
 
