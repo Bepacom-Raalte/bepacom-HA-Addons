@@ -19,7 +19,6 @@ device_properties_to_read: list = [
     PropertyIdentifier("segmentationSupported"),
     PropertyIdentifier("apduTimeout"),
     PropertyIdentifier("numberOfApduRetries"),
-    # PropertyIdentifier('deviceAddressBinding'),
     PropertyIdentifier("databaseRevision"),
 ]
 
