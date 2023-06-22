@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+	<style>
+		body {
+			font-family: 'Roboto';
+			font-style: normal;
+			font-weight: 400;
+		}
+
+		* {
+			box-sizing: border-box;
+			padding: 0;
+			margin: 0;
+		}
+
+		.parent {
+			display: grid;
+			grid-template-columns: 0.8fr repeat(4, 1fr);
+			grid-template-rows: 0.8fr 0.2fr repeat(3, 1fr);
+			grid-column-gap: 0px;
+			grid-row-gap: 0px;
+			width: 100vw;
+			height: 100vh;
+			background-color: white;
+			text-align: center;
+		}
+
+		.div1 {
+			grid-area: 1 / 1 / 2 / 6;
+			border: 2px solid #f60000;
+		}
+
+			.div1 h1 {
+			}
+
+		.div2 {
+			border: 2px solid #f60000;
+			grid-area: 2 / 1 / 3 / 6;
+			background-color: #f60000;
+			border-bottom-color: white;
+		}
+
+			.div2 a {
+				float: left;
+				display: block;
+				color: white;
+				margin-top: 0;
+				padding-left: 10px;
+				padding-right: 10px;
+				height: 100%;
+				line-height: 300%;
+				width: 12%;
+			}
+
+				.div2 a:hover {
+					background-color: white;
+					color: #f60000;
+				}
+
+		.div3 {
+			border: 2px solid #f60000;
+			grid-area: 3 / 1 / 6 / 2;
+		}
+
+		.div4 {
+			border: 2px solid #f60000;
+			grid-area: 3 / 2 / 6 / 5;
+			align-items: center;
+			text-align: center;
+			overflow-y: scroll;
+			scrollbar-width: none;
+		}
+
+		.div4 label {
+				padding: 10px;
+				width: 100%;
+				font-size: 24px;
+				display: block;
+			}
+
+		.div4 span {
+				padding: 10px;
+				width: 100%;
+				font-size: 16px;
+				display: block;
+			}
+
+		.div5 {
+			border: 2px solid #f60000;
+			grid-area: 3 / 5 / 6 / 6;
+		}
+
+			.div5 form {
+				border: 0px;
+				border-radius: 2px;
+			}
+
+			.div5 select {
+				padding: 20px;
+				width: 100%;
+				background-color: white;
+				color: #f60000;
+				font-size: 16px;
+			}
+
+				.div5 select:hover {
+					color: black;
+				}
+
+			.div5 label {
+				padding: 10px;
+				width: 100%;
+				background-color: #f60000;
+				color: white;
+				font-size: 16px;
+				display: block;
+			}
+
+			.div5 input[type=text] {
+				padding: 20px;
+				width: 100%;
+				background-color: white;
+				color: #f60000;
+				font-size: 16px;
+			}
+
+			.div5 input[type=file] {
+				padding: 20px;
+				width: 100%;
+				background-color: #f60000;
+				color: white;
+				font-size: 16px;
+			}
+
+			.div5 input[type=button] {
+				padding: 20px;
+				width: 100%;
+				border: none;
+				background-color: #f60000;
+				color: white;
+				font-size: 16px;
+				cursor: pointer;
+			}
+
+				.div5 input[type=button]:hover {
+					background-color: white;
+					color: #f60000
+				}
+
+		table,
+		th,
+		td {
+			border: 1px solid black;
+			border-collapse: collapse;
+		}
+
+		th,
+		td {
+			padding: 5px;
+		}
+
+		th {
+			text-align: left;
+		}
+
+		.button {
+			padding: 20px;
+			width: 100%;
+			border: none;
+			background-color: #f60000;
+			color: white;
+			font-size: 16px;
+			cursor: pointer;
+		}
+
+			.button:hover {
+				background-color: white;
+				color: #f60000
+			}
+
+		.selectable-label {
+		  display: inline-block;
+		  cursor: pointer;
+		}
+
+		.selectable-label input[type="checkbox"] {
+		  display: none;
+		  padding: 10px;
+		}
+
+		.selectable-label input[type="checkbox"]:checked + span {
+		  background-color: #f60000;
+		  color: white;
+		  padding: 10px;
+		  border-radius: 25px;
+		}
+
+	</style>
+	<title>WebUI</title>
+</head>
+<body>
+	<div class="parent">
+		<div class="div1">
+			<img src="https://www.bepacom.nl/wp-content/uploads/2018/09/logo-bepacom-besturingstechniek.jpg" alt="Bepacom B.V. Raalte" style="margin:1%; justify-content: center; align-items: center; height:40px;">
+			<h1>BACnet/IP Interface</h1>
+		</div>
+		<div class="div2">
+			<a href="./webapp" title="Main page where you can see all devices, objects and values.">Main</a>
+			<a href="./subscriptions" title="Page where you can see all subscriptions.">Subscriptions</a>
+			<a href="./ede" title="Page where you can see manage EDE files.">EDE</a>
+			<a id="docs" href="./docs" title="API documentation can be found here. Need an internet connection to load the page.">Swagger API Docs</a>
+			<a id="docs" href="./redoc" title="API documentation can be found here. Need an internet connection to load the page.">Redoc API Docs</a>
+			<a href="https://www.bepacom.nl" style="float:right;" title="Bepacom, the company that made this possible.">About</a>
+		</div>
+		<div class="div3">
+			<button class="button" onclick="command('iam')" title="Send I Am Request over the BACnet network.">I Am Request</button>
+			<button class="button" onclick="command('whois')" title="Send Who Is Request over the BACnet network.">Who Is Request</button>
+			<button class="button" onclick="command('readall')" title="Send Read Request to all devices over the BACnet network.">Read All Devices</button>
+		</div>
+		<div class="div4">
+			<label style="background-color: #f60000; color: white;">EDE files:</label>
+			{%	for file in files	%}
+				{% for key, value in file.items() %}
+				<label class="selectable-label">
+					<input type="checkbox" id="checkbox-{{ key }}">
+					<span class="ede_selection">{{ key }}</span>
+				</label>
+				{% endfor %}
+			{%	endfor	%}
+		</div>
+		<div class="div5">
+			<form id="form">
+				<label for="EDE_file">Select EDE</label>
+				<input type="file" id="EDE_file">
+				<label for="EDE_StateTexts">Select StateTexts</label>
+				<input type="file" id="EDE_StateTexts">
+				<input type="button" value="Upload Files" onclick="uploadFiles(event)" title="Send EDE Files to server">
+				<input type="button" value="Delete Selection" onclick="deleteFiles(event)" title="Delet">
+			</form>
+		</div>
+	</div>
+	<script>
+		function uploadFiles(event) {
+			console.log("Uploading...")
+			console.log(event)
+			var ede_file = document.getElementById('EDE_file');
+			var state_text_file = document.getElementById('EDE_StateTexts');
+
+			var edeFile = ede_file.files[0];
+			var stateTextsFile = state_text_file.files[0];
+
+			var formData = new FormData();
+			formData.append('EDE', edeFile, edeFile.name);
+			formData.append('stateTexts', stateTextsFile, stateTextsFile.name);
+			let url = './apiv1/commissioning/ede';
+
+			fetch(url, {
+				method: 'POST',
+				headers: {
+				  'accept': 'application/json'
+				},
+				body: formData
+			})
+			.then(response => {
+				if (response.status === 200) {
+					alert('EDE Files added!');
+				} else {
+					console.log("Unexpected response:", response.status);
+					// Handle other response statuses here
+					alert('Something went wrong...');
+				}
+			})
+			.then(data => {
+				console.log('API response:', data);
+				// Handle the API response here
+				location.reload() 
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				// Handle any errors that occur during the API request here
+				location.reload() 
+			});
+		}
+		
+
+		function deleteFiles() {
+			// Get all checkboxes that are checked
+			var checkboxes = document.querySelectorAll('.selectable-label input[type="checkbox"]:checked');
+
+			// Get the selected keys as an array
+			var keys = Array.from(checkboxes).map(function(checkbox) {
+				return checkbox.id.replace('checkbox-', '');
+			});
+
+			// Prepare the query parameter value
+			var queryParam = 'device_ids=' + keys.map(function(key) {
+				return key;
+			}).join(',');
+
+			let url = './apiv1/commissioning/ede';
+
+			console.log(queryParam);
+
+			fetch(url + '?' + queryParam, {
+				method: 'DELETE',
+				headers: {
+				  'accept': 'application/json'
+				}
+			})
+			.then(response => {
+				if (response.status === 200) {
+					alert('Deleted selection!');
+				} else {
+					console.log("Unexpected response:", response.status);
+					// Handle other response statuses here
+					alert('Something went wrong...');
+				}
+			})
+			.then(data => {
+				console.log('API response:', data);
+				// Handle the API response here
+				location.reload() 
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				// Handle any errors that occur during the API request here
+				location.reload() 
+			});
+		}
+
+
+
+	</script>
+</body>
+</html>

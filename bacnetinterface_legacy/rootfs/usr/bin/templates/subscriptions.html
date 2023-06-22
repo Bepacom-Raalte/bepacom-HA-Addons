@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+    <style>
+        body {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 400;
+        }
+
+        * {
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
+        }
+
+        .parent {
+            display: grid;
+            grid-template-columns: 0.8fr repeat(4, 1fr);
+            grid-template-rows: 0.8fr 0.2fr repeat(3, 1fr);
+            grid-column-gap: 0px;
+            grid-row-gap: 0px;
+            width: 100vw;
+            height: 100vh;
+            background-color: white;
+            text-align: center;
+        }
+
+        .div1 {
+            grid-area: 1 / 1 / 2 / 6;
+            border: 2px solid #f60000;
+        }
+
+            .div1 h1 {
+            }
+
+        .div2 {
+            border: 2px solid #f60000;
+            grid-area: 2 / 1 / 3 / 6;
+            background-color: #f60000;
+            border-bottom-color: white;
+        }
+
+            .div2 a {
+                float: left;
+                display: block;
+                color: white;
+                margin-top: 0;
+                padding-left: 10px;
+                padding-right: 10px;
+                height: 100%;
+                line-height: 300%;
+                width: 12%;
+            }
+
+                .div2 a:hover {
+                    background-color: white;
+                    color: #f60000;
+                }
+
+        .div3 {
+            border: 2px solid #f60000;
+            grid-area: 3 / 1 / 6 / 2;
+        }
+
+        .div4 {
+            border: 2px solid #f60000;
+            grid-area: 3 / 2 / 6 / 5;
+            align-items: center;
+            text-align: left;
+            overflow-y: scroll;
+            scrollbar-width: none;
+        }
+
+        .div5 {
+            border: 2px solid #f60000;
+            grid-area: 3 / 5 / 6 / 6;
+        }
+
+            .div5 form {
+                border: 0px;
+                border-radius: 2px;
+            }
+
+            .div5 select {
+                padding: 20px;
+                width: 100%;
+                background-color: white;
+                color: #f60000;
+                font-size: 16px;
+            }
+
+                .div5 select:hover {
+                    color: black;
+                }
+
+            .div5 label {
+                padding: 10px;
+                width: 100%;
+                background-color: #f60000;
+                color: white;
+                font-size: 16px;
+                display: block;
+            }
+
+            .div5 input[type=text] {
+                padding: 20px;
+                width: 100%;
+                background-color: white;
+                color: #f60000;
+                font-size: 16px;
+            }
+
+            .div5 input[type=button] {
+                padding: 20px;
+                width: 100%;
+                border: none;
+                background-color: #f60000;
+                color: white;
+                font-size: 16px;
+                cursor: pointer;
+            }
+
+                .div5 input[type=button]:hover {
+                    background-color: white;
+                    color: #f60000
+                }
+
+        table,
+        th,
+        td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 5px;
+        }
+
+        th {
+            text-align: left;
+        }
+
+        .button {
+            padding: 20px;
+            width: 100%;
+            border: none;
+            background-color: #f60000;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+            .button:hover {
+                background-color: white;
+                color: #f60000
+            }
+    </style>
+    <title>WebUI</title>
+</head>
+<body>
+    <div class="parent">
+        <div class="div1">
+            <img src="https://www.bepacom.nl/wp-content/uploads/2018/09/logo-bepacom-besturingstechniek.jpg" alt="Bepacom B.V. Raalte" style="margin:1%; justify-content: center; align-items: center; height:40px;">
+            <h1>BACnet/IP Interface</h1>
+        </div>
+        <div class="div2">
+            <a href="./webapp" title="Main page where you can see all devices, objects and values.">Main</a>
+            <a href="./subscriptions" title="Page where you can see all subscriptions.">Subscriptions</a>
+            <a href="./ede" title="Page where you can see manage EDE files.">EDE</a>
+            <a id="docs" href="./docs" title="API documentation can be found here. Need an internet connection to load the page.">Swagger API Docs</a>
+            <a id="docs" href="./redoc" title="API documentation can be found here. Need an internet connection to load the page.">Redoc API Docs</a>
+            <a href="https://www.bepacom.nl" style="float:right;" title="Bepacom, the company that made this possible.">About</a>
+        </div>
+        <div class="div3">
+            <button class="button" onclick="command('iam')" title="Send I Am Request over the BACnet network.">I Am Request</button>
+            <button class="button" onclick="command('whois')" title="Send Who Is Request over the BACnet network.">Who Is Request</button>
+            <button class="button" onclick="command('readall')" title="Send Read Request to all devices over the BACnet network.">Read All Devices</button>
+        </div>
+        <div class="div4">
+            <table>
+                <tr>
+                    <th>Subscription ID</th>
+                    <th>Object/Device of the subscription</th>
+                </tr>
+                {% for key, value in subscriptions.items() %}
+                <tr>
+                    <td>{{key}}</td>
+                    <td>{{value}}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="div5">
+            <form id="form">
+                <label for="device">Select Device:</label>
+                <select id="device" name="device" title="Device you want to subscribe to."></select>
+                <br>
+                <label for="object">Select Object:</label>
+                <select id="object" name="object" title="Object you want to subscribe to."></select>
+                <br>
+                <label for="confirmationType">Confirmation Type:</label>
+                <select id="confirmationType" name="confirmationType" title="Whether to receive Confirmed or Unconfirmed notifications.">
+                    <option value="true" title="Send ack after receiving update. Recommended for regular subscription.">Confirmed</option>
+                    <option value="false" title="Don't send ack after receiving update. Unconfirmed as well as lifetime 0 to unsubscribe">Unconfirmed</option>
+                </select>
+                <br>
+                <label for="value">Subscription Lifetime:</label>
+                <input type="text" id="lifetime" name="lifetime" title="Lifetime of subscription in seconds. Unconfirmed as well as lifetime 0 to unsubscribe">
+                <br>
+                <input type="button" value="Subscribe" onclick="submitForm()" title="Send Subscribe Request.">
+            </form>
+        </div>
+    </div>
+    <script>
+        const API_URL = './apiv1/json';
+        var refreshing = false; // flag to check if the page is ready
+        var devicedict = null;
+
+        function command(text) {
+            if (refreshing) return; // if the page is already refreshing, return and don't call the function again
+            let url = "../apiv1/command/" + text
+            fetch(url).then(response => response.text()).then(data => {
+                console.log(data);
+                // do something with the data here
+            });
+            switch (text) {
+                case "whois":
+                    alert('Who Is Request Sent!');
+                    break
+                case "iam":
+                    alert('I Am Request Sent!');
+                    break
+                case "readall":
+                    alert('Multiple Read Request Sent to all detected devices!');
+                    break
+                default:
+                    alert("Something went wrong...")
+            }
+        }
+
+
+        function updateData() {
+            fetch("./apiv1/json").then(response => response.json()).then(data => {
+                devicedict = data
+                fillOptions()
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            updateData()
+        });
+        let devices = [];
+        let objects = [];
+
+        function fillOptions() {
+            let selectDevice = document.getElementById("device");
+            let selectObject = document.getElementById("object");
+            for (let device in devicedict) {
+                if (!devices.includes(device)) {
+                    devices.push(device);
+                    let option = document.createElement("option");
+                    option.value = device;
+                    option.text = device;
+                    selectDevice.appendChild(option);
+                }
+                for (let object in devicedict[device]) {
+                    if (!objects.includes(object)) {
+                        objects.push(object);
+                        let option = document.createElement("option");
+                        option.value = object;
+                        option.text = object;
+                        selectObject.appendChild(option);
+                    }
+                }
+            }
+        }
+
+        function submitForm() {
+            let device = document.getElementById("device").value;
+            let object = document.getElementById("object").value;
+            let confirmationType = document.getElementById("confirmationType").value;
+            let lifetime = document.getElementById("lifetime").value;
+            let url = `./apiv1/subscribe/${device}/${object}?confirmationType=${confirmationType}&lifetime=${lifetime}`;
+            let data = {
+                lifetime: lifetime,
+                confirmationType: confirmationType
+            };
+            fetch(url, {
+                method: "POST",
+                body: JSON.stringify(data),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }).then(response => response.json()).then(data => {
+                console.log(data);
+            });
+            alert("Subscribe Request Processing! See logs whether it's succesful")
+        }
+    </script>
+</body>
+</html>
