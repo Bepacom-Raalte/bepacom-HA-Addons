@@ -156,6 +156,14 @@ class BACnetIOHandler(NormalApplication):
 
         except AbortPDU as err:
             logging.error(f"Abort PDU error while reading device properties without segmentation: {device_identifier}: {err}")
+
+            response = await self.read_property(address=apdu.pduSource,objid=device_identifier, prop=PropertyIdentifier("objectList"))
+
+            logging.error(response)
+
+            if response:
+                self.dict_updater(device_identifier=device_identifier,object_identifier=device_identifier,property_identifier=PropertyIdentifier("objectList"),property_value=response)
+
         except ErrorRejectAbortNack as err:
             logging.error(f"Nack error: {device_identifier}: {err}")
         except AttributeError as err:
