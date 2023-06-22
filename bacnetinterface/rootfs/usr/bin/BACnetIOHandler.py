@@ -75,6 +75,7 @@ class BACnetIOHandler(NormalApplication):
         await self.read_device_props(apdu=apdu)
 
         await self.read_object_list(device_identifier=apdu.iAmDeviceIdentifier)
+
         await self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
 
     def dict_updater(
@@ -207,6 +208,8 @@ class BACnetIOHandler(NormalApplication):
 
             logging.debug(f"Exploring Device info of {device_identifier}")
 
+            logging.error(f"Read object list ->: {self.dev_to_addr(ObjectIdentifier(device_identifier))}{parameter_list}")
+
             response = await self.read_property_multiple(
                 address=apdu.pduSource, parameter_list=parameter_list
             )
@@ -259,6 +262,7 @@ class BACnetIOHandler(NormalApplication):
                 logging.debug(
                     f"Reading object {obj_id} of {device_identifier} during read_object_list"
                 )
+                logging.error(f"Read object list ->: {self.dev_to_addr(ObjectIdentifier(device_identifier))}{parameter_list}")
 
                 response = await self.read_property_multiple(
                     address=self.dev_to_addr(ObjectIdentifier(device_identifier)),

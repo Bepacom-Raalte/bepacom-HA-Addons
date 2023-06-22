@@ -166,6 +166,9 @@ async def main():
         objectName=config.get("BACpypes", "objectName"),
         description="BACnet Add-on for Home Assistant",
         vendorIdentifier=int(config.get("BACpypes", "vendorIdentifier")),
+        maxApduLengthAccepted=1024,
+        maxSegmentsAccepted =24
+        
     )
 
     app = BACnetIOHandler(this_device, ipv4_address)
