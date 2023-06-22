@@ -209,7 +209,7 @@ class BACnetIOHandler(NormalApplication):
             if not "segmentation-not-supported" in str(err):
                 return False
             else:
-                self.read_device_props_non_segmented(apdu)
+                await self.read_device_props_non_segmented(apdu)
 
         except ErrorRejectAbortNack as err:
             logging.error(f"Nack error: {device_identifier}: {err}")
@@ -262,7 +262,7 @@ class BACnetIOHandler(NormalApplication):
                 if not "segmentation-not-supported" in str(err):
                     return False
                 else:
-                    self.read_object_list_non_segmented(device_identifier)
+                    await self.read_object_list_non_segmented(device_identifier)
 
             except ErrorRejectAbortNack as err:
                 logging.error(f"Nack error while reading object list: {obj_id}: {err}")
