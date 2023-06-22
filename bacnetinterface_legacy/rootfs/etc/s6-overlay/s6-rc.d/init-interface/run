@@ -6,6 +6,8 @@
 # s6-overlay docs: https://github.com/just-containers/s6-overlay
 # ==============================================================================
 
+# Declaring variables
+
 declare header
 declare objectname
 declare address
@@ -17,19 +19,6 @@ declare foreignBBMD
 declare foreignTTL
 declare maxSegmentsAccepted
 declare defaultPriority
-declare updateInterval
-
-# Functions
-
-IPprefix_by_netmask() {
-    #function returns prefix for given netmask in arg1
-    bits=0
-    for octet in $(echo $1| sed 's/\./ /g'); do 
-         binbits=$(echo "obase=2; ibase=10; ${octet}"| bc | sed 's/0//g') 
-         let bits+=${#binbits}
-    done
-    echo "/${bits}"
-}
 
 # Setting variables
 
@@ -42,9 +31,7 @@ readarray -t eth_adapters < <(ifconfig -a | grep -oE '^(enp|eth|eno)[a-z0-9]+')
     do
         ipaddr=$(ifconfig "$adapter" | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
         if [ -n "$ipaddr" ]; then
-            netmask=$(ifconfig $adapter | grep 'Mask' | cut -d: -f4)
-            cidr=$(IPprefix_by_netmask $netmask)
-            break
+            break            # Check if ipaddr is not empty
         fi
     done
 } || {
@@ -59,8 +46,8 @@ if [[ $(bashio::config 'address') == "auto" ]]; then
         bashio::log.error "All adapters checked but found no suitable choice. Check whether you are connected through ethernet with a BACnet network. If this problem persists, contact the developer."
         exit 1
     fi
-    address="address: $ipaddr$cidr"
-    echo "Using $adapter as $address"
+    address="address: $ipaddr/24"
+    echo "Using $adapter with $ipaddr..."
 elif [[ -z "$(bashio::config 'objectName')" ]]; then
     echo "Address is empty and didn't detect any suitable devices!"
     exit 1
