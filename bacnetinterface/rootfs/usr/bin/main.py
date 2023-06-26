@@ -200,9 +200,15 @@ async def main():
     webAPI.events.val_updated_event = app.update_event
     webAPI.events.startup_complete_event = app.startup_complete
 
+    if loglevel == "DEBUG":
+        uvilog="info"
+    else:
+        uvilog = loglevel.lower()
+
     config = uvicorn.Config(
-        app=fastapi_app, host="127.0.0.1", port=7813, log_level=loglevel.lower()
+        app=fastapi_app, host="127.0.0.1", port=7813, log_level=uvilog
     )
+
     server = uvicorn.Server(config)
 
     await server.serve()

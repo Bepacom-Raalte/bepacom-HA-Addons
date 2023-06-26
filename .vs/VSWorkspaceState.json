@@ -3,16 +3,14 @@
     "",
     "\\bacnetinterface",
     "\\bacnetinterface\\rootfs",
-    "\\bacnetinterface\\rootfs\\etc",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d",
     "\\bacnetinterface\\rootfs\\usr",
     "\\bacnetinterface\\rootfs\\usr\\bin",
-    "\\bacnetinterface\\rootfs\\usr\\bin\\static",
-    "\\bacnetinterface\\rootfs\\usr\\bin\\static\\css",
-    "\\bacnetinterface\\rootfs\\usr\\bin\\templates",
-    "\\bacnetinterface\\translations"
+    "\\bacnetinterface_legacy",
+    "\\bacnetinterface_legacy\\rootfs",
+    "\\bacnetinterface_legacy\\rootfs\\etc",
+    "\\bacnetinterface_legacy\\rootfs\\etc\\s6-overlay",
+    "\\bacnetinterface_legacy\\rootfs\\etc\\s6-overlay\\s6-rc.d"
   ],
-  "SelectedNode": "\\bacnetinterface\\build.yaml",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\BACnetIOHandler.py",
   "PreviewInSolutionExplorer": false
 }

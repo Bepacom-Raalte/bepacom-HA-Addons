@@ -66,12 +66,20 @@ class BACnetIOHandler(NormalApplication):
                 )
         return None
 
+    async def do_WhoIsRequest(self, apdu) -> None:
+        logging.info(f"Received Who Is Request from {apdu.pduSource}")
+        await super().do_WhoIsRequest(apdu)
+
     async def do_IAmRequest(self, apdu) -> None:
-        if apdu.iAmDeviceIdentifier[1] in self.device_info_cache.instance_cache:
-            return
-        await super().do_IAmRequest(apdu)
+
         logging.info(f"I Am from {apdu.iAmDeviceIdentifier}")
 
+        if apdu.iAmDeviceIdentifier[1] in self.device_info_cache.instance_cache:
+            logging.warning(f"Device {apdu.iAmDeviceIdentifier} already in cache!")
+            return
+
+        await super().do_IAmRequest(apdu)
+        
         await self.read_device_props(apdu=apdu)
 
         await self.read_object_list(device_identifier=apdu.iAmDeviceIdentifier)
@@ -208,8 +216,6 @@ class BACnetIOHandler(NormalApplication):
 
             logging.debug(f"Exploring Device info of {device_identifier}")
 
-            logging.error(f"Read object list ->: {self.dev_to_addr(ObjectIdentifier(device_identifier))}{parameter_list}")
-
             response = await self.read_property_multiple(
                 address=apdu.pduSource, parameter_list=parameter_list
             )
@@ -262,7 +268,6 @@ class BACnetIOHandler(NormalApplication):
                 logging.debug(
                     f"Reading object {obj_id} of {device_identifier} during read_object_list"
                 )
-                logging.error(f"Read object list ->: {self.dev_to_addr(ObjectIdentifier(device_identifier))}{parameter_list}")
 
                 response = await self.read_property_multiple(
                     address=self.dev_to_addr(ObjectIdentifier(device_identifier)),
