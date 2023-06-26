@@ -167,8 +167,7 @@ async def main():
         description="BACnet Add-on for Home Assistant",
         vendorIdentifier=int(config.get("BACpypes", "vendorIdentifier")),
         maxApduLengthAccepted=1024,
-        maxSegmentsAccepted =24
-        
+        maxSegmentsAccepted=24,
     )
 
     app = BACnetIOHandler(this_device, ipv4_address)
@@ -201,7 +200,7 @@ async def main():
     webAPI.events.startup_complete_event = app.startup_complete
 
     if loglevel == "DEBUG":
-        uvilog="info"
+        uvilog = "info"
     else:
         uvilog = loglevel.lower()
 

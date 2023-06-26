@@ -64,6 +64,7 @@ async def lifespan(app: FastAPI):
     """Lifespan manager of FastAPI."""
     # Do nothing on startup
     await events.startup_complete_event.wait()
+    await asyncio.sleep(3)
     yield
     # Do nothing on shutdown
 
@@ -287,7 +288,11 @@ async def upload_ede_files(
 
             deviceDict = deep_update(
                 deviceDict,
-                {f"device:{dev_instance}": {f"{obj_type.attr}:{obj_instance}": obj_dict}},
+                {
+                    f"device:{dev_instance}": {
+                        f"{obj_type.attr}:{obj_instance}": obj_dict
+                    }
+                },
             )
 
         if row[0] == "# keyname":
@@ -466,10 +471,8 @@ async def websocket_endpoint(websocket: WebSocket):
         try:
             data = await websocket.receive()
             if data["type"] == "websocket.disconnect":
-                write_task.cancel
-                activeSockets.remove(websocket)
-                logging.info("Disconnected gracefully...\n")
-                return
+                raise WebSocketDisconnect
+
             if data["type"] == "websocket.receive" and "device:" in data["text"]:
                 message = data["text"]
                 try:
@@ -514,17 +517,17 @@ async def websocket_endpoint(websocket: WebSocket):
                     logging.warning(f"message: {message} is not processed")
 
         except (RuntimeError, asyncio.CancelledError) as error:
-            write_task.cancel
+            write_task.cancel()
             activeSockets.remove(websocket)
             logging.error("Disconnected with RuntimeError or CancelledError...\n")
             return
         except WebSocketDisconnect:
-            write_task.cancel
+            write_task.cancel()
             activeSockets.remove(websocket)
-            logging.error("Disconnected with WebSocketDisconnect...\n")
+            logging.error("Disconnected...\n")
             return
         except Exception as e:
-            write_task.cancel
+            write_task.cancel()
             activeSockets.remove(websocket)
             logging.error("Disconnected with Exception" + str(e) + "...\n")
 

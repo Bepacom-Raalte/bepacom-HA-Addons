@@ -4,13 +4,8 @@
     "\\bacnetinterface",
     "\\bacnetinterface\\rootfs",
     "\\bacnetinterface\\rootfs\\usr",
-    "\\bacnetinterface\\rootfs\\usr\\bin",
-    "\\bacnetinterface_legacy",
-    "\\bacnetinterface_legacy\\rootfs",
-    "\\bacnetinterface_legacy\\rootfs\\etc",
-    "\\bacnetinterface_legacy\\rootfs\\etc\\s6-overlay",
-    "\\bacnetinterface_legacy\\rootfs\\etc\\s6-overlay\\s6-rc.d"
+    "\\bacnetinterface\\rootfs\\usr\\bin"
   ],
-  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\BACnetIOHandler.py",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\webAPI.py",
   "PreviewInSolutionExplorer": false
 }
