@@ -545,12 +545,11 @@ async def websocket_writer(websocket: WebSocket):
             else:
                 await asyncio.sleep(0.5)
 
-    except (RuntimeError, asyncio.CancelledError) as error:
-        logging.warning(f"Websocket writer error: {error}")
-        return
+    except asyncio.CancelledError as error:
+        logging.debug(f"Websocket writer cancelled: {error}")
+
     except WebSocketDisconnect:
-        logging.warning("Websocket disconnected")
-        return
+        logging.info("Websocket disconnected")
 
 
 @app.post("/apiv2/{deviceid}/{objectid}/{property}", tags=["apiv2"])

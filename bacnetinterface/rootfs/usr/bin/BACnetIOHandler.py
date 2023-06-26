@@ -270,7 +270,7 @@ class BACnetIOHandler(NormalApplication):
                 )
 
                 response = await self.read_property_multiple(
-                    address=self.dev_to_addr(ObjectIdentifier(device_identifier)),
+                    address=self.dev_to_addr(device_identifier),
                     parameter_list=parameter_list,
                 )
             except AbortPDU as err:
@@ -283,6 +283,9 @@ class BACnetIOHandler(NormalApplication):
 
             except ErrorRejectAbortNack as err:
                 logging.error(f"Nack error while reading object list: {obj_id}: {err}")
+
+            except AssertionError as err:
+                logging.error(f"Assertion error for: {device_identifier}: {obj_id}")
 
             except AttributeError as err:
                 logging.error(f"Attribute error while reading object list: {obj_id}: {err}")
