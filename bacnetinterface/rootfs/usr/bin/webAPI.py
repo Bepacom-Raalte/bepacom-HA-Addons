@@ -411,7 +411,7 @@ async def write_property(
 
 @app.post("/apiv1/subscribe/{deviceid}/{objectid}", tags=["apiv1"])
 async def subscribe_objectid(
-    deviceid: str, objectid: str, confirmationType: str, lifetime: int
+    deviceid: str, objectid: str, confirmationType: str, lifetime: int | None = None
 ):
     """Subscribe to an object of a device."""
     try:

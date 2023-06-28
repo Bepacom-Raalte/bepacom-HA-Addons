@@ -387,7 +387,6 @@ class BACnetIOHandler(NormalApplication):
                     device_identifier=device_identifier,
                     object_identifier=ObjectIdentifier(object_id),
                     confirmed_notifications=True,
-                    lifetime=28799,
                 )
 
     def unsubscribe_object_list(self):
@@ -400,7 +399,7 @@ class BACnetIOHandler(NormalApplication):
         device_identifier: ObjectIdentifier,
         object_identifier: ObjectIdentifier,
         confirmed_notifications: bool,
-        lifetime: int,
+        lifetime: int | None = None,
     ):
         device_address = self.dev_to_addr(ObjectIdentifier(device_identifier))
         if confirmed_notifications:
@@ -448,7 +447,7 @@ class BACnetIOHandler(NormalApplication):
         device_address: Address,
         object_identifier: ObjectIdentifier,
         confirmed_notification: bool,
-        lifetime: int,
+        lifetime: int | None = None,
     ) -> None:
         try:
             subscription = await self.change_of_value(
