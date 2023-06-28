@@ -4,7 +4,7 @@
 
 28/6/2023
 - Fixed an issue where empty websockets would remain in memory.
-- Lifetime of CoV is now 0 again. This _should_ ensure lifetime is infinite again.
+- CoV now gets refreshed after 28799 seconds.
 - Removed excessive logging.
 
 
