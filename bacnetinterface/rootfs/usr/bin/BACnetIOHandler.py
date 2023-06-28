@@ -390,6 +390,11 @@ class BACnetIOHandler(NormalApplication):
                     lifetime=28799,
                 )
 
+    def unsubscribe_object_list(self):
+        logging.info("Unsubscribing from every object...")
+        for task in self.subscription_tasks:
+            task.cancel()
+
     async def create_subscription_task(
         self,
         device_identifier: ObjectIdentifier,

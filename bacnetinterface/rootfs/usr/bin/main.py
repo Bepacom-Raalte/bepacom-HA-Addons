@@ -138,6 +138,19 @@ async def unsubscribe_handler_task(
         logging.warning(f"Unsubscribe task cancelled: {err}")
 
 
+async def subscription_refresh_handler(app: Application) -> None:
+    """Task to handle the resubscribing periodically"""
+    try:
+        while True:
+            await asyncio.sleep(28799)
+            app.unsubscribe_object_list()
+            for device in app.bacnet_device_dict:
+                await app.subscribe_object_list(ObjectIdentifier(device))
+
+    except asyncio.CancelledError as err:
+        logging.warning(f"subscription_refresh_handler task cancelled: {err}")
+
+
 async def main():
     """Main function of the application."""
 
@@ -192,6 +205,10 @@ async def main():
         unsubscribe_handler_task(app=app, unsub_queue=webAPI.events.unsub_queue)
     )
 
+    refresh_task = asyncio.create_task(
+        subscription_refresh_handler(app=app)
+    )
+
     webAPI.sub_list = app.subscription_tasks
     webAPI.bacnet_device_dict = app.bacnet_device_dict
     webAPI.who_is_func = app.who_is
@@ -217,6 +234,7 @@ async def main():
         write_task.cancel()
         sub_task.cancel()
         unsub_task.cancel()
+        refresh_task.cancel()
         await app.end_subscription_tasks()
         app.close()
 
