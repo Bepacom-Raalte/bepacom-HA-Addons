@@ -387,7 +387,7 @@ class BACnetIOHandler(NormalApplication):
                     device_identifier=device_identifier,
                     object_identifier=ObjectIdentifier(object_id),
                     confirmed_notifications=True,
-                    lifetime=28799,
+                    lifetime=0,
                 )
 
     async def create_subscription_task(

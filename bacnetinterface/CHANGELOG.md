@@ -2,12 +2,21 @@
 
 # 1.0.1
 
+28/6/2023
+- Fixed an issue where empty websockets would remain in memory.
+- Lifetime of CoV is now 0 again. This _should_ ensure lifetime is infinite again.
+- Removed excessive logging.
+
+
+# 1.0.1
+
 20/6/2023
 - Updated web UI main page to make navigation a little easier.
 - Unsubscribing now gets done when the add-on closes.
 - All errors now really should be caught instead of dumping tracelogs.
 - Updated translations.
 - EDE files show up on the web UI now once uploaded.
+
 
 # 1.0.0
 

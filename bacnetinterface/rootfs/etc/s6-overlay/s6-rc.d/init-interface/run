@@ -56,7 +56,7 @@ header='[BACpypes]'
 objectname="objectName: $(bashio::config 'objectName')"
 if [[ $(bashio::config 'address') == "auto" ]]; then
     if [ -z "$ipaddr" ]; then
-        bashio::log.error "All adapters checked but found no suitable choice. Check whether you are connected through ethernet with a BACnet network. If this problem persists, contact the developer."
+        bashio::log.error "All adapters checked but found no suitable choice. Check whether you are connected through ethernet to a BACnet network. Try configuring an IP address manually. If this problem persists, contact the developer."
         exit 1
     fi
     address="address: $ipaddr$cidr"
