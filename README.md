@@ -1,6 +1,6 @@
 # Bepacom Addon Repository
 
-This repository contains everything related to Bepacom's EcoPanel functionality.
+This repository contains all of Bepacom B.V.'s developed add-ons for Home Assistant.
 
 Add-on documentation: <https://github.com/Bepacom-Raalte/bepacom-HA-Addons>
 
