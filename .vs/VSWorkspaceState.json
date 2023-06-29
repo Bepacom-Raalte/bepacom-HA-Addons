@@ -10,6 +10,6 @@
     "\\bacnetinterface\\rootfs\\usr",
     "\\bacnetinterface\\rootfs\\usr\\bin"
   ],
-  "SelectedNode": "\\bacnetinterface\\CHANGELOG.md",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\BACnetIOHandler.py",
   "PreviewInSolutionExplorer": false
 }

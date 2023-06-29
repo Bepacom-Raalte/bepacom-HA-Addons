@@ -1,10 +1,17 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.0.1
+# 1.0.3
+
+29/6/2023
+- EDE files give out correct data through API now.
+- Increased sleeping time during startup to give the add-on enough chance to catch all BACnet data.
+
+
+# 1.0.2
 
 28/6/2023
 - Fixed an issue where empty websockets would remain in memory.
-- CoV now gets refreshed after 28799 seconds.
+- CoV is now indefinite, because of lack of lifetime. Siemens PXC4 doesn't work with lifetime = 0.
 - Removed excessive logging.
 
 

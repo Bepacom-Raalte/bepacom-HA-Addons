@@ -64,7 +64,7 @@ async def lifespan(app: FastAPI):
     """Lifespan manager of FastAPI."""
     # Do nothing on startup
     await events.startup_complete_event.wait()
-    await asyncio.sleep(3)
+    await asyncio.sleep(5)
     yield
     # Do nothing on shutdown
 
@@ -118,7 +118,7 @@ app = FastAPI(
     lifespan=lifespan,
     title="Bepacom EcoPanel BACnet/IP Interface API",
     description=description,
-    version="1.0.0",
+    version="1.0.2",
     contact={
         "name": "Bepacom B.V. Contact",
         "url": "https://www.bepacom.nl/contact/",
@@ -264,7 +264,7 @@ async def upload_ede_files(
             obj_dict = {}
             obj_dict = {
                 "objectIdentifier": [obj_type.attr, obj_instance],
-                "objectType": obj_type,
+                "objectType": obj_type.attr,
                 "objectName": obj_name,
                 "description": desc,
             }
@@ -277,7 +277,7 @@ async def upload_ede_files(
                 obj_dict["numberOfStates"] = len(stateTextsList[int(state_text) - 1])
 
             if unit:
-                obj_dict["units"] = unit
+                obj_dict["units"] = unit.attr
 
             if obj_type == ObjectType("device"):
                 obj_dict["modelName"] = "EDE File"
