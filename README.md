@@ -11,6 +11,7 @@ Add-on documentation: <https://github.com/Bepacom-Raalte/bepacom-HA-Addons>
 This repository contains the following add-ons:
 
 ### [BACnet Interface](./bacnetinterface)
+### [BACnet Interface Legacy](./bacnetinterface_legacy)
 
 ![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]
