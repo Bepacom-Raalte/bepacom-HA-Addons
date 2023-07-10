@@ -177,6 +177,7 @@ class BACnetIOHandler(NormalApplication):
                 address=apdu.pduSource,
                 objid=device_identifier,
                 prop=PropertyIdentifier("objectList"),
+                array_index=0
             )
 
             logging.error(response)
@@ -252,7 +253,6 @@ class BACnetIOHandler(NormalApplication):
             if not "segmentation-not-supported" in str(err):
                 return False
             else:
-                logging.error(traceback.print_exc())
                 await self.read_device_props_non_segmented(apdu)
 
         except ErrorRejectAbortNack as err:
