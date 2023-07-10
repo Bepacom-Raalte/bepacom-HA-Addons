@@ -19,6 +19,8 @@ device_properties_to_read: list = [
     PropertyIdentifier("apduTimeout"),
     PropertyIdentifier("numberOfApduRetries"),
     PropertyIdentifier("databaseRevision"),
+    PropertyIdentifier("segmentationSupported"),
+    PropertyIdentifier("maxApduLengthAccepted"),
     PropertyIdentifier("objectList"),
 ]
 
