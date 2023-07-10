@@ -76,7 +76,7 @@ vendorID="vendorIdentifier: $(bashio::config 'vendorID' '15')"
 foreignBBMD="foreignBBMD: $(bashio::config 'foreignBBMD' '-')"
 foreignTTL="foreignTTL: $(bashio::config 'foreignTTL' '255')"
 maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted' '24')"
-loglevel="loglevel: $(bashio::config 'loglevel', 'INFO')"
+loglevel="loglevel: $(bashio::config 'loglevel')"
 defaultPriority="defaultPriority: $(bashio::config 'defaultPriority')"
 updateInterval="updateInterval: $(bashio::config 'updateInterval')"
 

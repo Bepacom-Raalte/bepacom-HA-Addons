@@ -9,6 +9,7 @@
 - Trying to log abort PDU's. Issue with Priva devices not supporting segmentation.
 - Reading objectList last to get most info from the device without getting an error.
 
+
 # 1.0.3
 
 29/6/2023

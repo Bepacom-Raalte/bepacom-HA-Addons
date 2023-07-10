@@ -10,5 +10,3 @@ labels:
   org.opencontainers.image.description: "Bepacom add-on for Home Assistant. It can act as a virtual BACnet device and read data."
   org.opencontainers.image.source: "https://github.com/Bepacom-Raalte/bepacom-HA-Addons"
   org.opencontainers.image.licenses: "Apache License 2.0"
-args:
-  TEMPIO_VERSION: "2021.09.0"
