@@ -168,7 +168,7 @@ async def main():
         description="BACnet Add-on for Home Assistant",
         vendorIdentifier=int(config.get("BACpypes", "vendorIdentifier")),
         segmentationSupported=Segmentation(config.get("BACpypes", "defaultPriority")),
-        maxApduLengthAccepted=1024,
+        maxApduLengthAccepted=1476,
         maxSegmentsAccepted=24,
     )
 
