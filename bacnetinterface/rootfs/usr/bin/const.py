@@ -21,7 +21,7 @@ device_properties_to_read: list = [
     PropertyIdentifier("databaseRevision"),
     PropertyIdentifier("segmentationSupported"),
     PropertyIdentifier("maxApduLengthAccepted"),
-    PropertyIdentifier("maxSegmentsAccepted")
+    PropertyIdentifier("maxSegmentsAccepted"),
     PropertyIdentifier("objectList"),
 ]
 
