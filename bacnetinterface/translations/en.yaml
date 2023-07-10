@@ -1,13 +1,13 @@
 configuration:
   objectName:
     name: Object Name
-    description: The name of the interface in the BACnet network
+    description: The name of the interface in the BACnet network.
   address:
     name: Interface IP
     description: BACnet/IP host address. "auto" tries to automatically get your IP. x.x.x.x/24 format.
   objectIdentifier:
     name: Object ID
-    description: The identifier (number) of the interface
+    description: The identifier (number) of the interface.
   defaultPriority:
     name: BACnet write priority
     description: Priority of the BACnet write request. Priority 1 is highest, priority 16 is lowest it can go.
@@ -16,24 +16,25 @@ configuration:
     description: The severity of log messages being displayed.
   maxApduLenghtAccepted: 
     name: Maximum  APDU Length Accepted
-    description: Maximum amount of Application Layer Protocol Data Units allowed
-  segmentationSupported:
+    description: Maximum amount of Application Layer Protocol Data Units allowed.
+  segmentation:
     name: Segmentation Supported
-    description: Supported type of segmentation of the interface
+    description: >-
+      Supported type of segmentation of the interface.
   vendorID:
     name: Vendor Identifier
-    description: The vendor ID of the interface
+    description: The vendor ID of the interface.
   foreignBBMD:
     name: BACnet/IP Broadcast Management Device
-    description: IP address of the BBMD
+    description: IP address of the BBMD.
   foreignTTL: 
     name: Foreign TTL
-    description: Time To Live of the packets sent for BBMD
+    description: Time To Live of the packets sent for BBMD.
   maxSegmentsAccepted:
     name: Maximum Segments Accepted
-    description: The maximum amount of segments accepted in a message
+    description: The maximum amount of segments accepted in a message.
   updateInterval:
     name: Update Interval
-    description: Time between periodic updates in seconds
+    description: Time between periodic updates in seconds.
 network:
-  47808/udp: Used for BACnet devices
+  47808/udp: Used for BACnet devices.

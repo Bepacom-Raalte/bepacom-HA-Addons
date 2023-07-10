@@ -7,7 +7,6 @@ device_properties_to_read: list = [
     PropertyIdentifier("systemStatus"),
     PropertyIdentifier("vendorName"),
     PropertyIdentifier("vendorIdentifier"),
-    PropertyIdentifier("objectList"),
     PropertyIdentifier("description"),
     PropertyIdentifier("modelName"),
     PropertyIdentifier("firmwareRevision"),
@@ -20,6 +19,7 @@ device_properties_to_read: list = [
     PropertyIdentifier("apduTimeout"),
     PropertyIdentifier("numberOfApduRetries"),
     PropertyIdentifier("databaseRevision"),
+    PropertyIdentifier("objectList"),
 ]
 
 object_properties_to_read_once: list = [

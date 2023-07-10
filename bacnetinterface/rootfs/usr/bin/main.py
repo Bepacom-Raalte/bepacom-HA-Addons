@@ -14,6 +14,7 @@ from bacpypes3.ipv4.app import Application
 from bacpypes3.local.device import DeviceObject
 from bacpypes3.pdu import Address, IPv4Address
 from bacpypes3.primitivedata import ObjectIdentifier
+from bacpypes3.basetypes import Segmentation
 from webAPI import app as fastapi_app
 
 KeyType = TypeVar("KeyType")
@@ -166,6 +167,7 @@ async def main():
         objectName=config.get("BACpypes", "objectName"),
         description="BACnet Add-on for Home Assistant",
         vendorIdentifier=int(config.get("BACpypes", "vendorIdentifier")),
+        segmentationSupported=Segmentation(config.get("BACpypes", "defaultPriority")),
         maxApduLengthAccepted=1024,
         maxSegmentsAccepted=24,
     )

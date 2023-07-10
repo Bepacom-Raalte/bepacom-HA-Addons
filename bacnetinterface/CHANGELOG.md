@@ -1,5 +1,14 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.0.4
+
+10/7/2023
+- Base image to hassio-addons/addon-base-python image.
+- Library versions are more closely guarded now.
+- Added segmentation option back in.
+- Trying to log abort PDU's. Issue with Priva devices not supporting segmentation.
+- Reading objectList last to get most info from the device without getting an error.
+
 # 1.0.3
 
 29/6/2023

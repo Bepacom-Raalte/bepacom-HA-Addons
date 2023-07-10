@@ -11,7 +11,7 @@ declare objectname
 declare address
 declare objectIdentifier
 declare maxApduLenghtAccepted
-declare segmentationSupported
+declare segmentation
 declare vendorID
 declare foreignBBMD
 declare foreignTTL
@@ -56,7 +56,7 @@ header='[BACpypes]'
 objectname="objectName: $(bashio::config 'objectName')"
 if [[ $(bashio::config 'address') == "auto" ]]; then
     if [ -z "$ipaddr" ]; then
-        bashio::log.error "All adapters checked but found no suitable choice. Check whether you are connected through ethernet to a BACnet network. Try configuring an IP address manually. If this problem persists, contact the developer."
+        bashio::log.error "All adapters checked but found no suitable choice. Check whether you are connected through ethernet with a BACnet network. If this problem persists, contact the developer."
         exit 1
     fi
     address="address: $ipaddr$cidr"
@@ -71,18 +71,18 @@ else
 fi
 objectIdentifier="objectIdentifier: $(bashio::config 'objectIdentifier')"
 maxApduLenghtAccepted="maxApduLengthAccepted: $(bashio::config 'maxApduLenghtAccepted' '1024')"
-segmentationSupported="segmentationSupported: $(bashio::config 'segmentationSupported' 'segmentedBoth')"
+segmentation="segmentation: $(bashio::config 'segmentation' 'segmentedBoth')"
 vendorID="vendorIdentifier: $(bashio::config 'vendorID' '15')"
 foreignBBMD="foreignBBMD: $(bashio::config 'foreignBBMD' '-')"
 foreignTTL="foreignTTL: $(bashio::config 'foreignTTL' '255')"
 maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted' '24')"
-loglevel="loglevel: $(bashio::config 'loglevel')"
+loglevel="loglevel: $(bashio::config 'loglevel', 'INFO')"
 defaultPriority="defaultPriority: $(bashio::config 'defaultPriority')"
 updateInterval="updateInterval: $(bashio::config 'updateInterval')"
 
 # Generate INI file
 
-printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentationSupported" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" "$loglevel" "$defaultPriority" "$updateInterval" > /usr/bin/BACpypes.ini
+printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentation" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" "$loglevel" "$defaultPriority" "$updateInterval" > /usr/bin/BACpypes.ini
 cat /usr/bin/BACpypes.ini
 
 printf "$(bashio::addon.ingress_url)" > /usr/bin/ingress.ini

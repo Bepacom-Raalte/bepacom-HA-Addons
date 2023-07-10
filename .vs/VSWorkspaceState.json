@@ -8,8 +8,9 @@
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d",
     "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\init-interface",
     "\\bacnetinterface\\rootfs\\usr",
-    "\\bacnetinterface\\rootfs\\usr\\bin"
+    "\\bacnetinterface\\rootfs\\usr\\bin",
+    "\\bacnetinterface\\translations"
   ],
-  "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\BACnetIOHandler.py",
+  "SelectedNode": "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\init-interface\\run",
   "PreviewInSolutionExplorer": false
 }

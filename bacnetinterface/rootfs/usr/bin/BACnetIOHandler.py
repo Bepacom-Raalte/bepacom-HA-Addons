@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import traceback
 from typing import Any, Dict, TypeVar
 
 from bacpypes3.apdu import (AbortPDU, ConfirmedCOVNotificationRequest,
@@ -251,6 +252,7 @@ class BACnetIOHandler(NormalApplication):
             if not "segmentation-not-supported" in str(err):
                 return False
             else:
+                logging.error(traceback.print_exc())
                 await self.read_device_props_non_segmented(apdu)
 
         except ErrorRejectAbortNack as err:
