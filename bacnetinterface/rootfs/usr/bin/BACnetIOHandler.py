@@ -184,7 +184,7 @@ class BACnetIOHandler(NormalApplication):
 
             object_list = []
 
-            for number in range(start=1, stop=number_of_objects):
+            for number in range(1, number_of_objects):
                 response = await self.read_property(
                     address=apdu.pduSource,
                     objid=device_identifier,
