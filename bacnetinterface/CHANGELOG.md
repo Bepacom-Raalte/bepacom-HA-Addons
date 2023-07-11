@@ -1,5 +1,12 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.0.5
+
+10/7/2023
+- segmentation-not-supported error while reading objectlist solved.
+- Allowing more internal Home Assistant IP's.
+
+
 # 1.0.4
 
 10/7/2023

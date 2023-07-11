@@ -10,11 +10,11 @@ import uvicorn
 import webAPI
 from BACnetIOHandler import BACnetIOHandler
 from bacpypes3.argparse import INIArgumentParser
+from bacpypes3.basetypes import Segmentation
 from bacpypes3.ipv4.app import Application
 from bacpypes3.local.device import DeviceObject
 from bacpypes3.pdu import Address, IPv4Address
 from bacpypes3.primitivedata import ObjectIdentifier
-from bacpypes3.basetypes import Segmentation
 from webAPI import app as fastapi_app
 
 KeyType = TypeVar("KeyType")

@@ -179,7 +179,7 @@ class BACnetIOHandler(NormalApplication):
                 address=apdu.pduSource,
                 objid=device_identifier,
                 prop=PropertyIdentifier("objectList"),
-                array_index=0
+                array_index=0,
             )
 
             object_list = []
@@ -189,7 +189,7 @@ class BACnetIOHandler(NormalApplication):
                     address=apdu.pduSource,
                     objid=device_identifier,
                     prop=PropertyIdentifier("objectList"),
-                    array_index=number
+                    array_index=number,
                 )
                 object_list.append(response)
 
@@ -275,11 +275,6 @@ class BACnetIOHandler(NormalApplication):
                 logging.error(
                     f"Abort PDU Error while reading object list: {obj_id}: {err}"
                 )
-
-                if not "segmentation-not-supported" in str(err):
-                    return False
-                else:
-                    await self.read_object_list_non_segmented(device_identifier)
 
             except ErrorRejectAbortNack as err:
                 logging.error(f"Nack error while reading object list: {obj_id}: {err}")
