@@ -25,3 +25,4 @@ bashio::var.json \
         -template /etc/nginx/templates/ingress.gtpl \
         -out /etc/nginx/servers/ingress.conf
 
+
