@@ -167,7 +167,7 @@ async def main():
         objectName=config.get("BACpypes", "objectName"),
         description="BACnet Add-on for Home Assistant",
         vendorIdentifier=int(config.get("BACpypes", "vendorIdentifier")),
-        segmentationSupported=Segmentation(config.get("BACpypes", "defaultPriority")),
+        segmentationSupported=Segmentation(config.get("BACpypes", "segmentation")),
         maxApduLengthAccepted=int(config.get("BACpypes", "maxApduLengthAccepted")),
         maxSegmentsAccepted=int(config.get("BACpypes", "maxSegmentsAccepted")),
     )
@@ -179,7 +179,7 @@ async def main():
     )
 
     app.asap.segmentationSupported = Segmentation(
-        config.get("BACpypes", "defaultPriority")
+        config.get("BACpypes", "segmentation")
     )
 
     app.asap.maxSegmentsAccepted = int(config.get("BACpypes", "maxSegmentsAccepted"))
