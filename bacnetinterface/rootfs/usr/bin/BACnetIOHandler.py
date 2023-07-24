@@ -152,60 +152,6 @@ class BACnetIOHandler(NormalApplication):
                 },
             )
 
-    async def read_device_props_non_segmented(self, apdu):
-        try:
-            device_identifier = ObjectIdentifier(apdu.iAmDeviceIdentifier)
-            for property_id in device_properties_to_read:
-                response = await self.read_property(
-                    address=apdu.pduSource, objid=device_identifier, prop=property_id
-                )
-
-                if response:
-                    self.dict_updater(
-                        device_identifier=device_identifier,
-                        object_identifier=device_identifier,
-                        property_identifier=property_id,
-                        property_value=response,
-                    )
-
-        except AbortPDU as err:
-            logging.error(
-                f"Abort PDU error while reading device properties without segmentation: {device_identifier}: {err}"
-            )
-            if property_id != PropertyIdentifier("objectList"):
-                return
-
-            number_of_objects = await self.read_property(
-                address=apdu.pduSource,
-                objid=device_identifier,
-                prop=PropertyIdentifier("objectList"),
-                array_index=0,
-            )
-
-            object_list = []
-
-            for number in range(1, number_of_objects):
-                response = await self.read_property(
-                    address=apdu.pduSource,
-                    objid=device_identifier,
-                    prop=PropertyIdentifier("objectList"),
-                    array_index=number,
-                )
-                object_list.append(response)
-
-            if object_list:
-                self.dict_updater(
-                    device_identifier=device_identifier,
-                    object_identifier=device_identifier,
-                    property_identifier=PropertyIdentifier("objectList"),
-                    property_value=object_list,
-                )
-
-        except ErrorRejectAbortNack as err:
-            logging.error(f"Nack error: {device_identifier}: {err}")
-        except AttributeError as err:
-            logging.error(f"Attribute error: {err}")
-
     async def read_device_props(self, apdu) -> bool:
         try:  # Send readPropertyMultiple and get response
             device_identifier = ObjectIdentifier(apdu.iAmDeviceIdentifier)
@@ -221,11 +167,6 @@ class BACnetIOHandler(NormalApplication):
             logging.error(
                 f"Abort PDU error while reading device properties: {device_identifier}: {err}"
             )
-
-            if not "segmentation-not-supported" in str(err):
-                return False
-            else:
-                await self.read_device_props_non_segmented(apdu)
 
         except ErrorRejectAbortNack as err:
             logging.error(f"Nack error: {device_identifier}: {err}")

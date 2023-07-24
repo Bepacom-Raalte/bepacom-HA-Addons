@@ -54,6 +54,7 @@ readarray -t eth_adapters < <(ifconfig -a | grep -oE '^(enp|eth|eno)[a-z0-9]+')
 
 header='[BACpypes]'
 objectname="objectName: $(bashio::config 'objectName')"
+
 if [[ $(bashio::config 'address') == "auto" ]]; then
     if [ -z "$ipaddr" ]; then
         bashio::log.error "All adapters checked but found no suitable choice. Check whether you are connected through ethernet with a BACnet network. If this problem persists, contact the developer."
@@ -69,14 +70,28 @@ elif [[ $(bashio::config 'address') == *"/"* ]]; then
 else
     address="address: $(bashio::config 'address')/24"
 fi
+
 objectIdentifier="objectIdentifier: $(bashio::config 'objectIdentifier')"
-maxApduLenghtAccepted="maxApduLengthAccepted: $(bashio::config 'maxApduLenghtAccepted' '1024')"
+maxApduLenghtAccepted="maxApduLengthAccepted: $(bashio::config 'maxApduLenghtAccepted' '1476')"
 segmentation="segmentation: $(bashio::config 'segmentation' 'segmentedBoth')"
+
+if [[ -z $(bashio::config 'segmentation' 'segmentedBoth') ]]; then
+    segmentation="segmentation: segmentedBoth"
+else
+    segmentation="segmentation: $(bashio::config 'segmentation' 'segmentedBoth')"
+fi
+
 vendorID="vendorIdentifier: $(bashio::config 'vendorID' '15')"
 foreignBBMD="foreignBBMD: $(bashio::config 'foreignBBMD' '-')"
 foreignTTL="foreignTTL: $(bashio::config 'foreignTTL' '255')"
-maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted' '24')"
-loglevel="loglevel: $(bashio::config 'loglevel')"
+maxSegmentsAccepted="maxSegmentsAccepted: $(bashio::config 'maxSegmentsAccepted' '64')"
+
+if [[ -z $(bashio::config 'loglevel' 'INFO') ]]; then
+    loglevel="loglevel: INFO"
+else
+    loglevel="loglevel: $(bashio::config 'loglevel')"
+fi
+
 defaultPriority="defaultPriority: $(bashio::config 'defaultPriority')"
 updateInterval="updateInterval: $(bashio::config 'updateInterval')"
 

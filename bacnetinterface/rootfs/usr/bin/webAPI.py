@@ -25,7 +25,7 @@ from fastapi import (FastAPI, File, Path, Query, Request, Response, UploadFile,
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pydantic.utils import deep_update
+
 
 # ===================================================
 # Global variables
@@ -40,6 +40,17 @@ sub_list: list = []
 who_is_func: Callable
 i_am_func: Callable
 ingress: str
+
+
+def deep_update(mapping: dict, *updating_mappings: dict) -> dict:
+    updated_mapping = mapping.copy()
+    for updating_mapping in updating_mappings:
+        for k, v in updating_mapping.items():
+            if k in updated_mapping and isinstance(updated_mapping[k], dict) and isinstance(v, dict):
+                updated_mapping[k] = deep_update(updated_mapping[k], v)
+            else:
+                updated_mapping[k] = v
+    return updated_mapping
 
 
 @dataclass
@@ -118,7 +129,7 @@ app = FastAPI(
     lifespan=lifespan,
     title="Bepacom EcoPanel BACnet/IP Interface API",
     description=description,
-    version="1.0.4",
+    version="1.0.6",
     contact={
         "name": "Bepacom B.V. Contact",
         "url": "https://www.bepacom.nl/contact/",

@@ -168,11 +168,21 @@ async def main():
         description="BACnet Add-on for Home Assistant",
         vendorIdentifier=int(config.get("BACpypes", "vendorIdentifier")),
         segmentationSupported=Segmentation(config.get("BACpypes", "defaultPriority")),
-        maxApduLengthAccepted=1476,
-        maxSegmentsAccepted=24,
+        maxApduLengthAccepted=int(config.get("BACpypes", "maxApduLengthAccepted")),
+        maxSegmentsAccepted=int(config.get("BACpypes", "maxSegmentsAccepted")),
     )
 
     app = BACnetIOHandler(this_device, ipv4_address)
+
+    app.asap.maxApduLengthAccepted = int(
+        config.get("BACpypes", "maxApduLengthAccepted")
+    )
+
+    app.asap.segmentationSupported = Segmentation(
+        config.get("BACpypes", "defaultPriority")
+    )
+
+    app.asap.maxSegmentsAccepted = int(config.get("BACpypes", "maxSegmentsAccepted"))
 
     update_task = asyncio.create_task(
         updater_task(

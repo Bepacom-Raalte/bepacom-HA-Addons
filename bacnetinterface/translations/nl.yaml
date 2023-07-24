@@ -19,22 +19,21 @@ configuration:
     description: Maximum hoeveelheid Application Layer Protocol Data Units toegestaan.
   segmentation:
     name: Segmentatie Ondersteund
-    description: >-
-      Ondersteunde type segmentatie. "segmentedBoth" als standaard.
+    description: Ondersteunde type segmentatie. "segmentedBoth" als standaard.
   vendorID:
     name: Vendor Identifier
     description: Het ID van de regelaar's leverancier.
   foreignBBMD:
     name: BACnet/IP Broadcast Management Device
-    description: IP address van het BBMD
+    description: IP address van het BBMD.
   foreignTTL: 
     name: Foreign TTL
-    description: Time To Live packets voor BBMD
+    description: Time To Live packets voor BBMD.
   maxSegmentsAccepted:
     name: Maximum Segmenten Geaccepted
     description: De maximale hoeveelheid segmenten er in een BACnet bericht mogen zitten.
   updateInterval:
     name: Update Interval
-    description: Tijd tussen periodieke updates in seconden
+    description: Tijd tussen periodieke updates in seconden.
 network:
-  47808/udp: BACnet poort
+  47808/udp: BACnet poort.

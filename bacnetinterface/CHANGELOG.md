@@ -1,5 +1,11 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.0.6
+
+10/7/2023
+- Configuration options are now dropdown menu's, reducing configuration page clutter.
+
+
 # 1.0.5
 
 10/7/2023

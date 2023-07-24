@@ -18,7 +18,7 @@ This add-on works on Home Assistant OS as well as Home Assistant Supervised.
 1. Start the "Bepacom EcoPanel BACnet/IP Interface" add-on.
 1. Check the logs of the "Bepacom EcoPanel BACnet/IP Interface" add-on to see if everything went
    well.
-1. Now your Home Assistant device is a virtual BACnet/IP device!
+1. Now your Home Assistant host is a virtual BACnet/IP device!
 
 
 ## API Points
@@ -79,17 +79,17 @@ updateInterval: 60
 The Object Name that this device will get. This will be seen by other devices on the BACnet network.
 
 ### Option: `address`
-The address of the BACnet interface. 0.0.0.0/24 is recommended as it'll bind to all available IP addresses.
-Best is to write the IP of the Ethernet port connected to the BACneet network. Include /24 as not all BACnet devices can be detected without.
+The address of the BACnet/IP interface.
+Best is to write the IP of the Ethernet port connected to the BACnet network. Include /24 as not all BACnet devices can be detected without.
 
 ### Option: `objectIdentifier`
-The Object Identifier that this device will get. This will be seen by other devices on the BACnet network. **Make sure it's unique!**
+The Object Identifier that this device will get. This will be seen by other devices on the BACnet network. **Make sure it's unique in your network!**
 
 ### Option: `defaultPriority`
-The priority your write requests get. Low number means high priority. High number means low priority. Recommended to keep at 15 or 16 unless you know what higher priority can do to your BACnet devices.
+The priority your write requests get. Low number means high priority. High number means low priority. Recommended to keep at 15 or 16 unless you know what a higher priority can do to your BACnet devices.
 
 ### Option: `loglevel`
-The verbosity of the logs in the add-on. Usually WARNING is alright, INFO gets a little chatty.
+The verbosity of the logs in the add-on. Usually WARNING is sufficient.
 
 ### Option: `vendorID`
 Identifier of the vendor of the interface. As we don't have an official identifier, put anything you want in here.
