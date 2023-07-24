@@ -22,4 +22,6 @@ RUN \
 
 WORKDIR /
 
+RUN chmod +x /etc/s6-overlay/s6-rc.d/*
+
 COPY rootfs /
