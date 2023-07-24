@@ -4,6 +4,9 @@
 
 10/7/2023
 - Configuration options are now dropdown menu's, reducing configuration page clutter.
+- Fixed segmentation issue, segmentation now gets passed down to requests.
+- Removed the "fall back" functionality where the add-on reads every object of the object list seperately.
+- Punched a hole in NGINX to allow the device's own IP to communicate with the API.
 
 
 # 1.0.5

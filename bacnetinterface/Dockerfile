@@ -13,7 +13,7 @@ RUN \
     py3-setuptools \
     py3-wheel \
   && pip3 install --no-cache-dir --upgrade pip \
-  -r requirements.txt
+    -r requirements.txt
 
 WORKDIR /
 
