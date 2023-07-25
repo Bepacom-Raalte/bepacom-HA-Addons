@@ -158,6 +158,8 @@ async def main():
 
     logging.basicConfig(format="%(levelname)s:    %(message)s", level=loglevel)
 
+    logging.info("starting BACpypes3...")
+
     ipv4_address = IPv4Address(config.get("BACpypes", "address"))
 
     this_device = DeviceObject(
@@ -184,6 +186,8 @@ async def main():
 
     app.asap.maxSegmentsAccepted = int(config.get("BACpypes", "maxSegmentsAccepted"))
 
+    logging.info("starting update task...")
+
     update_task = asyncio.create_task(
         updater_task(
             app=app,
@@ -192,13 +196,19 @@ async def main():
         )
     )
 
+    logging.info("starting write task...")
+
     write_task = asyncio.create_task(
         writer_task(app=app, write_queue=webAPI.events.write_queue)
     )
 
+    logging.info("starting subscribe task...")
+
     sub_task = asyncio.create_task(
         subscribe_handler_task(app=app, sub_queue=webAPI.events.sub_queue)
     )
+
+    logging.info("starting unsubscribe task...")
 
     unsub_task = asyncio.create_task(
         unsubscribe_handler_task(app=app, unsub_queue=webAPI.events.unsub_queue)
@@ -216,6 +226,8 @@ async def main():
     else:
         uvilog = loglevel.lower()
 
+    logging.info("starting uvicorn task...")
+
     config = uvicorn.Config(
         app=fastapi_app, host="127.0.0.1", port=7813, log_level=uvilog
     )
@@ -225,6 +237,8 @@ async def main():
     await asyncio.sleep(5)
 
     await server.serve()
+
+    logging.info("Closing...")
 
     if app:
         logging.warning("shutting down...")
