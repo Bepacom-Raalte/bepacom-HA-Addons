@@ -4,14 +4,13 @@
     "\\bacnetinterface_development",
     "\\bacnetinterface_development\\rootfs",
     "\\bacnetinterface_development\\rootfs\\etc",
-    "\\bacnetinterface_development\\rootfs\\etc\\nginx",
-    "\\bacnetinterface_development\\rootfs\\etc\\nginx\\servers",
-    "\\bacnetinterface_development\\rootfs\\etc\\nginx\\templates",
     "\\bacnetinterface_development\\rootfs\\etc\\s6-overlay",
     "\\bacnetinterface_development\\rootfs\\etc\\s6-overlay\\s6-rc.d",
-    "\\bacnetinterface_development\\rootfs\\etc\\s6-overlay\\s6-rc.d\\discovery",
-    "\\bacnetinterface_development\\rootfs\\etc\\s6-overlay\\s6-rc.d\\discovery\\dependencies.d"
+    "\\bacnetinterface_development\\rootfs\\etc\\s6-overlay\\s6-rc.d\\interface",
+    "\\bacnetinterface_development\\rootfs\\usr",
+    "\\bacnetinterface_development\\rootfs\\usr\\bin",
+    "\\bacnetinterface_development\\translations"
   ],
-  "SelectedNode": "\\bacnetinterface_development\\rootfs\\etc\\nginx\\servers\\.gitkeep",
+  "SelectedNode": "\\bacnetinterface_development\\rootfs\\usr\\bin\\BACnetIOHandler.py",
   "PreviewInSolutionExplorer": false
 }
