@@ -226,15 +226,19 @@ async def main():
     else:
         uvilog = loglevel.lower()
 
-    logging.info("starting uvicorn task...")
+    logging.info("Setting up uvicorn task...")
 
     config = uvicorn.Config(
         app=fastapi_app, host="127.0.0.1", port=7813, log_level=uvilog
     )
 
+
+
     server = uvicorn.Server(config)
 
     await asyncio.sleep(5)
+
+    logging.info("Right before starting uvicorn")
 
     await server.serve()
 

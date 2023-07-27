@@ -74,7 +74,6 @@ events = EventStruct()
 async def lifespan(app: FastAPI):
     """Lifespan manager of FastAPI."""
     # Do nothing on startup
-    await events.startup_complete_event.wait()
     await asyncio.sleep(5)
     yield
     # Do nothing on shutdown

@@ -50,7 +50,7 @@ class BACnetIOHandler(NormalApplication):
                 else:
                     mapping[k] = v
         self.update_event.set()
-        logging.debug(f"Updating {updating_mapping}")
+        #logging.debug(f"Updating {updating_mapping}")
         return mapping
 
     def dev_to_addr(self, dev: ObjectIdentifier) -> Address | None:
@@ -80,11 +80,19 @@ class BACnetIOHandler(NormalApplication):
 
         await super().do_IAmRequest(apdu)
 
+        logging.info(f"Reading all device props of {apdu.iAmDeviceIdentifier}...")
+
         await self.read_device_props(apdu=apdu)
+
+        logging.info(f"Reading objectlist {apdu.iAmDeviceIdentifier}...")
 
         await self.read_object_list(device_identifier=apdu.iAmDeviceIdentifier)
 
+        logging.info(f"Subscribing all object props {apdu.iAmDeviceIdentifier}...")
+
         await self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
+        
+        logging.info(f"Done with {apdu.iAmDeviceIdentifier}!")
 
     def dict_updater(
         self,
@@ -328,10 +336,10 @@ class BACnetIOHandler(NormalApplication):
         self.subscription_tasks.append(task)
 
     async def end_subscription_tasks(self):
+        logging.info("Cancelling all subscriptions")
         for task in self.subscription_tasks:
             task.cancel()
-        while self.subscription_tasks:
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.1)
         logging.info("Cancelled all subscriptions")
 
     async def do_ConfirmedCOVNotificationRequest(
@@ -341,6 +349,7 @@ class BACnetIOHandler(NormalApplication):
 
     async def do_ReadPropertyRequest(self, apdu: ReadPropertyRequest) -> None:
         try:
+            logging.info(f"{self.addr_to_dev(apdu.pduSource)} read {apdu.objectIdentifier} {apdu.propertyIdentifier}")
             await super().do_ReadPropertyRequest(apdu)
         except (Exception, AttributeError) as err:
             logging.error(

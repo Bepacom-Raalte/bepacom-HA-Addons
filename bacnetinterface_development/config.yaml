@@ -31,7 +31,7 @@ options:
   objectIdentifier: 420
   defaultPriority: 15
   updateInterval: 60
-  loglevel: WARNING
+  loglevel: INFO
   segmentation: segmentedBoth
 schema:
   objectName: str
