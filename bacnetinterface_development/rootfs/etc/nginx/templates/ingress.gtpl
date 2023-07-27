@@ -6,7 +6,7 @@
         allow 172.30.32.0/24;
         allow 127.0.0.0/24;
         allow {{ .interface }};
-        deny all;
+        # deny all;
 
         # forward request to backend
         location / {

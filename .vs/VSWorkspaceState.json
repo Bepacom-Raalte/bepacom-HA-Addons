@@ -7,6 +7,6 @@
     "\\bacnetinterface_development\\rootfs\\usr",
     "\\bacnetinterface_development\\rootfs\\usr\\bin"
   ],
-  "SelectedNode": "\\bacnetinterface_development\\rootfs\\usr\\bin\\BACnetIOHandler.py",
+  "SelectedNode": "\\bacnetinterface_development\\rootfs\\usr\\bin\\main.py",
   "PreviewInSolutionExplorer": false
 }
