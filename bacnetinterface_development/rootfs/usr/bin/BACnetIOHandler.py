@@ -88,9 +88,9 @@ class BACnetIOHandler(NormalApplication):
 
         await self.read_object_list(device_identifier=apdu.iAmDeviceIdentifier)
 
-        logging.info(f"Subscribing all object props {apdu.iAmDeviceIdentifier}...")
+        #logging.info(f"Subscribing all object props {apdu.iAmDeviceIdentifier}...")
 
-        await self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
+        #await self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
         
         logging.info(f"Done with {apdu.iAmDeviceIdentifier}!")
 

@@ -232,8 +232,6 @@ async def main():
         app=fastapi_app, host="127.0.0.1", port=7813, log_level=uvilog
     )
 
-
-
     server = uvicorn.Server(config)
 
     await asyncio.sleep(5)
@@ -241,8 +239,6 @@ async def main():
     logging.info("Right before starting uvicorn")
 
     await server.serve()
-
-    logging.info("Closing...")
 
     if app:
         logging.warning("shutting down...")
