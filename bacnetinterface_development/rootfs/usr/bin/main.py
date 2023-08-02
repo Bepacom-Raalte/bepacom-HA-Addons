@@ -35,8 +35,10 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
             try:
                 await asyncio.wait_for(event.wait(), timeout=interval)
                 event.clear()
+                logging.debug("Read objects periodically event got cleared...")
             except asyncio.TimeoutError:
                 await app.read_objects_periodically()
+                logging.debug("Read objects periodically...")
 
     except asyncio.CancelledError as err:
         logging.warning(f"Updater task cancelled: {err}")

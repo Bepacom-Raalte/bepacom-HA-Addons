@@ -88,9 +88,9 @@ class BACnetIOHandler(NormalApplication):
 
         await self.read_object_list(device_identifier=apdu.iAmDeviceIdentifier)
 
-        #logging.info(f"Subscribing all object props {apdu.iAmDeviceIdentifier}...")
+        logging.info(f"Subscribing all object props {apdu.iAmDeviceIdentifier}...")
 
-        #await self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
+        self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
         
         logging.info(f"Done with {apdu.iAmDeviceIdentifier}!")
 
@@ -298,16 +298,16 @@ class BACnetIOHandler(NormalApplication):
                             property_value=property_value,
                         )
 
-    async def subscribe_object_list(self, device_identifier):
+    def subscribe_object_list(self, device_identifier):
         for object_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"]:
             if ObjectIdentifier(object_id)[0] in subscribable_objects:
-                await self.create_subscription_task(
+                self.create_subscription_task(
                     device_identifier=device_identifier,
                     object_identifier=ObjectIdentifier(object_id),
                     confirmed_notifications=True,
                 )
 
-    async def create_subscription_task(
+    def create_subscription_task(
         self,
         device_identifier: ObjectIdentifier,
         object_identifier: ObjectIdentifier,
