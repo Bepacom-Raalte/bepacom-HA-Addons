@@ -31,14 +31,15 @@
                 <a>Confirmation Type</a>
             </label>
             {% for key in subs %}
-            	<label class="selectable-label">
-					<input type="checkbox" id="checkbox-{{ " ".join(map(str, key)) }}">
-					<span class="ede_selection">
-                        <a>{{ key[4] }}</a>
-                        <a>{{ key[1] }}</a>
-                        <a>{{ key[2] }}</a>
-                    </span>
-				</label>
+            <label class="selectable-label">
+                {% set string_list = key | map('string') | list %}
+                <input type="checkbox" id="checkbox-{{ " ".join(string_list) }}">
+                <span class="ede_selection">
+                    <a>{{ key[4] }}</a>
+                    <a>{{ key[1] }}</a>
+                    <a>{{ key[2] }}</a>
+                </span>
+            </label>
             {% endfor %}
 
         </div>
