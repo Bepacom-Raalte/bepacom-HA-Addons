@@ -32,12 +32,14 @@ class BACnetIOHandler(NormalApplication):
     object_to_id = {}
     available_ids = set()
     next_id = 1
+    default_subscription_lifetime = 28800
 
     def __init__(self, *args) -> None:
         NormalApplication.__init__(self, *args)
         super().i_am()
         super().who_is()
         self.vendor_info = get_vendor_info(0)
+        asyncio.get_event_loop().create_task(self.refresh_subscriptions())
         self.startup_complete.set()
         logging.debug("Application initialised")
 
@@ -101,6 +103,18 @@ class BACnetIOHandler(NormalApplication):
         del self.id_to_object[obj_id]
         del self.object_to_id[(obj, dev)]
         self.available_ids.add(obj_id)
+
+    async def refresh_subscriptions(self):
+        while True:
+            logging.info("Refreshing subscriptions...")
+            await asyncio.sleep(self.default_subscription_lifetime)
+            for task in self.subscription_tasks:
+                await self.create_subscription_task(
+                    device_identifier=task[4],
+                    object_identifier=task[1],
+                    confirmed_notifications=task[2],
+                    lifetime=task[3],
+                )
 
     async def do_WhoIsRequest(self, apdu) -> None:
         logging.info(f"Received Who Is Request from {apdu.pduSource}")
@@ -341,6 +355,12 @@ class BACnetIOHandler(NormalApplication):
         confirmed_notifications: bool,
         lifetime: int | None = None,
     ):
+        if isinstance(object_identifier, str):
+            object_identifier = ObjectIdentifier(object_identifier)
+
+        if isinstance(device_identifier, str):
+            device_identifier = ObjectIdentifier(device_identifier)
+
         subscriber_process_identifier = self.assign_id(
             dev=device_identifier, obj=object_identifier
         )
@@ -355,18 +375,34 @@ class BACnetIOHandler(NormalApplication):
 
         response = await self.request(subscribe_req)
 
+        logging.info(response)
+
         if isinstance(response, ErrorRejectAbortNack):
             raise response
 
-        self.subscription_tasks.append(
-            [
+        logging.info(
+            f"Subscribed to {device_identifier}, {object_identifier} with ID {subscriber_process_identifier}"
+        )
+
+        if (
+            not [
                 subscriber_process_identifier,
                 object_identifier,
                 confirmed_notifications,
                 lifetime,
                 ObjectIdentifier(device_identifier),
             ]
-        )
+            in self.subscription_tasks
+        ):
+            self.subscription_tasks.append(
+                [
+                    subscriber_process_identifier,
+                    object_identifier,
+                    confirmed_notifications,
+                    lifetime,
+                    ObjectIdentifier(device_identifier),
+                ]
+            )
 
     async def unsubscribe_COV(
         self, subscriber_process_identifier, device_identifier, object_identifier

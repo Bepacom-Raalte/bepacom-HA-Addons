@@ -31,14 +31,15 @@
                 <a>Confirmation Type</a>
             </label>
             {% for key in subs %}
-            	<label class="selectable-label">
-					<input type="checkbox" id="checkbox-{{ key }}">
-					<span class="ede_selection">
-                        <a>{{ key[4] }}</a>
-                        <a>{{ key[1] }}</a>
-                        <a>{{ key[2] }}</a>
-                    </span>
-				</label>
+            <label class="selectable-label">
+                {% set string_list = key | map('string') | list %}
+                <input type="checkbox" id="checkbox-{{ " ".join(string_list) }}">
+                <span class="ede_selection">
+                    <a>{{ key[4] }}</a>
+                    <a>{{ key[1] }}</a>
+                    <a>{{ key[2] }}</a>
+                </span>
+            </label>
             {% endfor %}
 
         </div>
@@ -153,41 +154,43 @@
 
 
         function removeSubscription() {
-			// Get all checkboxes that are checked
-			var checkboxes = document.querySelectorAll('.selectable-label input[type="checkbox"]:checked');
+            // Get all checkboxes that are checked
+            var checkboxes = document.querySelectorAll('.selectable-label input[type="checkbox"]:checked');
 
-			// Get the selected keys as an array
-			var keys = Array.from(checkboxes).map(function(checkbox) {
-				return checkbox.id.replace('checkbox-', '');
-			});
+            // Get the selected keys as an array
+            var keys = Array.from(checkboxes).map(function (checkbox) {
+                return checkbox.id.replace('checkbox-', '');
+            });
 
             var error = false;
 
+            console.log(keys)
+
             for (let i = 0; i < keys.length; i++) {
-                let dev_obj_conf = keys[i].split(",")
-                let device_identifier = dev_obj_conf[0]
-                let object_identifier = dev_obj_conf[1]
+                let split_keys = keys[i].split(" ")
+                let device_identifier = split_keys[4]
+                let object_identifier = split_keys[1]
                 let url = './apiv1/subscribe/' + device_identifier + "/" + object_identifier
                 console.log(url)
 
                 fetch(url, {
                     method: 'DELETE',
                     headers: {
-                      'accept': 'application/json'
+                        'accept': 'application/json'
                     }
                 })
-                .then(response => {
-                    if (response.status === 200) {
-                        console.log("Deleted subscription" + device_identifier + object_identifier)
-                    } else {
-                        console.log("Unexpected response:", response.status);
-                        // Handle other response statuses here
-                        var error = true;
-                    }
-                })
-                .then(data => {
-                    console.log('API response:', data);
-                })
+                    .then(response => {
+                        if (response.status === 200) {
+                            console.log("Deleted subscription" + device_identifier + object_identifier)
+                        } else {
+                            console.log("Unexpected response:", response.status);
+                            // Handle other response statuses here
+                            var error = true;
+                        }
+                    })
+                    .then(data => {
+                        console.log('API response:', data);
+                    })
             }
 
             if (error)
@@ -195,12 +198,12 @@
             else
                 alert('Deleted selection!');
 
-            checkboxes.forEach(function(checkbox) {
+            checkboxes.forEach(function (checkbox) {
                 checkbox.checked = false;
             });
 
             location.reload()
-		}
+        }
 
 
     </script>

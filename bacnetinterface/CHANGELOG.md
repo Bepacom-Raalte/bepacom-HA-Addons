@@ -1,5 +1,12 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.1.1
+7/8/2023
+- Subscriptions no longer indefinite as some devices don't support it.
+- Subscriptions can be deleted through the UI.
+- Subscriptions get renewed automatically.
+
+
 # 1.1.0
 
 7/8/2023

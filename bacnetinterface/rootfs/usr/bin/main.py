@@ -96,10 +96,8 @@ async def subscribe_handler_task(app: Application, sub_queue: asyncio.Queue) -> 
             notifications = queue_result[2]
             lifetime = queue_result[3]
 
-            task_name = f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]}"
-
             for task in app.subscription_tasks:
-                if task_name in task.get_name():
+                if task[1] == object_identifier and task[4] == device_identifier:
                     logging.error(
                         f"Subscription for {device_identifier}, {object_identifier} already exists"
                     )
@@ -130,11 +128,14 @@ async def unsubscribe_handler_task(
                 if task[1] == object_identifier and task[4] == device_identifier:
                     await app.unsubscribe_COV(
                         subscriber_process_identifier=task[0],
-                        device_identifier=[4],
-                        object_identifier=[1],
+                        device_identifier=task[4],
+                        object_identifier=task[1],
                     )
+                    break
             else:
-                logging.error("Subscription task does not exist")
+                logging.error(
+                    f"Subscription task '{device_identifier}, {object_identifier}' does not exist"
+                )
 
     except asyncio.CancelledError as err:
         logging.warning(f"Unsubscribe task cancelled: {err}")

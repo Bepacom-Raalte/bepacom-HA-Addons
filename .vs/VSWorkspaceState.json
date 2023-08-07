@@ -1,16 +1,13 @@
 {
   "ExpandedNodes": [
     "",
-    "\\bacnetinterface\\rootfs",
-    "\\bacnetinterface\\rootfs\\etc",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\discovery",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\init-interface",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\init-nginx",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\interface",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\nginx",
-    "\\bacnetinterface\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user"
+    "\\bacnetinterface_development",
+    "\\bacnetinterface_development\\rootfs",
+    "\\bacnetinterface_development\\rootfs\\usr",
+    "\\bacnetinterface_development\\rootfs\\usr\\bin",
+    "\\bacnetinterface_development\\rootfs\\usr\\bin\\static",
+    "\\bacnetinterface_development\\rootfs\\usr\\bin\\templates"
   ],
-  "SelectedNode": "\\bacnetinterface_development\\rootfs\\usr\\bin\\BACnetIOHandler.py",
+  "SelectedNode": "\\bacnetinterface_development\\rootfs\\usr",
   "PreviewInSolutionExplorer": false
 }
