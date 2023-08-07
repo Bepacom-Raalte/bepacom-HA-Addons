@@ -359,6 +359,8 @@ class BACnetIOHandler(NormalApplication):
 
         response = await self.request(subscribe_req)
 
+        logging.info(response)
+
         if isinstance(response, ErrorRejectAbortNack):
             raise response
 
@@ -382,6 +384,8 @@ class BACnetIOHandler(NormalApplication):
         unsubscribe_cov_request.pduDestination=self.dev_to_addr(device_identifier)
         # send the request, wait for the response
         response = await self.request(unsubscribe_cov_request)
+
+        logging.info(response)
 
         if not isinstance(response, SimpleAckPDU):
             return False
