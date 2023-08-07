@@ -122,6 +122,7 @@ async def unsubscribe_handler_task(app: Application, unsub_queue: asyncio.Queue)
             for task in app.subscription_tasks:
                 if task[1] == object_identifier and task[4] == device_identifier:
                     await app.unsubscribe_COV(subscriber_process_identifier=task[0], device_identifier=task[4], object_identifier=task[1])
+                    break
             else:
                 logging.error(f"Subscription task '{device_identifier}, {object_identifier}' does not exist")
 
