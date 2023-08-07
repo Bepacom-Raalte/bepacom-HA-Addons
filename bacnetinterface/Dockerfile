@@ -1,6 +1,8 @@
 ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
+COPY requirements.txt /usr/src/requirements.txt
+
 # Install requirements for add-on
 WORKDIR /usr/src
 RUN \
@@ -19,7 +21,5 @@ RUN \
     'python-multipart<=0.0.6'
 
 WORKDIR /
-
-RUN chmod +x /etc/s6-overlay/s6-rc.d/*
 
 COPY rootfs /

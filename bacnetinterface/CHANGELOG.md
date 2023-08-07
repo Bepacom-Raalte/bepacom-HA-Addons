@@ -3,8 +3,9 @@
 # 1.1.0
 
 7/8/2023
-- NGINX now waits until the API is available
-- 
+- NGINX now waits until the API is available before starting.
+- Copied CoV method of legacy version. This will stop the system from being overwhelmed and hanging.
+- NGINX using templates to dynamically add own IP.
 
 
 # 1.0.6

@@ -31,6 +31,7 @@ class BACnetIOHandler(NormalApplication):
     object_to_id = {}
     available_ids = set()
     next_id = 1
+    default_subscription_lifetime = 28800
 
     def __init__(self, *args) -> None:
         NormalApplication.__init__(self, *args)
@@ -39,6 +40,7 @@ class BACnetIOHandler(NormalApplication):
         self.vendor_info = get_vendor_info(0)
         self.startup_complete.set()
         logging.debug("Application initialised")
+        asyncio.get_event_loop().create_task(self.refresh_subscriptions())
 
     def deep_update(
         self, mapping: Dict[KeyType, Any], *updating_mappings: Dict[KeyType, Any]
@@ -100,6 +102,13 @@ class BACnetIOHandler(NormalApplication):
         del self.id_to_object[obj_id]
         del self.object_to_id[(obj, dev)]
         self.available_ids.add(obj_id)
+
+    async def refresh_subscriptions(self):
+        while True:
+            logging.info("Refreshing subscriptions...")
+            await asyncio.sleep(self.default_subscription_lifetime)
+            for task in self.subscription_tasks:
+                await self.create_subscription_task(device_identifier=task[4],object_identifier=task[1],confirmed_notifications=task[2],lifetime=task[3],)
 
     async def do_WhoIsRequest(self, apdu) -> None:
         logging.info(f"Received Who Is Request from {apdu.pduSource}")
@@ -331,6 +340,7 @@ class BACnetIOHandler(NormalApplication):
                     device_identifier=device_identifier,
                     object_identifier=ObjectIdentifier(object_id),
                     confirmed_notifications=True,
+                    lifetime=self.default_subscription_lifetime
                 )
 
     async def create_subscription_task(
@@ -366,7 +376,8 @@ class BACnetIOHandler(NormalApplication):
 
         logging.info(f"Subscribed to {device_identifier}, {object_identifier} with ID {subscriber_process_identifier}")
 
-        self.subscription_tasks.append([subscriber_process_identifier, object_identifier, confirmed_notifications, lifetime, device_identifier])
+        if not [subscriber_process_identifier, object_identifier, confirmed_notifications, lifetime, ObjectIdentifier(device_identifier)] in self.subscription_tasks:
+            self.subscription_tasks.append([subscriber_process_identifier, object_identifier, confirmed_notifications, lifetime, ObjectIdentifier(device_identifier)])
 
     async def unsubscribe_COV(self, subscriber_process_identifier, device_identifier, object_identifier):
 
