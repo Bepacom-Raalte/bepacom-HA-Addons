@@ -120,10 +120,10 @@ async def unsubscribe_handler_task(app: Application, unsub_queue: asyncio.Queue)
             object_identifier = queue_result[1]
 
             for task in app.subscription_tasks:
-                if task[1] == object_identifier and task[4] == device_identifier:
+                if task[1] == ObjectIdentifier(object_identifier) and task[4] == ObjectIdentifier(device_identifier):
                     await app.unsubscribe_COV(subscriber_process_identifier=task[0], device_identifier=[4], object_identifier=[1])
             else:
-                logging.error("Subscription task does not exist")
+                logging.error(f"Subscription task '{device_identifier}, {object_identifier}' does not exist")
 
     except asyncio.CancelledError as err:
         logging.warning(f"Unsubscribe task cancelled: {err}")
