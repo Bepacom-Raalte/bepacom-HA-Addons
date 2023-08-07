@@ -35,10 +35,8 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
             try:
                 await asyncio.wait_for(event.wait(), timeout=interval)
                 event.clear()
-                logging.debug("Read objects periodically event got cleared...")
             except asyncio.TimeoutError:
                 await app.read_objects_periodically()
-                logging.debug("Read objects periodically...")
 
     except asyncio.CancelledError as err:
         logging.warning(f"Updater task cancelled: {err}")
@@ -88,7 +86,7 @@ async def writer_task(app: Application, write_queue: asyncio.Queue) -> None:
         logging.warning(f"Writer task cancelled: {err}")
 
 
-async def subscribe_handler_task(app: Application, sub_queue: asyncio.Queue) -> None:
+async def subscribe_handler_task(app: Application, sub_queue: asyncio.Queue)-> None:
     """Task to handle the subscribe queue"""
     try:
         while True:
@@ -98,29 +96,22 @@ async def subscribe_handler_task(app: Application, sub_queue: asyncio.Queue) -> 
             notifications = queue_result[2]
             lifetime = queue_result[3]
 
-            task_name = f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]}"
+            task_name=f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]}"
 
             for task in app.subscription_tasks:
                 if task_name in task.get_name():
-                    logging.error(
-                        f"Subscription for {device_identifier}, {object_identifier} already exists"
-                    )
+                    logging.error(f"Subscription for {device_identifier}, {object_identifier} already exists")
                     break
             else:
-                await app.create_subscription_task(
-                    device_identifier=device_identifier,
-                    object_identifier=object_identifier,
-                    confirmed_notifications=notifications,
-                    lifetime=lifetime,
-                )
+                await app.create_subscription_task(device_identifier=device_identifier,
+                                                   object_identifier=object_identifier,
+                                                   confirmed_notifications=notifications, lifetime=lifetime)
 
     except asyncio.CancelledError as err:
         logging.warning(f"Subscribe task cancelled: {err}")
 
 
-async def unsubscribe_handler_task(
-    app: Application, unsub_queue: asyncio.Queue
-) -> None:
+async def unsubscribe_handler_task(app: Application, unsub_queue: asyncio.Queue)-> None:
     """Task to handle the unsubscribe queue"""
     try:
         while True:
@@ -128,12 +119,9 @@ async def unsubscribe_handler_task(
             device_identifier = queue_result[0]
             object_identifier = queue_result[1]
 
-            task_name = f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]}"
-
             for task in app.subscription_tasks:
-                if task_name in task.get_name():
-                    task.cancel()
-                    break
+                if task[1] == object_identifier and task[4] == device_identifier:
+                    await app.unsubscribe_COV(subscriber_process_identifier=task[0], device_identifier=[4], object_identifier=[1])
             else:
                 logging.error("Subscription task does not exist")
 
@@ -159,8 +147,6 @@ async def main():
     loglevel = config.get("BACpypes", "loglevel")
 
     logging.basicConfig(format="%(levelname)s:    %(message)s", level=loglevel)
-
-    logging.info("starting BACpypes3...")
 
     ipv4_address = IPv4Address(config.get("BACpypes", "address"))
 
@@ -188,8 +174,6 @@ async def main():
 
     app.asap.maxSegmentsAccepted = int(config.get("BACpypes", "maxSegmentsAccepted"))
 
-    logging.info("starting update task...")
-
     update_task = asyncio.create_task(
         updater_task(
             app=app,
@@ -198,19 +182,13 @@ async def main():
         )
     )
 
-    logging.info("starting write task...")
-
     write_task = asyncio.create_task(
         writer_task(app=app, write_queue=webAPI.events.write_queue)
     )
 
-    logging.info("starting subscribe task...")
-
     sub_task = asyncio.create_task(
         subscribe_handler_task(app=app, sub_queue=webAPI.events.sub_queue)
     )
-
-    logging.info("starting unsubscribe task...")
 
     unsub_task = asyncio.create_task(
         unsubscribe_handler_task(app=app, unsub_queue=webAPI.events.unsub_queue)
@@ -228,22 +206,15 @@ async def main():
     else:
         uvilog = loglevel.lower()
 
-    logging.info("Setting up uvicorn task...")
-
     config = uvicorn.Config(
         app=fastapi_app, host="127.0.0.1", port=7813, log_level=uvilog
     )
 
     server = uvicorn.Server(config)
 
-    await asyncio.sleep(5)
-
-    logging.info("Right before starting uvicorn")
-
     await server.serve()
 
     if app:
-        logging.warning("shutting down...")
         update_task.cancel()
         write_task.cancel()
         sub_task.cancel()

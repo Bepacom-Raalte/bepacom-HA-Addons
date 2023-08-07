@@ -5,7 +5,7 @@ from typing import Any, Dict, TypeVar
 
 from bacpypes3.apdu import (AbortPDU, ConfirmedCOVNotificationRequest,
                             ErrorPDU, ErrorRejectAbortNack,
-                            ReadPropertyRequest, SubscribeCOVRequest)
+                            ReadPropertyRequest, SubscribeCOVRequest, SimpleAckPDU, RejectPDU)
 from bacpypes3.basetypes import (BinaryPV, DeviceStatus, EngineeringUnits,
                                  ErrorType, EventState, PropertyIdentifier,
                                  Reliability)
@@ -27,6 +27,10 @@ class BACnetIOHandler(NormalApplication):
     subscription_tasks: list = []
     update_event: asyncio.Event = asyncio.Event()
     startup_complete: asyncio.Event = asyncio.Event()
+    id_to_object = {}
+    object_to_id = {}
+    available_ids = set()
+    next_id = 1
 
     def __init__(self, *args) -> None:
         NormalApplication.__init__(self, *args)
@@ -34,7 +38,7 @@ class BACnetIOHandler(NormalApplication):
         super().who_is()
         self.vendor_info = get_vendor_info(0)
         self.startup_complete.set()
-        logging.debug("Initialised application")
+        logging.debug("Application initialised")
 
     def deep_update(
         self, mapping: Dict[KeyType, Any], *updating_mappings: Dict[KeyType, Any]
@@ -50,7 +54,7 @@ class BACnetIOHandler(NormalApplication):
                 else:
                     mapping[k] = v
         self.update_event.set()
-        #logging.debug(f"Updating {updating_mapping}")
+        logging.debug(f"Updating {updating_mapping}")
         return mapping
 
     def dev_to_addr(self, dev: ObjectIdentifier) -> Address | None:
@@ -67,6 +71,36 @@ class BACnetIOHandler(NormalApplication):
                 )
         return None
 
+    def assign_id(self, obj: ObjectIdentifier, dev: ObjectIdentifier) -> int:
+        """Assign an ID to the given object and return it."""
+        if (obj, dev) in self.object_to_id:
+            # The object already has an ID, return it
+            return self.object_to_id[(obj, dev)]
+
+        # Assign a new ID to the object
+        if self.available_ids:
+            # Use an available ID if there is one
+            new_id = self.available_ids.pop()
+        else:
+            # Assign a new ID if there are no available IDs
+            new_id = self.next_id
+            self.next_id += 1
+
+        self.id_to_object[new_id] = (obj, dev)
+        self.object_to_id[(obj, dev)] = new_id
+        return new_id
+
+    def unassign_id(self, obj: ObjectIdentifier, dev: ObjectIdentifier) -> None:
+        """Remove the ID assignment for the given object."""
+        if (obj, dev) not in self.object_to_id:
+            return
+
+        # Remove the ID assignment for the object and add the ID to the available IDs set
+        obj_id = self.object_to_id[(obj, dev)]
+        del self.id_to_object[obj_id]
+        del self.object_to_id[(obj, dev)]
+        self.available_ids.add(obj_id)
+
     async def do_WhoIsRequest(self, apdu) -> None:
         logging.info(f"Received Who Is Request from {apdu.pduSource}")
         await super().do_WhoIsRequest(apdu)
@@ -80,19 +114,11 @@ class BACnetIOHandler(NormalApplication):
 
         await super().do_IAmRequest(apdu)
 
-        logging.info(f"Reading all device props of {apdu.iAmDeviceIdentifier}...")
-
         await self.read_device_props(apdu=apdu)
-
-        logging.info(f"Reading objectlist {apdu.iAmDeviceIdentifier}...")
 
         await self.read_object_list(device_identifier=apdu.iAmDeviceIdentifier)
 
-        logging.info(f"Subscribing all object props {apdu.iAmDeviceIdentifier}...")
-
-        self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
-        
-        logging.info(f"Done with {apdu.iAmDeviceIdentifier}!")
+        await self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
 
     def dict_updater(
         self,
@@ -298,149 +324,93 @@ class BACnetIOHandler(NormalApplication):
                             property_value=property_value,
                         )
 
-    def subscribe_object_list(self, device_identifier):
+    async def subscribe_object_list(self, device_identifier):
         for object_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"]:
             if ObjectIdentifier(object_id)[0] in subscribable_objects:
-                self.create_subscription_task(
+                await self.create_subscription_task(
                     device_identifier=device_identifier,
                     object_identifier=ObjectIdentifier(object_id),
                     confirmed_notifications=True,
                 )
 
-    def create_subscription_task(
+    async def create_subscription_task(
         self,
         device_identifier: ObjectIdentifier,
         object_identifier: ObjectIdentifier,
         confirmed_notifications: bool,
         lifetime: int | None = None,
     ):
-        device_address = self.dev_to_addr(ObjectIdentifier(device_identifier))
-        if confirmed_notifications:
-            notifications = "confirmed"
-        else:
-            notifications = "unconfirmed"
 
-        logging.debug(
-            f"Creating {notifications} subscription task {object_identifier} of {device_identifier}"
+        subscriber_process_identifier=self.assign_id(dev=device_identifier, obj=object_identifier)
+
+        subscribe_req = SubscribeCOVRequest(
+            subscriberProcessIdentifier=subscriber_process_identifier,
+            monitoredObjectIdentifier=object_identifier,
+            issueConfirmedNotifications=confirmed_notifications,
+            lifetime=lifetime,
+            destination=self.dev_to_addr(ObjectIdentifier(device_identifier)),
         )
 
-        task = asyncio.create_task(
-            self.subscription_task(
-                device_address=device_address,
-                object_identifier=ObjectIdentifier(object_identifier),
-                confirmed_notification=confirmed_notifications,
-                lifetime=lifetime,
-            ),
-            name=f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]},{notifications}",
+        response = await self.request(subscribe_req)
+
+        if isinstance(response, ErrorRejectAbortNack):
+            raise response
+
+        self.subscription_tasks.append([subscriber_process_identifier, object_identifier, confirmed_notifications, lifetime, ObjectIdentifier(device_identifier)])
+
+    async def unsubscribe_COV(self, subscriber_process_identifier, device_identifier, object_identifier):
+        unsubscribe_cov_request = SubscribeCOVRequest(
+            subscriberProcessIdentifier=subscriber_process_identifier,
+            monitoredObjectIdentifier=object_identifier,
         )
-        self.subscription_tasks.append(task)
+        unsubscribe_cov_request.pduDestination=self.dev_to_addr(device_identifier)
+        # send the request, wait for the response
+        response = await self.request(unsubscribe_cov_request)
+
+        if not isinstance(response, SimpleAckPDU):
+            return False
+
+        for subscription in self.subscription_tasks:
+            if subscription[0] == subscriber_process_identifier and subscription[1] == object_identifier and subscription[4] == device_identifier:
+                self.unassign_id(obj=subscription[1], dev=subscription[4])
+                del self.subscription_tasks[self.subscription_tasks.index(subscription)]
+                return
 
     async def end_subscription_tasks(self):
-        logging.info("Cancelling all subscriptions")
-        for task in self.subscription_tasks:
-            task.cancel()
-            await asyncio.sleep(0.1)
-        logging.info("Cancelled all subscriptions")
+        while self.subscription_tasks:
+            for subscription in self.subscription_tasks:
+                await self.unsubscribe_COV(subscriber_process_identifier=subscription[0],device_identifier=subscription[4],object_identifier=subscription[1])
 
     async def do_ConfirmedCOVNotificationRequest(
         self, apdu: ConfirmedCOVNotificationRequest
     ) -> None:
-        await super().do_ConfirmedCOVNotificationRequest(apdu)
+        #await super().do_ConfirmedCOVNotificationRequest(apdu)
+
+        for value in apdu.listOfValues:
+            vendor_info = get_vendor_info(0)
+            object_class = vendor_info.get_object_class(apdu.monitoredObjectIdentifier[0])
+            property_type = object_class.get_property_type(
+                value.propertyIdentifier
+            )
+            property_value = value.value.cast_out(property_type)
+
+            self.dict_updater(
+                device_identifier=apdu.initiatingDeviceIdentifier,
+                object_identifier=apdu.monitoredObjectIdentifier,
+                property_identifier=value.propertyIdentifier,
+                property_value=property_value,
+            )
+
+        # success
+        resp = SimpleAckPDU(context=apdu)
+
+        # return the result
+        await self.response(resp)
 
     async def do_ReadPropertyRequest(self, apdu: ReadPropertyRequest) -> None:
         try:
-            logging.info(f"{self.addr_to_dev(apdu.pduSource)} read {apdu.objectIdentifier} {apdu.propertyIdentifier}")
             await super().do_ReadPropertyRequest(apdu)
         except (Exception, AttributeError) as err:
             logging.error(
                 f"{self.addr_to_dev(apdu.pduSource)} tried to read {apdu.objectIdentifier} {apdu.propertyIdentifier}: {err}"
             )
-
-    async def subscription_task(
-        self,
-        device_address: Address,
-        object_identifier: ObjectIdentifier,
-        confirmed_notification: bool,
-        lifetime: int | None = None,
-    ) -> None:
-        try:
-            subscription = await self.change_of_value(
-                address=device_address,
-                monitored_object_identifier=object_identifier,
-                subscriber_process_identifier=None,
-                issue_confirmed_notifications=confirmed_notification,
-                lifetime=lifetime,
-            ).__aenter__()
-            # create a request to cancel the subscription
-            unsubscribe_cov_request = SubscribeCOVRequest(
-                subscriberProcessIdentifier=subscription.subscriber_process_identifier,
-                monitoredObjectIdentifier=subscription.monitored_object_identifier,
-                destination=subscription.address,
-            )
-
-            unsubscribe_cov_request.pduDestination = device_address
-            subscription.create_refresh_task()
-            dev_id = self.addr_to_dev(addr=device_address)
-            task_name = f"{dev_id[0].attr}:{dev_id[1]},{object_identifier[0].attr}:{object_identifier[1]}"
-            logging.debug(f"Created {task_name} subscription task successfully")
-            while True:
-                property_identifier, property_value = await subscription.get_value()
-
-                if isinstance(property_value, BitString):
-                    property_value = property_value.cast(list())
-                elif isinstance(property_value, int | float):
-                    property_value = round(property_value, 2)
-
-                self.dict_updater(
-                    device_identifier=dev_id,
-                    object_identifier=object_identifier,
-                    property_identifier=property_identifier,
-                    property_value=property_value,
-                )
-
-                logging.debug(
-                    f"Subscription: {object_identifier}, {property_identifier} = {property_value}"
-                )
-
-        except (
-            ServicesError,
-            AbortException,
-            ConfigurationError,
-            AttributeError,
-        ) as err:
-            logging.error(
-                f"ServicesError, AbortException or ConfigurationError for: {object_identifier}: {err}"
-            )
-
-            await subscription.__aexit__()
-            for task in self.subscription_tasks:
-                if task_name in task.get_name():
-                    index = self.subscription_tasks.index(task)
-                    self.subscription_tasks.pop(index)
-
-        except (Exception, InvalidTag, RejectException, ErrorPDU) as err:
-            logging.error(
-                f"InvalidTag, Reject or ErrorPDU for: {object_identifier}: {err}"
-            )
-
-            dev_id = self.addr_to_dev(addr=device_address)
-            task_name = f"{dev_id[0].attr}:{dev_id[1]},{object_identifier[0].attr}:{object_identifier[1]}"
-
-            for task in self.subscription_tasks:
-                if task_name in task.get_name():
-                    index = self.subscription_tasks.index(task)
-                    self.subscription_tasks.pop(index)
-
-        except asyncio.CancelledError:
-            logging.error(
-                f"Cancelled subscription task for: {device_address}, {object_identifier}"
-            )
-
-            # send the request, wait for the response
-            response = await self.request(unsubscribe_cov_request)
-
-            await subscription.__aexit__()
-            for task in self.subscription_tasks:
-                if task_name in task.get_name():
-                    index = self.subscription_tasks.index(task)
-                    self.subscription_tasks.pop(index)
