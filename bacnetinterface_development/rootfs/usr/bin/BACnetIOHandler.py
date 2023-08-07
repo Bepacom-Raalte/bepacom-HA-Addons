@@ -341,6 +341,12 @@ class BACnetIOHandler(NormalApplication):
         lifetime: int | None = None,
     ):
 
+        if isinstance(object_identifier, str):
+            object_identifier = ObjectIdentifier(object_identifier)
+        
+        if isinstance(device_identifier, str):
+            device_identifier = ObjectIdentifier(device_identifier)
+
         subscriber_process_identifier=self.assign_id(dev=device_identifier, obj=object_identifier)
 
         subscribe_req = SubscribeCOVRequest(
@@ -361,10 +367,18 @@ class BACnetIOHandler(NormalApplication):
         self.subscription_tasks.append([subscriber_process_identifier, f"{object_identifier[0].attr}:{object_identifier[1]}", confirmed_notifications, lifetime, f"{device_identifier[0].attr}:{device_identifier[1]}"])
 
     async def unsubscribe_COV(self, subscriber_process_identifier, device_identifier, object_identifier):
+
+        if isinstance(object_identifier, str):
+            object_identifier = ObjectIdentifier(object_identifier)
+        
+        if isinstance(device_identifier, str):
+            device_identifier = ObjectIdentifier(device_identifier)
+
         unsubscribe_cov_request = SubscribeCOVRequest(
             subscriberProcessIdentifier=subscriber_process_identifier,
             monitoredObjectIdentifier=object_identifier,
         )
+
         unsubscribe_cov_request.pduDestination=self.dev_to_addr(device_identifier)
         # send the request, wait for the response
         response = await self.request(unsubscribe_cov_request)
