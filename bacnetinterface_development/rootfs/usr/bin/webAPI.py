@@ -451,20 +451,15 @@ async def subscribe_objectid(
 @app.delete("/apiv1/subscribe/{deviceid}/{objectid}", tags=["apiv1"])
 async def unsubscribe_objectid(deviceid: str, objectid: str):
     """Subscribe to an object of a device."""
-    try:
-        deviceid = ObjectIdentifier(deviceid)
-        objectid = ObjectIdentifier(objectid)
+    deviceid = ObjectIdentifier(deviceid)
+    objectid = ObjectIdentifier(objectid)
 
-        sub_tuple = (
-            deviceid,
-            objectid,
-        )
+    sub_tuple = (
+        deviceid,
+        objectid,
+    )
 
-        await events.unsub_queue.put(sub_tuple)
-
-    except Exception as e:
-        logging.error(f"{e} on subscribe from API POST request")
-        return status.HTTP_400_BAD_REQUEST
+    await events.unsub_queue.put(sub_tuple)
 
 
 @app.websocket("/ws")
