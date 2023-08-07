@@ -166,10 +166,10 @@
             console.log(keys)
 
             for (let i = 0; i < keys.length; i++) {
-                let dev_obj_conf = dev_obj_conf.replace(/\[\]/g, ''); // Removes all occurrences of "[]"
-                let dev_obj_conf = keys[i].split(",")
-                let device_identifier = dev_obj_conf[4]
-                let object_identifier = dev_obj_conf[1]
+                let dev_obj_conf = keys.replace(/\[\]/g, ''); // Removes all occurrences of "[]"
+                let split_keys = dev_obj_conf[i].split(",")
+                let device_identifier = split_keys[4]
+                let object_identifier = split_keys[1]
                 let url = './apiv1/subscribe/'+device_identifier+"/"+object_identifier
                 console.log(url)
 
