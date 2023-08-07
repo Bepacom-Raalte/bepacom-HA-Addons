@@ -165,7 +165,7 @@
 
             for (let i = 0; i < keys.length; i++) {
                 let dev_obj_conf = keys[i].split(",")
-                let device_identifier = dev_obj_conf[0]
+                let device_identifier = dev_obj_conf[4]
                 let object_identifier = dev_obj_conf[1]
                 let url = './apiv1/subscribe/' + device_identifier + "/" + object_identifier
                 console.log(url)
@@ -179,18 +179,21 @@
                 .then(response => {
                     if (response.status === 200) {
                         console.log("Deleted subscription" + device_identifier + object_identifier)
-                        alert('Deleted selection!');
                     } else {
                         console.log("Unexpected response:", response.status);
                         // Handle other response statuses here
-                        alert('Something went wrong...');
+                        var error = true;
                     }
                 })
                 .then(data => {
                     console.log('API response:', data);
                 })
             }
-                
+
+            if (error)
+                alert('Something went wrong...');
+            else
+                alert('Deleted selection!');
 
             checkboxes.forEach(function(checkbox) {
                 checkbox.checked = false;
