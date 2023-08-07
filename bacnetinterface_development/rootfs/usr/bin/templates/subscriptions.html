@@ -32,7 +32,7 @@
             </label>
             {% for key in subs %}
             	<label class="selectable-label">
-					<input type="checkbox" id="checkbox-{{ key }}">
+					<input type="checkbox" id="checkbox-{{ " ".join( e for e in keys) }}">
 					<span class="ede_selection">
                         <a>{{ key[4] }}</a>
                         <a>{{ key[1] }}</a>
@@ -166,8 +166,7 @@
             console.log(keys)
 
             for (let i = 0; i < keys.length; i++) {
-                let dev_obj_conf = keys.replace(/\[\]/g, ''); // Removes all occurrences of "[]"
-                let split_keys = dev_obj_conf[i].split(",")
+                let split_keys = keys[i].split(",")
                 let device_identifier = split_keys[4]
                 let object_identifier = split_keys[1]
                 let url = './apiv1/subscribe/'+device_identifier+"/"+object_identifier
