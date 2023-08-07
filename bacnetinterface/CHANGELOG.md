@@ -1,5 +1,12 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.1.0
+
+7/8/2023
+- NGINX now waits until the API is available
+- 
+
+
 # 1.0.6
 
 10/7/2023

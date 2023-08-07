@@ -26,7 +26,6 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-
 # ===================================================
 # Global variables
 # ===================================================
@@ -46,7 +45,11 @@ def deep_update(mapping: dict, *updating_mappings: dict) -> dict:
     updated_mapping = mapping.copy()
     for updating_mapping in updating_mappings:
         for k, v in updating_mapping.items():
-            if k in updated_mapping and isinstance(updated_mapping[k], dict) and isinstance(v, dict):
+            if (
+                k in updated_mapping
+                and isinstance(updated_mapping[k], dict)
+                and isinstance(v, dict)
+            ):
                 updated_mapping[k] = deep_update(updated_mapping[k], v)
             else:
                 updated_mapping[k] = v
@@ -129,7 +132,7 @@ app = FastAPI(
     lifespan=lifespan,
     title="Bepacom EcoPanel BACnet/IP Interface API",
     description=description,
-    version="1.0.6",
+    version="1.1.0",
     contact={
         "name": "Bepacom B.V. Contact",
         "url": "https://www.bepacom.nl/contact/",
@@ -445,7 +448,7 @@ async def subscribe_objectid(
         await events.sub_queue.put(sub_tuple)
 
     except Exception as e:
-        logging.error(e + " on subscribe from API POST request")
+        logging.error(f"{str(e)} on subscribe from API POST request")
         return status.HTTP_400_BAD_REQUEST
 
 
@@ -464,7 +467,7 @@ async def unsubscribe_objectid(deviceid: str, objectid: str):
         await events.unsub_queue.put(sub_tuple)
 
     except Exception as e:
-        logging.error(e + " on subscribe from API POST request")
+        logging.error(f"{str(e)} on subscribe from API DELETE request")
         return status.HTTP_400_BAD_REQUEST
 
 

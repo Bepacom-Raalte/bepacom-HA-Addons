@@ -5,7 +5,10 @@
 # s6-overlay docs: https://github.com/just-containers/s6-overlay
 # ==============================================================================
 
-bashio::log.info "Running NGINX"
+# Wait for Node-RED to become available
+bashio::net.wait_for 7813 localhost 300
+
+bashio::log.info "Starting NGINX"
 
 exec nginx 
 

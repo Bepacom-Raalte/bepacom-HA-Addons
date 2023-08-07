@@ -32,11 +32,11 @@
             </label>
             {% for key in subs %}
             	<label class="selectable-label">
-					<input type="checkbox" id="checkbox-{{ key.get_name() }}">
+					<input type="checkbox" id="checkbox-{{ key }}">
 					<span class="ede_selection">
-                        <a>{{ key.get_name().split(",")[0] }}</a>
-                        <a>{{ key.get_name().split(",")[1] }}</a>
-                        <a>{{ key.get_name().split(",")[2] }}</a>
+                        <a>{{ key[4] }}</a>
+                        <a>{{ key[1] }}</a>
+                        <a>{{ key[2] }}</a>
                     </span>
 				</label>
             {% endfor %}

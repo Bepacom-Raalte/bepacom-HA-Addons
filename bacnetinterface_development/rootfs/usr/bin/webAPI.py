@@ -463,7 +463,7 @@ async def unsubscribe_objectid(deviceid: str, objectid: str):
         await events.unsub_queue.put(sub_tuple)
 
     except Exception as e:
-        logging.error(e + " on subscribe from API POST request")
+        logging.error(f"{e} on subscribe from API POST request")
         return status.HTTP_400_BAD_REQUEST
 
 
