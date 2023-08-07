@@ -179,21 +179,18 @@
                 .then(response => {
                     if (response.status === 200) {
                         console.log("Deleted subscription" + device_identifier + object_identifier)
+                        alert('Deleted selection!');
                     } else {
                         console.log("Unexpected response:", response.status);
                         // Handle other response statuses here
-                        var error = true;
+                        alert('Something went wrong...');
                     }
                 })
                 .then(data => {
                     console.log('API response:', data);
                 })
             }
-
-            if (error)
-                alert('Something went wrong...');
-            else
-                alert('Deleted selection!');
+                
 
             checkboxes.forEach(function(checkbox) {
                 checkbox.checked = false;

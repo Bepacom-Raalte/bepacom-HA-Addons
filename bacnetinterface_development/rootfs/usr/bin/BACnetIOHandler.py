@@ -356,7 +356,7 @@ class BACnetIOHandler(NormalApplication):
         if isinstance(response, ErrorRejectAbortNack):
             raise response
 
-        self.subscription_tasks.append([subscriber_process_identifier, object_identifier, confirmed_notifications, lifetime, ObjectIdentifier(device_identifier)])
+        self.subscription_tasks.append([subscriber_process_identifier, str(object_identifier[0]+":"+object_identifier[1]), confirmed_notifications, lifetime, str(device_identifier[0]+":"+device_identifier[1])])
 
     async def unsubscribe_COV(self, subscriber_process_identifier, device_identifier, object_identifier):
         unsubscribe_cov_request = SubscribeCOVRequest(
@@ -371,7 +371,7 @@ class BACnetIOHandler(NormalApplication):
             return False
 
         for subscription in self.subscription_tasks:
-            if subscription[0] == subscriber_process_identifier and subscription[1] == object_identifier and subscription[4] == device_identifier:
+            if subscription[0] == subscriber_process_identifier and subscription[1] == ObjectIdentifier(object_identifier) and subscription[4] == ObjectIdentifier(device_identifier):
                 self.unassign_id(obj=subscription[1], dev=subscription[4])
                 del self.subscription_tasks[self.subscription_tasks.index(subscription)]
                 return
