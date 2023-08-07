@@ -453,6 +453,7 @@ async def unsubscribe_objectid(deviceid: str, objectid: str):
     """Subscribe to an object of a device."""
     try:
         logging.info(f"entered: {deviceid} and {objectid}")
+
         deviceid = ObjectIdentifier(deviceid)
         objectid = ObjectIdentifier(objectid)
 

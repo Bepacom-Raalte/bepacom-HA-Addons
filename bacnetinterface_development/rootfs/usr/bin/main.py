@@ -96,10 +96,8 @@ async def subscribe_handler_task(app: Application, sub_queue: asyncio.Queue)-> N
             notifications = queue_result[2]
             lifetime = queue_result[3]
 
-            task_name=f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]}"
-
             for task in app.subscription_tasks:
-                if task_name in task.get_name():
+                if task[1] == object_identifier and task[4] == device_identifier:
                     logging.error(f"Subscription for {device_identifier}, {object_identifier} already exists")
                     break
             else:
