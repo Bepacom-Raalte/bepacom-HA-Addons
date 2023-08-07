@@ -120,8 +120,8 @@ async def unsubscribe_handler_task(app: Application, unsub_queue: asyncio.Queue)
             object_identifier = queue_result[1]
 
             for task in app.subscription_tasks:
-                if task[1] == f"{object_identifier[0]}:{object_identifier[1]}" and task[4] == f"{device_identifier[0]}:{device_identifier[1]}":
-                    await app.unsubscribe_COV(subscriber_process_identifier=task[0], device_identifier=[4], object_identifier=[1])
+                if task[1] == f"{object_identifier[0].attr}:{object_identifier[1]}" and task[4] == f"{device_identifier[0].attr}:{device_identifier[1]}":
+                    await app.unsubscribe_COV(subscriber_process_identifier=task[0], device_identifier=task[4], object_identifier=task[1])
             else:
                 logging.error(f"Subscription task '{device_identifier}, {object_identifier}' does not exist")
 
