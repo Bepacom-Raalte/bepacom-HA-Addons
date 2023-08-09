@@ -346,7 +346,7 @@ class BACnetIOHandler(NormalApplication):
                     device_identifier=device_identifier,
                     object_identifier=ObjectIdentifier(object_id),
                     confirmed_notifications=True,
-                    lifetime=self.default_subscription_lifetime
+                    lifetime=self.default_subscription_lifetime,
                 )
 
     async def create_subscription_task(
@@ -374,16 +374,15 @@ class BACnetIOHandler(NormalApplication):
             destination=self.dev_to_addr(ObjectIdentifier(device_identifier)),
         )
 
-        response = await self.request(subscribe_req)
+        try:
+            response = await self.request(subscribe_req)
+            logging.debug(response)
 
-        logging.info(response)
-
-        if isinstance(response, ErrorRejectAbortNack):
-            raise response
-
-        logging.info(
-            f"Subscribed to {device_identifier}, {object_identifier} with ID {subscriber_process_identifier}"
-        )
+        except (ErrorRejectAbortNack, RejectException, AbortException) as error:
+            logging.error(
+                f"Error while subscribing to {device_identifier}, {object_identifier}: {error}"
+            )
+            return
 
         if (
             not [

@@ -6,10 +6,7 @@
     "\\bacnetinterface\\rootfs\\etc",
     "\\bacnetinterface\\rootfs\\usr",
     "\\bacnetinterface\\rootfs\\usr\\bin",
-    "\\bacnetinterface\\rootfs\\usr\\bin\\templates",
-    "\\bacnetinterface_development\\rootfs",
-    "\\bacnetinterface_development\\rootfs\\usr",
-    "\\bacnetinterface_development\\rootfs\\usr\\bin"
+    "\\bacnetinterface\\rootfs\\usr\\bin\\templates"
   ],
   "SelectedNode": "\\bacnetinterface\\rootfs\\usr\\bin\\BACnetIOHandler.py",
   "PreviewInSolutionExplorer": false

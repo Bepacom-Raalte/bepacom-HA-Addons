@@ -1,4 +1,13 @@
-<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
+﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
+
+# 1.1.2
+9/8/2023
+
+- Fixed getting rejection PDU stopping subscribing process.
+- ⬆️ Bumped base-python image to version v11.0.4.
+- ⬆️ Bumped FastAPI to version 0.101.0.
+- ⬆️ Bumped Uvicorn to version 0.23.2.
+
 
 # 1.1.1
 7/8/2023
