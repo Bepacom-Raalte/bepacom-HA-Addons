@@ -367,12 +367,13 @@ class BACnetIOHandler(NormalApplication):
             destination=self.dev_to_addr(ObjectIdentifier(device_identifier)),
         )
 
-        response = await self.request(subscribe_req)
+        try:
 
-        logging.info(response)
+            response = await self.request(subscribe_req)
 
-        if isinstance(response, ErrorRejectAbortNack):
-            raise response
+        except (ErrorRejectAbortNack, RejectException, AbortException) as error:
+            logging.error(f"Error while subscribing to {device_identifier}, {object_identifier}: {error}")
+            return
 
         logging.info(f"Subscribed to {device_identifier}, {object_identifier} with ID {subscriber_process_identifier}")
 
