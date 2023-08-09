@@ -1,4 +1,28 @@
-<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
+﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
+
+# 1.1.2
+9/8/2023
+
+- Fixed getting rejection PDU stopping subscribing process.
+- ⬆️ Bumped base-python image to version v11.0.4.
+- ⬆️ Bumped FastAPI to version 0.101.0.
+- ⬆️ Bumped Uvicorn to version 0.23.2.
+
+
+# 1.1.1
+7/8/2023
+- Subscriptions no longer indefinite as some devices don't support it.
+- Subscriptions can be deleted through the UI.
+- Subscriptions get renewed automatically.
+
+
+# 1.1.0
+
+7/8/2023
+- NGINX now waits until the API is available before starting.
+- Copied CoV method of legacy version. This will stop the system from being overwhelmed and hanging.
+- NGINX using templates to dynamically add own IP.
+
 
 # 1.0.6
 

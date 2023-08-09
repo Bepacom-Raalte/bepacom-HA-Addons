@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: Bepacom EcoPanel BACnet/IP Interface Development Version
-version: "1.0.6"
+version: "1.1.2"
 slug: bacnetinterface_development
 description: Development mule. Preferably don't use this unless you want a sneak peak.
 url: "https://github.com/Bepacom-Raalte/bepacom-HA-Addons/tree/main/bacnetinterface"
@@ -17,6 +17,8 @@ ingress_entry: webapp
 host_network: true
 panel_icon: mdi:router-wireless-settings
 startup: services
+discovery:
+  - bacnet_interface
 map:
   - config:rw
 ports:

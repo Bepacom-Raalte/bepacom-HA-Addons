@@ -14,9 +14,9 @@ RUN \
     py3-wheel \
   && pip3 install --no-cache-dir --upgrade pip \
     'bacpypes3<=0.0.78' \
-    'fastapi<=0.99.1' \
+    'fastapi<=0.101.0' \
     'jinja2<=3.1.2' \
-    'uvicorn<=0.22.0' \
+    'uvicorn<=0.23.2' \
     'websockets<=11.0.3' \
     'python-multipart<=0.0.6'
 
