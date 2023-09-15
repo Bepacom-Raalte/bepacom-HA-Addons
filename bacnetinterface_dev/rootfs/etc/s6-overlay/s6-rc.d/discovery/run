@@ -1,0 +1,26 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+
+# ==============================================================================
+# Do Home Assistant discovery (doesn't work)
+# s6-overlay docs: https://github.com/just-containers/s6-overlay
+# ==============================================================================
+
+declare payload
+
+# Wait some more
+sleep 5
+
+# Prepare discovery payload
+payload=$(\
+    bashio::var.json \
+        host "$(hostname)" \
+)
+
+if bashio::discovery "bacnet_interface" "${payload}" > /dev/null; then
+    bashio::log.info "Successfully send discovery information to Home Assistant."
+else
+    bashio::log.error "Discovery message to Home Assistant failed!"
+fi
+
+

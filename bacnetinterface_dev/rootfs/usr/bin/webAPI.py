@@ -176,7 +176,7 @@ async def subscriptions(request: Request):
 
 
 @app.get("/ede", response_class=HTMLResponse, tags=["Webpages"])
-async def ede(request: Request):
+async def subscriptions(request: Request):
     """Page to see EDE files uploaded."""
     return templates.TemplateResponse(
         "ede.html",
