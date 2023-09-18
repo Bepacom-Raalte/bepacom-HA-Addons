@@ -2,6 +2,7 @@ import asyncio
 import logging
 import traceback
 from typing import Any, Dict, TypeVar
+from math import isnan, isinf
 
 from bacpypes3.apdu import (AbortPDU, ConfirmedCOVNotificationRequest,
                             ErrorPDU, ErrorRejectAbortNack,
@@ -145,7 +146,13 @@ class BACnetIOHandler(NormalApplication):
         if isinstance(property_value, ErrorType):
             return
         elif isinstance(property_value, float):
-            property_value = round(property_value, 2)
+            if isnan(property_value):
+                logging.warning(f"Replacing with 0: {device_identifier}, {object_identifier}, {property_identifier}... NaN value: {property_value}")
+                property_value = 0
+            if isinf(property_value):
+                logging.warning(f"Replacing with 0: {device_identifier}, {object_identifier}, {property_identifier}... Inf value: {property_value}")
+                property_value = 0
+            property_value = round(property_value, 4)
         elif isinstance(property_value, AnyAtomic):
             return
 

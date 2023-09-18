@@ -1,5 +1,15 @@
 ﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+
+# 1.1.3
+15/9/2023
+
+- Fixed Float value not getting handled correctly when parsing JSON.
+- Removed legacy Home Assistant discovery.
+- ⬆️ Bumped base-python image to version v11.0.5.
+- ⬆️ Bumped BACpypes3 to version 0.0.79.
+
+
 # 1.1.2
 9/8/2023
 
