@@ -124,12 +124,13 @@ class BACnetIOHandler(NormalApplication):
     async def do_IAmRequest(self, apdu) -> None:
         logging.info(f"I Am from {apdu.iAmDeviceIdentifier}")
 
-        await super().do_IAmRequest(apdu)
-        
         if apdu.iAmDeviceIdentifier[1] in self.device_info_cache.instance_cache:
             logging.warning(f"Device {apdu.iAmDeviceIdentifier} already in cache!")
-        else:
-             await self.read_device_props(apdu=apdu)   
+            return
+
+        await super().do_IAmRequest(apdu)
+
+        await self.read_device_props(apdu=apdu)
 
         await self.read_object_list(device_identifier=apdu.iAmDeviceIdentifier)
 
@@ -242,7 +243,6 @@ class BACnetIOHandler(NormalApplication):
                 )
 
     async def read_object_list(self, device_identifier):
-        """Read Object List of a device."""
         for obj_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"][
             f"device:{device_identifier[1]}"
         ]["objectList"]:
@@ -272,21 +272,17 @@ class BACnetIOHandler(NormalApplication):
                 logging.error(
                     f"Abort PDU Error while reading object list: {obj_id}: {err}"
                 )
-                return False
 
             except ErrorRejectAbortNack as err:
                 logging.error(f"Nack error while reading object list: {obj_id}: {err}")
-                return False
 
             except AssertionError as err:
                 logging.error(f"Assertion error for: {device_identifier}: {obj_id}")
-                return False
 
             except AttributeError as err:
                 logging.error(
                     f"Attribute error while reading object list: {obj_id}: {err}"
                 )
-                return False
             else:
                 for (
                     object_identifier,
@@ -300,7 +296,6 @@ class BACnetIOHandler(NormalApplication):
                         property_identifier=property_identifier,
                         property_value=property_value,
                     )
-                    return True
 
     async def read_objects_periodically(self):
         for dev_id in self.bacnet_device_dict:

@@ -40,5 +40,16 @@ schema:
   defaultPriority: "int(1,16)"
   loglevel: list(DEBUG|INFO|WARNING|ERROR|CRITICAL|)
   updateInterval: int
+  subscriptions:
+    analogInput: bool?
+    analogOutput: bool?
+    analogValue: bool?
+    binaryInput: bool?
+    binaryOutput: bool?
+    binaryValue: bool?
+    multiStateInput: bool?
+    multiStateOutput: bool?
+    multiStateValue: bool?
+    accumulator: bool?
   vendorID: int?
   segmentation: list(segmentedBoth|segmentedTransmit|segmentedReceive|noSegmentation||)?

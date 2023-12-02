@@ -8,14 +8,11 @@
 
 bashio::log.info "Initialising NGINX"
 
-readarray -t eth_adapters < <(ifconfig -a | grep -oE '^(enp|eth|eno)[a-z0-9]+')
-
-bashio::log.info "Initialising NGINX - array read..."
+readarray -t eth_adapters < <(ifconfig -a | grep -oE '^(enp|eth|eno|wl)[a-z0-9]+')
 
 for adapter in "${eth_adapters[@]}"
 do
     ipaddr=$(ifconfig "$adapter" | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
-    bashio::log.info "Initialising NGINX - cycling through adapters... $ipaddr"
     if [ -n "$ipaddr" ]; then
         break
     fi
