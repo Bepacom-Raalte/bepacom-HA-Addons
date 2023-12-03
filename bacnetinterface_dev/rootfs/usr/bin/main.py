@@ -4,11 +4,14 @@ import asyncio
 import configparser
 import json
 import logging
+import os
+from re import A
 from typing import TypeVar
 
 import uvicorn
 import webAPI
 from BACnetIOHandler import BACnetIOHandler
+from bacpypes3.basetypes import ObjectType, PropertyIdentifier
 from bacpypes3.argparse import INIArgumentParser
 from bacpypes3.basetypes import Segmentation
 from bacpypes3.ipv4.app import Application
@@ -159,6 +162,9 @@ async def main():
     loglevel = config.get("BACpypes", "loglevel")
 
     logging.basicConfig(format="%(levelname)s:    %(message)s", level=loglevel)
+    
+    with open('/data/options.json') as f:
+        options = json.load(f)
 
     ipv4_address = IPv4Address(config.get("BACpypes", "address"))
 
@@ -185,6 +191,8 @@ async def main():
     )
 
     app.asap.maxSegmentsAccepted = int(config.get("BACpypes", "maxSegmentsAccepted"))
+    
+    app.subscription_list = [ObjectType(subscription) for subscription, value in options['subscriptions'].items() if value == True]
 
     update_task = asyncio.create_task(
         updater_task(

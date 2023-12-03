@@ -31,6 +31,16 @@ options:
   objectIdentifier: 420
   defaultPriority: 15
   updateInterval: 60
+  subscriptions:
+    analogInput: true
+    analogOutput: true
+    analogValue: true
+    binaryInput: true
+    binaryOutput: true
+    binaryValue: true
+    multiStateInput: true
+    multiStateOutput: true
+    multiStateValue: true
   loglevel: WARNING
   segmentation: segmentedBoth
 schema:
@@ -41,15 +51,14 @@ schema:
   loglevel: list(DEBUG|INFO|WARNING|ERROR|CRITICAL|)
   updateInterval: int
   subscriptions:
-    analogInput: bool?
-    analogOutput: bool?
-    analogValue: bool?
-    binaryInput: bool?
-    binaryOutput: bool?
-    binaryValue: bool?
-    multiStateInput: bool?
-    multiStateOutput: bool?
-    multiStateValue: bool?
-    accumulator: bool?
+    analogInput: bool
+    analogOutput: bool
+    analogValue: bool
+    binaryInput: bool
+    binaryOutput: bool
+    binaryValue: bool
+    multiStateInput: bool
+    multiStateOutput: bool
+    multiStateValue: bool
   vendorID: int?
   segmentation: list(segmentedBoth|segmentedTransmit|segmentedReceive|noSegmentation||)?

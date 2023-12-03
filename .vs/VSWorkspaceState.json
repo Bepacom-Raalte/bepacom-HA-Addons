@@ -1,11 +1,8 @@
 {
   "ExpandedNodes": [
     "",
-    "\\bacnetinterface_dev",
-    "\\bacnetinterface_dev\\rootfs",
-    "\\bacnetinterface_dev\\rootfs\\usr",
-    "\\bacnetinterface_dev\\rootfs\\usr\\bin"
+    "\\bacnetinterface_dev"
   ],
-  "SelectedNode": "\\bacnetinterface_dev\\rootfs\\usr\\bin\\BACnetIOHandler.py",
+  "SelectedNode": "\\bacnetinterface_dev\\Dockerfile",
   "PreviewInSolutionExplorer": false
 }

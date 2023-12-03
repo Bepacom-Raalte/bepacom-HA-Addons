@@ -18,8 +18,7 @@ from bacpypes3.object import get_vendor_info
 from bacpypes3.pdu import Address
 from bacpypes3.primitivedata import BitString, ObjectIdentifier, ObjectType
 from const import (device_properties_to_read, object_properties_to_read_once,
-                   object_properties_to_read_periodically,
-                   subscribable_objects)
+                   object_properties_to_read_periodically)
 
 KeyType = TypeVar("KeyType")
 
@@ -34,6 +33,7 @@ class BACnetIOHandler(NormalApplication):
     available_ids = set()
     next_id = 1
     default_subscription_lifetime = 28800
+    subscription_list = []
 
     def __init__(self, *args) -> None:
         NormalApplication.__init__(self, *args)
@@ -58,7 +58,7 @@ class BACnetIOHandler(NormalApplication):
                 else:
                     mapping[k] = v
         self.update_event.set()
-        logging.debug(f"Updating {updating_mapping}")
+        # logging.debug(f"Updating {updating_mapping}")
         return mapping
 
     def dev_to_addr(self, dev: ObjectIdentifier) -> Address | None:
@@ -125,8 +125,7 @@ class BACnetIOHandler(NormalApplication):
         logging.info(f"I Am from {apdu.iAmDeviceIdentifier}")
 
         if apdu.iAmDeviceIdentifier[1] in self.device_info_cache.instance_cache:
-            logging.warning(f"Device {apdu.iAmDeviceIdentifier} already in cache!")
-            return
+            logging.debug(f"Device {apdu.iAmDeviceIdentifier} already in cache!")
 
         await super().do_IAmRequest(apdu)
 
@@ -298,6 +297,7 @@ class BACnetIOHandler(NormalApplication):
                     )
 
     async def read_objects_periodically(self):
+        logging.debug(f"Periodic object reading...")
         for dev_id in self.bacnet_device_dict:
             for obj_id in self.bacnet_device_dict[dev_id]:
                 if not isinstance(obj_id, ObjectIdentifier):
@@ -348,7 +348,7 @@ class BACnetIOHandler(NormalApplication):
 
     async def subscribe_object_list(self, device_identifier):
         for object_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"]:
-            if ObjectIdentifier(object_id)[0] in subscribable_objects:
+            if ObjectIdentifier(object_id)[0] in subscription_list:
                 await self.create_subscription_task(
                     device_identifier=device_identifier,
                     object_identifier=ObjectIdentifier(object_id),
