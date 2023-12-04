@@ -348,7 +348,7 @@ class BACnetIOHandler(NormalApplication):
 
     async def subscribe_object_list(self, device_identifier):
         for object_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"]:
-            if ObjectIdentifier(object_id)[0] in subscription_list:
+            if ObjectIdentifier(object_id)[0] in self.subscription_list:
                 await self.create_subscription_task(
                     device_identifier=device_identifier,
                     object_identifier=ObjectIdentifier(object_id),
