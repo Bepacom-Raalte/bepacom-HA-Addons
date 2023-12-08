@@ -35,7 +35,7 @@ fi
 
 # Generate Ingress configuration
 bashio::var.json \
-    Interfaces "ip_array" \
+    Interfaces "$ip_array" \
     | tempio \
         -template /etc/nginx/templates/ingress.gtpl \
         -out /etc/nginx/servers/ingress.conf
