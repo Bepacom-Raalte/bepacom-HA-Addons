@@ -2,7 +2,7 @@
 
 # ==============================================================================
 # Exit Interface Service
-# Take down the S6 supervision tree when Nginx fails
+# Take down the S6 supervision tree when interface fails
 # ==============================================================================
 
 declare exit_code

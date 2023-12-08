@@ -6,9 +6,11 @@
 # s6-overlay docs: https://github.com/just-containers/s6-overlay
 # ==============================================================================
 
-bashio::log.info "Initialising NGINX"
+bashio::log.info "Running init-nginx."
 
 readarray -t eth_adapters < <(ifconfig -a | grep -oE '^(enp|eth|eno|wl)[a-z0-9]+')
+
+bashio::log.debug "Read the array... now going into the for loop."
 
 for adapter in "${eth_adapters[@]}"
 do
@@ -18,6 +20,8 @@ do
     fi
 done
 
+bashio::log.debug "Found an IP... $ipaddr."
+
 # Generate Ingress configuration
 bashio::var.json \
     interface "$ipaddr" \
@@ -25,4 +29,4 @@ bashio::var.json \
         -template /etc/nginx/templates/ingress.gtpl \
         -out /etc/nginx/servers/ingress.conf
 
-
+bashio::log.debug "Generated ingress configuration!"

@@ -1,0 +1,8 @@
+#!/command/with-contenv bashio
+
+# ==============================================================================
+# Exit Interface Service
+# Take down the S6 supervision tree when interface fails
+# ==============================================================================
+
+bashio::log.debug "Finishing init-interface."
