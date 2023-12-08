@@ -10,11 +10,17 @@ bashio::log.info "Running init-nginx."
 
 ip_addresses=$(ip address show | grep 'inet ' | awk '{print $2}')
 
-bashio::log.info "$ip_addresses"
+# Convert the string of IP addresses into an array
+IFS=$'\n' read -r -a ip_array <<< "$ip_addresses"
+
+# Iterate over the array
+for ip in "${ip_array[@]}"; do
+    echo "$ip"
+done
 
 # Generate Ingress configuration
 bashio::var.json \
-    interfaces "ip_addresses" \
+    interfaces "ip_array" \
     | tempio \
         -template /etc/nginx/templates/ingress.gtpl \
         -out /etc/nginx/servers/ingress.conf
