@@ -6,8 +6,12 @@ server {
     allow 172.30.32.0/24;
     allow 127.0.0.0/24;
 
-    {{ range .interfaces }}
+    {{ if (len .Addresses) }}
+    {{ range .Addresses }}
         allow {{ . }};
+    {{ end }}
+    {{ else }}
+        allow {{ .Addresses }};
     {{ end }}
 
     # deny all;
