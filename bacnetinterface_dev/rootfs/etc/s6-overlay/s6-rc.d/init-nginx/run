@@ -14,13 +14,13 @@ echo $ip_addresses > "/config/koele_text.txt"
 
 bashio::log.info "$ip_addresses"
 
-# Use read to split the string into an array
-IFS=' ' read -ra ip_array <<< "$ip_addresses"
+ip_array=()
 
-# Iterate over the array
-for ip in "${ip_array[@]}"; do
-    echo "$ip"
+for address in $ip_addresses
+do
+    ip_array+=("$address")
 done
+
 
 # Generate Ingress configuration
 bashio::var.json \
