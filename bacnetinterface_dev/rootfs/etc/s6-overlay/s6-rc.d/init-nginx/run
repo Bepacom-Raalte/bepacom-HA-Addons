@@ -21,6 +21,17 @@ do
     ip_array+=("$address")
 done
 
+if [[ "${ip_array[@]}" ]]; then
+    echo "ip_array is an array."
+
+    # Iterate over array elements
+    for item in "${ip_array[@]}"; do
+        echo "Item: $item"
+    done
+else
+    echo "ip_array is not an array or is empty."
+fi
+
 
 # Generate Ingress configuration
 bashio::var.json \

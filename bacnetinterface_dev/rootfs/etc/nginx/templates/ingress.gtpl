@@ -7,7 +7,7 @@ server {
     allow 127.0.0.0/24;
 
     {{ if (len .interfaces) }}
-    {{ range .interfaces }}
+    {{ .interfaces }}
         allow {{ . }};
     {{ end }}
     {{ else }}
