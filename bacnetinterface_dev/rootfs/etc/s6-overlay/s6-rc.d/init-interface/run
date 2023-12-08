@@ -38,7 +38,7 @@ bashio::log.info "Generating BACpypes.ini"
 readarray -t eth_adapters < <(ifconfig -a | grep -oE '^(enp|eth|eno)[a-z0-9]+')
 
 { # Try
-    bashio::log.debug "Read the array"
+    bashio::log.info "Read the array"
     for adapter in "${eth_adapters[@]}"
     do
         ipaddr=$(ifconfig "$adapter" | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')

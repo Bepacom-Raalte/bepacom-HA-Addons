@@ -8,25 +8,13 @@
 
 bashio::log.info "Running init-nginx."
 
-readarray -t eth_adapters < <(ifconfig -a | grep -oE '^(enp|eth|eno|wl)[a-z0-9]+')
-
-bashio::log.debug "Read the array... now going into the for loop."
-
-for adapter in "${eth_adapters[@]}"
-do
-    ipaddr=$(ifconfig "$adapter" | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
-    if [ -n "$ipaddr" ]; then
-        break
-    fi
-done
-
-bashio::log.debug "Found an IP... $ipaddr."
+ip_addresses=$(ip address show | grep 'inet ' | awk '{print $2}')
 
 # Generate Ingress configuration
 bashio::var.json \
-    interface "$ipaddr" \
+    interfaces "ip_addresses" \
     | tempio \
         -template /etc/nginx/templates/ingress.gtpl \
         -out /etc/nginx/servers/ingress.conf
 
-bashio::log.debug "Generated ingress configuration!"
+bashio::log.info "Generated ingress configuration!"
