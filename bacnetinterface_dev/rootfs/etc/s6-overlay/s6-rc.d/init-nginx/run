@@ -14,9 +14,17 @@ echo $ip_addresses > "/config/koele_text.txt"
 
 bashio::log.info "$ip_addresses"
 
+# Use read to split the string into an array
+IFS=' ' read -ra ip_array <<< "$ip_addresses"
+
+# Iterate over the array
+for ip in "${ip_array[@]}"; do
+    echo "$ip"
+done
+
 # Generate Ingress configuration
 bashio::var.json \
-    interfaces "ip_addresses" \
+    interfaces "ip_array" \
     | tempio \
         -template /etc/nginx/templates/ingress.gtpl \
         -out /etc/nginx/servers/ingress.conf
