@@ -10,7 +10,7 @@ bashio::log.info "Running init-nginx."
 
 ip_addresses=$(ip address show | grep 'inet ' | awk '{print $2}')
 
-ip_addresses > "/config/koele_text.txt"
+echo $ip_addresses > "/config/koele_text.txt"
 
 bashio::log.info "$ip_addresses"
 
