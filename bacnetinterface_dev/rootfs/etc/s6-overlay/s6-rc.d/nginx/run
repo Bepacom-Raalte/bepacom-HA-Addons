@@ -8,7 +8,7 @@
 # Wait for Node-RED to become available
 bashio::net.wait_for 7813 localhost 300
 
-bashio::log.info "Starting NGINX"
+bashio::log.info "Running NGINX"
 
 exec nginx 
 

@@ -6,7 +6,7 @@ server {
     allow 172.30.32.0/24;
     allow 127.0.0.0/24;
 
-    {{ range .Interfaces }}
+    {{ range .ip_array }}
         allow {{ . }};
     {{ end }}
 
