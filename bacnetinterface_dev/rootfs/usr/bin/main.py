@@ -5,7 +5,7 @@ import configparser
 import json
 import logging
 import os
-from re import A
+from re import A, L
 from typing import TypeVar
 
 import uvicorn
@@ -178,11 +178,15 @@ async def main():
         maxApduLengthAccepted=int(config.get("BACpypes", "maxApduLengthAccepted")),
         maxSegmentsAccepted=int(config.get("BACpypes", "maxSegmentsAccepted")),
     )
+    
+    foreign_ip = Address(config.get("BACpypes", "foreignBBMD"))
+    
+    logging.warn(foreign_ip)
 
     app = BACnetIOHandler(
         device=this_device,
         local_ip=ipv4_address,
-        foreign_ip=Address(config.get("BACpypes", "foreignBBMD")),
+        foreign_ip=foreign_ip,
         ttl=config.get("BACpypes", "foreignTTL"),
     )
 
