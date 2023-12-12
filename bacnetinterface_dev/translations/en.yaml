@@ -25,7 +25,7 @@ configuration:
     name: Vendor Identifier
     description: The vendor ID of the interface.
   foreignBBMD:
-    name: BACnet/IP Broadcast Management Device
+    name: BACnet/IP Broadcast Management Device Address
     description: IP address of the BBMD.
   foreignTTL: 
     name: Foreign TTL

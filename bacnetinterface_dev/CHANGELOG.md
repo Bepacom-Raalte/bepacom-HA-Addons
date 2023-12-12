@@ -3,7 +3,7 @@
 # 1.2.0
 9/12/2023
 
-- TESTING: ADD FOREIGN DEVICE SUPPORT
+- Foreign device mode is working. Use the Foreign BBMD Address in the configuration.
 - Added configurable subscriptions in the add-on configuration!
 - Changed init-nginx service to not use ifconfig.
 - ⬆️ Bumped base-python image to version v12.0.2.

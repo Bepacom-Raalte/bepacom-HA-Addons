@@ -60,5 +60,7 @@ schema:
     multiStateInput: bool
     multiStateOutput: bool
     multiStateValue: bool
+  foreignBBMD: str?
+  foreignTTL: str?
   vendorID: int?
   segmentation: list(segmentedBoth|segmentedTransmit|segmentedReceive|noSegmentation||)?
