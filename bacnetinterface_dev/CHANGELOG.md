@@ -3,13 +3,14 @@
 # 1.2.0
 9/12/2023
 
-- TODO: ADD FOREIGN DEVICE SUPPORT
+- TESTING: ADD FOREIGN DEVICE SUPPORT
 - Added configurable subscriptions in the add-on configuration!
 - Changed init-nginx service to not use ifconfig.
 - ⬆️ Bumped base-python image to version v12.0.2.
-- ⬆️ Bumped FastAPI to version 0.104.1
-- ⬆️ Bumped Uvicorn to version 0.24.0
-- ⬆️ Bumped Websockets to version 12.0
+- ⬆️ Bumped BACpypes3 to version 0.0.86.
+- ⬆️ Bumped FastAPI to version 0.104.1.
+- ⬆️ Bumped Uvicorn to version 0.24.0.
+- ⬆️ Bumped Websockets to version 12.0.
 
 # 1.1.3
 15/9/2023

@@ -1,8 +1,8 @@
 import asyncio
 import logging
 import traceback
+from math import isinf, isnan
 from typing import Any, Dict, TypeVar
-from math import isnan, isinf
 
 from bacpypes3.apdu import (AbortPDU, ConfirmedCOVNotificationRequest,
                             ErrorPDU, ErrorRejectAbortNack,
@@ -13,7 +13,7 @@ from bacpypes3.basetypes import (BinaryPV, DeviceStatus, EngineeringUnits,
                                  Reliability)
 from bacpypes3.constructeddata import AnyAtomic
 from bacpypes3.errors import *
-from bacpypes3.ipv4.app import NormalApplication
+from bacpypes3.ipv4.app import ForeignApplication, NormalApplication
 from bacpypes3.object import get_vendor_info
 from bacpypes3.pdu import Address
 from bacpypes3.primitivedata import BitString, ObjectIdentifier, ObjectType
@@ -23,7 +23,7 @@ from const import (device_properties_to_read, object_properties_to_read_once,
 KeyType = TypeVar("KeyType")
 
 
-class BACnetIOHandler(NormalApplication):
+class BACnetIOHandler(NormalApplication, ForeignApplication):
     bacnet_device_dict: dict = {}
     subscription_tasks: list = []
     update_event: asyncio.Event = asyncio.Event()
@@ -35,8 +35,12 @@ class BACnetIOHandler(NormalApplication):
     default_subscription_lifetime = 28800
     subscription_list = []
 
-    def __init__(self, *args) -> None:
-        NormalApplication.__init__(self, *args)
+    def __init__(self, device, local_ip, foreign_ip="", ttl=255) -> None:
+        if foreign_ip:
+            ForeignApplication.__init__(self, device, local_ip)
+            self.register(addr=foreign_ip, ttl=60)
+        else:
+            NormalApplication.__init__(self, device, local_ip)
         super().i_am()
         super().who_is()
         self.vendor_info = get_vendor_info(0)
@@ -146,10 +150,14 @@ class BACnetIOHandler(NormalApplication):
             return
         elif isinstance(property_value, float):
             if isnan(property_value):
-                logging.warning(f"Replacing with 0: {device_identifier}, {object_identifier}, {property_identifier}... NaN value: {property_value}")
+                logging.warning(
+                    f"Replacing with 0: {device_identifier}, {object_identifier}, {property_identifier}... NaN value: {property_value}"
+                )
                 property_value = 0
             if isinf(property_value):
-                logging.warning(f"Replacing with 0: {device_identifier}, {object_identifier}, {property_identifier}... Inf value: {property_value}")
+                logging.warning(
+                    f"Replacing with 0: {device_identifier}, {object_identifier}, {property_identifier}... Inf value: {property_value}"
+                )
                 property_value = 0
             property_value = round(property_value, 4)
         elif isinstance(property_value, AnyAtomic):
@@ -210,7 +218,7 @@ class BACnetIOHandler(NormalApplication):
     async def read_device_props(self, apdu) -> bool:
         try:  # Send readPropertyMultiple and get response
             device_identifier = ObjectIdentifier(apdu.iAmDeviceIdentifier)
-            parameter_list = [device_identifier] + device_properties_to_read
+            parameter_list = [device_identifier, device_properties_to_read]
 
             logging.debug(f"Exploring Device info of {device_identifier}")
 
@@ -255,8 +263,7 @@ class BACnetIOHandler(NormalApplication):
             ):
                 continue
 
-            parameter_list = [obj_id]
-            parameter_list.extend(object_properties_to_read_once)
+            parameter_list = [obj_id, object_properties_to_read_once]
 
             try:  # Send readPropertyMultiple and get response
                 logging.debug(
@@ -311,8 +318,7 @@ class BACnetIOHandler(NormalApplication):
                 ):
                     continue
 
-                parameter_list = [obj_id]
-                parameter_list.extend(object_properties_to_read_periodically)
+                parameter_list = [obj_id, object_properties_to_read_periodically]
 
                 try:  # Send readPropertyMultiple and get response
                     logging.debug(
