@@ -38,7 +38,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
     def __init__(self, device, local_ip, foreign_ip="", ttl=255) -> None:
         if foreign_ip:
             ForeignApplication.__init__(self, device, local_ip)
-            self.register(addr=foreign_ip, ttl=60)
+            self.register(addr=Address(foreign_ip), ttl=ttl)
         else:
             NormalApplication.__init__(self, device, local_ip)
         super().i_am()
