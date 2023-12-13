@@ -235,7 +235,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         except ErrorRejectAbortNack as err:
             logging.error(f"Nack error: {device_identifier}: {err}")
         except AttributeError as err:
-            logging.error(f"Attribute error: {err}")
+            logging.error(f"Attribute error: {device_identifier}: {err}")
         else:
             for (
                 object_identifier,
@@ -498,6 +498,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             await super().do_ReadPropertyRequest(apdu)
         except (Exception, AttributeError) as err:
             await super().do_ReadPropertyRequest(apdu)
-            logging.error(
+            logging.warning(
                 f"{self.addr_to_dev(apdu.pduSource)} tried to read {apdu.objectIdentifier} {apdu.propertyIdentifier}: {err}"
             )

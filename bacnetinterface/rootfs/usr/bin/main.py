@@ -4,13 +4,15 @@ import asyncio
 import configparser
 import json
 import logging
+import os
+from re import A, L
 from typing import TypeVar
 
 import uvicorn
 import webAPI
 from BACnetIOHandler import BACnetIOHandler
 from bacpypes3.argparse import INIArgumentParser
-from bacpypes3.basetypes import Segmentation
+from bacpypes3.basetypes import Null, ObjectType, PropertyIdentifier, Segmentation
 from bacpypes3.ipv4.app import Application
 from bacpypes3.local.device import DeviceObject
 from bacpypes3.pdu import Address, IPv4Address
@@ -160,6 +162,9 @@ async def main():
 
     logging.basicConfig(format="%(levelname)s:    %(message)s", level=loglevel)
 
+    with open("/data/options.json") as f:
+        options = json.load(f)
+
     ipv4_address = IPv4Address(config.get("BACpypes", "address"))
 
     this_device = DeviceObject(
@@ -173,8 +178,18 @@ async def main():
         maxApduLengthAccepted=int(config.get("BACpypes", "maxApduLengthAccepted")),
         maxSegmentsAccepted=int(config.get("BACpypes", "maxSegmentsAccepted")),
     )
+    
+    foreign_ip = config.get("BACpypes", "foreignBBMD")
+    
+    if foreign_ip == "-":
+        foreign_ip = None
 
-    app = BACnetIOHandler(this_device, ipv4_address)
+    app = BACnetIOHandler(
+        device=this_device,
+        local_ip=ipv4_address,
+        foreign_ip=foreign_ip,
+        ttl=config.get("BACpypes", "foreignTTL"),
+    )
 
     app.asap.maxApduLengthAccepted = int(
         config.get("BACpypes", "maxApduLengthAccepted")
@@ -185,6 +200,12 @@ async def main():
     )
 
     app.asap.maxSegmentsAccepted = int(config.get("BACpypes", "maxSegmentsAccepted"))
+
+    app.subscription_list = [
+        ObjectType(subscription)
+        for subscription, value in options["subscriptions"].items()
+        if value == True
+    ]
 
     update_task = asyncio.create_task(
         updater_task(

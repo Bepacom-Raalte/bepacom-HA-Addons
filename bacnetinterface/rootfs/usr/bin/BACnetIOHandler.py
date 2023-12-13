@@ -1,8 +1,8 @@
 import asyncio
 import logging
 import traceback
+from math import isinf, isnan
 from typing import Any, Dict, TypeVar
-from math import isnan, isinf
 
 from bacpypes3.apdu import (AbortPDU, ConfirmedCOVNotificationRequest,
                             ErrorPDU, ErrorRejectAbortNack,
@@ -13,18 +13,17 @@ from bacpypes3.basetypes import (BinaryPV, DeviceStatus, EngineeringUnits,
                                  Reliability)
 from bacpypes3.constructeddata import AnyAtomic
 from bacpypes3.errors import *
-from bacpypes3.ipv4.app import NormalApplication
+from bacpypes3.ipv4.app import ForeignApplication, NormalApplication
 from bacpypes3.object import get_vendor_info
 from bacpypes3.pdu import Address
 from bacpypes3.primitivedata import BitString, ObjectIdentifier, ObjectType
 from const import (device_properties_to_read, object_properties_to_read_once,
-                   object_properties_to_read_periodically,
-                   subscribable_objects)
+                   object_properties_to_read_periodically)
 
 KeyType = TypeVar("KeyType")
 
 
-class BACnetIOHandler(NormalApplication):
+class BACnetIOHandler(NormalApplication, ForeignApplication):
     bacnet_device_dict: dict = {}
     subscription_tasks: list = []
     update_event: asyncio.Event = asyncio.Event()
@@ -34,9 +33,14 @@ class BACnetIOHandler(NormalApplication):
     available_ids = set()
     next_id = 1
     default_subscription_lifetime = 28800
+    subscription_list = []
 
-    def __init__(self, *args) -> None:
-        NormalApplication.__init__(self, *args)
+    def __init__(self, device, local_ip, foreign_ip="", ttl=255) -> None:
+        if foreign_ip:
+            ForeignApplication.__init__(self, device, local_ip)
+            self.register(addr=Address(foreign_ip), ttl=ttl)
+        else:
+            NormalApplication.__init__(self, device, local_ip)
         super().i_am()
         super().who_is()
         self.vendor_info = get_vendor_info(0)
@@ -58,7 +62,7 @@ class BACnetIOHandler(NormalApplication):
                 else:
                     mapping[k] = v
         self.update_event.set()
-        logging.debug(f"Updating {updating_mapping}")
+        # logging.debug(f"Updating {updating_mapping}")
         return mapping
 
     def dev_to_addr(self, dev: ObjectIdentifier) -> Address | None:
@@ -106,9 +110,10 @@ class BACnetIOHandler(NormalApplication):
         self.available_ids.add(obj_id)
 
     async def refresh_subscriptions(self):
+        """Refreshing subscriptions automatically.""" #Maybe make a blacklist to exclude objects we dont want to subscribe to.
         while True:
-            logging.info("Refreshing subscriptions...")
             await asyncio.sleep(self.default_subscription_lifetime)
+            logging.info("Refreshing subscriptions...")
             for task in self.subscription_tasks:
                 await self.create_subscription_task(
                     device_identifier=task[4],
@@ -125,8 +130,7 @@ class BACnetIOHandler(NormalApplication):
         logging.info(f"I Am from {apdu.iAmDeviceIdentifier}")
 
         if apdu.iAmDeviceIdentifier[1] in self.device_info_cache.instance_cache:
-            logging.warning(f"Device {apdu.iAmDeviceIdentifier} already in cache!")
-            return
+            logging.debug(f"Device {apdu.iAmDeviceIdentifier} already in cache!")
 
         await super().do_IAmRequest(apdu)
 
@@ -147,10 +151,14 @@ class BACnetIOHandler(NormalApplication):
             return
         elif isinstance(property_value, float):
             if isnan(property_value):
-                logging.warning(f"Replacing with 0: {device_identifier}, {object_identifier}, {property_identifier}... NaN value: {property_value}")
+                logging.warning(
+                    f"Replacing with 0: {device_identifier}, {object_identifier}, {property_identifier}... NaN value: {property_value}"
+                )
                 property_value = 0
             if isinf(property_value):
-                logging.warning(f"Replacing with 0: {device_identifier}, {object_identifier}, {property_identifier}... Inf value: {property_value}")
+                logging.warning(
+                    f"Replacing with 0: {device_identifier}, {object_identifier}, {property_identifier}... Inf value: {property_value}"
+                )
                 property_value = 0
             property_value = round(property_value, 4)
         elif isinstance(property_value, AnyAtomic):
@@ -211,7 +219,7 @@ class BACnetIOHandler(NormalApplication):
     async def read_device_props(self, apdu) -> bool:
         try:  # Send readPropertyMultiple and get response
             device_identifier = ObjectIdentifier(apdu.iAmDeviceIdentifier)
-            parameter_list = [device_identifier] + device_properties_to_read
+            parameter_list = [device_identifier, device_properties_to_read]
 
             logging.debug(f"Exploring Device info of {device_identifier}")
 
@@ -227,7 +235,7 @@ class BACnetIOHandler(NormalApplication):
         except ErrorRejectAbortNack as err:
             logging.error(f"Nack error: {device_identifier}: {err}")
         except AttributeError as err:
-            logging.error(f"Attribute error: {err}")
+            logging.error(f"Attribute error: {device_identifier}: {err}")
         else:
             for (
                 object_identifier,
@@ -243,6 +251,8 @@ class BACnetIOHandler(NormalApplication):
                 )
 
     async def read_object_list(self, device_identifier):
+        """Read all objects from a device."""
+        logging.info(f"Reading objectList from {device_identifier}...")
         for obj_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"][
             f"device:{device_identifier[1]}"
         ]["objectList"]:
@@ -256,8 +266,7 @@ class BACnetIOHandler(NormalApplication):
             ):
                 continue
 
-            parameter_list = [obj_id]
-            parameter_list.extend(object_properties_to_read_once)
+            parameter_list = [obj_id, object_properties_to_read_once]
 
             try:  # Send readPropertyMultiple and get response
                 logging.debug(
@@ -298,6 +307,8 @@ class BACnetIOHandler(NormalApplication):
                     )
 
     async def read_objects_periodically(self):
+        """Read objects after a set time."""
+        logging.info(f"Periodic object reading...")
         for dev_id in self.bacnet_device_dict:
             for obj_id in self.bacnet_device_dict[dev_id]:
                 if not isinstance(obj_id, ObjectIdentifier):
@@ -311,8 +322,7 @@ class BACnetIOHandler(NormalApplication):
                 ):
                     continue
 
-                parameter_list = [obj_id]
-                parameter_list.extend(object_properties_to_read_periodically)
+                parameter_list = [obj_id, object_properties_to_read_periodically]
 
                 try:  # Send readPropertyMultiple and get response
                     logging.debug(
@@ -347,8 +357,9 @@ class BACnetIOHandler(NormalApplication):
                         )
 
     async def subscribe_object_list(self, device_identifier):
+        """"Subscribe to selected objects.""" #Maybe make a blacklist to exclude objects we dont want to subscribe to.
         for object_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"]:
-            if ObjectIdentifier(object_id)[0] in subscribable_objects:
+            if ObjectIdentifier(object_id)[0] in self.subscription_list:
                 await self.create_subscription_task(
                     device_identifier=device_identifier,
                     object_identifier=ObjectIdentifier(object_id),
@@ -363,6 +374,8 @@ class BACnetIOHandler(NormalApplication):
         confirmed_notifications: bool,
         lifetime: int | None = None,
     ):
+        """Actually creating and sending a subscription."""
+       
         if isinstance(object_identifier, str):
             object_identifier = ObjectIdentifier(object_identifier)
 
@@ -383,9 +396,16 @@ class BACnetIOHandler(NormalApplication):
 
         try:
             response = await self.request(subscribe_req)
-            logging.debug(response)
+            logging.info(
+                f"Subscribing to: {device_identifier}, {object_identifier}... response: {response}"
+            )
 
         except (ErrorRejectAbortNack, RejectException, AbortException) as error:
+            logging.error(
+                f"Error while subscribing to {device_identifier}, {object_identifier}: {error}"
+            )
+            return
+        except (AbortPDU, ErrorPDU, RejectPDU) as error:
             logging.error(
                 f"Error while subscribing to {device_identifier}, {object_identifier}: {error}"
             )
@@ -414,6 +434,7 @@ class BACnetIOHandler(NormalApplication):
     async def unsubscribe_COV(
         self, subscriber_process_identifier, device_identifier, object_identifier
     ):
+        """Unsubscribe from an object."""
         unsubscribe_cov_request = SubscribeCOVRequest(
             subscriberProcessIdentifier=subscriber_process_identifier,
             monitoredObjectIdentifier=object_identifier,
@@ -457,6 +478,8 @@ class BACnetIOHandler(NormalApplication):
             property_type = object_class.get_property_type(value.propertyIdentifier)
             property_value = value.value.cast_out(property_type)
 
+            logging.debug(f"COV: {apdu.initiatingDeviceIdentifier}, {apdu.monitoredObjectIdentifier}, {value.propertyIdentifier}, {property_value}")
+
             self.dict_updater(
                 device_identifier=apdu.initiatingDeviceIdentifier,
                 object_identifier=apdu.monitoredObjectIdentifier,
@@ -474,6 +497,7 @@ class BACnetIOHandler(NormalApplication):
         try:
             await super().do_ReadPropertyRequest(apdu)
         except (Exception, AttributeError) as err:
-            logging.error(
+            await super().do_ReadPropertyRequest(apdu)
+            logging.warning(
                 f"{self.addr_to_dev(apdu.pduSource)} tried to read {apdu.objectIdentifier} {apdu.propertyIdentifier}: {err}"
             )
