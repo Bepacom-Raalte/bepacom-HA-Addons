@@ -478,6 +478,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             property_type = object_class.get_property_type(value.propertyIdentifier)
             property_value = value.value.cast_out(property_type)
 
+            logging.debug(f"COV: {apdu.initiatingDeviceIdentifier}, {apdu.monitoredObjectIdentifier}, {value.propertyIdentifier}, {property_value}")
+
             self.dict_updater(
                 device_identifier=apdu.initiatingDeviceIdentifier,
                 object_identifier=apdu.monitoredObjectIdentifier,
@@ -495,6 +497,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         try:
             await super().do_ReadPropertyRequest(apdu)
         except (Exception, AttributeError) as err:
+            await super().do_ReadPropertyRequest(apdu)
             logging.error(
                 f"{self.addr_to_dev(apdu.pduSource)} tried to read {apdu.objectIdentifier} {apdu.propertyIdentifier}: {err}"
             )
