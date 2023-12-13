@@ -110,9 +110,10 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         self.available_ids.add(obj_id)
 
     async def refresh_subscriptions(self):
+        """Refreshing subscriptions automatically.""" #Maybe make a blacklist to exclude objects we dont want to subscribe to.
         while True:
-            logging.info("Refreshing subscriptions...")
             await asyncio.sleep(self.default_subscription_lifetime)
+            logging.info("Refreshing subscriptions...")
             for task in self.subscription_tasks:
                 await self.create_subscription_task(
                     device_identifier=task[4],
@@ -250,6 +251,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 )
 
     async def read_object_list(self, device_identifier):
+        """Read all objects from a device."""
+        logging.info(f"Reading objectList from {device_identifier}...")
         for obj_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"][
             f"device:{device_identifier[1]}"
         ]["objectList"]:
@@ -304,7 +307,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     )
 
     async def read_objects_periodically(self):
-        logging.debug(f"Periodic object reading...")
+        """Read objects after a set time."""
+        logging.info(f"Periodic object reading...")
         for dev_id in self.bacnet_device_dict:
             for obj_id in self.bacnet_device_dict[dev_id]:
                 if not isinstance(obj_id, ObjectIdentifier):
@@ -353,6 +357,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         )
 
     async def subscribe_object_list(self, device_identifier):
+        """"Subscribe to selected objects.""" #Maybe make a blacklist to exclude objects we dont want to subscribe to.
         for object_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"]:
             if ObjectIdentifier(object_id)[0] in self.subscription_list:
                 await self.create_subscription_task(
@@ -369,6 +374,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         confirmed_notifications: bool,
         lifetime: int | None = None,
     ):
+        """Actually creating and sending a subscription."""
         if isinstance(object_identifier, str):
             object_identifier = ObjectIdentifier(object_identifier)
 
@@ -392,6 +398,11 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             logging.debug(response)
 
         except (ErrorRejectAbortNack, RejectException, AbortException) as error:
+            logging.error(
+                f"Error while subscribing to {device_identifier}, {object_identifier}: {error}"
+            )
+            return
+        except (AbortPDU, ErrorPDU, RejectPDU) as error:
             logging.error(
                 f"Error while subscribing to {device_identifier}, {object_identifier}: {error}"
             )
@@ -420,6 +431,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
     async def unsubscribe_COV(
         self, subscriber_process_identifier, device_identifier, object_identifier
     ):
+        """Unsubscribe from an object."""
         unsubscribe_cov_request = SubscribeCOVRequest(
             subscriberProcessIdentifier=subscriber_process_identifier,
             monitoredObjectIdentifier=object_identifier,
