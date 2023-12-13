@@ -375,6 +375,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         lifetime: int | None = None,
     ):
         """Actually creating and sending a subscription."""
+       
         if isinstance(object_identifier, str):
             object_identifier = ObjectIdentifier(object_identifier)
 
@@ -395,7 +396,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         try:
             response = await self.request(subscribe_req)
-            logging.debug(response)
+            logging.info(
+                f"Subscribing to: {device_identifier}, {object_identifier}... response: {response}"
+            )
 
         except (ErrorRejectAbortNack, RejectException, AbortException) as error:
             logging.error(
