@@ -64,3 +64,4 @@ schema:
   foreignTTL: str?
   vendorID: int?
   segmentation: list(segmentedBoth|segmentedTransmit|segmentedReceive|noSegmentation||)?
+image: "ghcr.io/bepacom-raalte/{arch}-bacnet-interface"
