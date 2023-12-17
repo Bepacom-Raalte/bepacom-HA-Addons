@@ -1,5 +1,11 @@
 ﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.2.1
+17/12/2023
+
+- Devices that don't support segmentation should get read now.
+
+
 # 1.2.0
 9/12/2023
 

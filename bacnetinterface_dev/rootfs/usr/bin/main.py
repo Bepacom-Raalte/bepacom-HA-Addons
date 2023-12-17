@@ -12,7 +12,8 @@ import uvicorn
 import webAPI
 from BACnetIOHandler import BACnetIOHandler
 from bacpypes3.argparse import INIArgumentParser
-from bacpypes3.basetypes import Null, ObjectType, PropertyIdentifier, Segmentation
+from bacpypes3.basetypes import (Null, ObjectType, PropertyIdentifier,
+                                 Segmentation)
 from bacpypes3.ipv4.app import Application
 from bacpypes3.local.device import DeviceObject
 from bacpypes3.pdu import Address, IPv4Address
@@ -178,9 +179,9 @@ async def main():
         maxApduLengthAccepted=int(config.get("BACpypes", "maxApduLengthAccepted")),
         maxSegmentsAccepted=int(config.get("BACpypes", "maxSegmentsAccepted")),
     )
-    
+
     foreign_ip = config.get("BACpypes", "foreignBBMD")
-    
+
     if foreign_ip == "-":
         foreign_ip = None
 
