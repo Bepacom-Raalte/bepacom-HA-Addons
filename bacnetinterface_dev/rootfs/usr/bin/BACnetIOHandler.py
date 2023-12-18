@@ -7,16 +7,16 @@ from typing import Any, Dict, TypeVar
 from bacpypes3.apdu import (AbortPDU, ConfirmedCOVNotificationRequest,
                             ErrorPDU, ErrorRejectAbortNack,
                             ReadPropertyRequest, RejectPDU, SimpleAckPDU,
-                            SubscribeCOVRequest)
+                            SubscribeCOVRequest, ReadPropertyACK)
 from bacpypes3.basetypes import (BinaryPV, DeviceStatus, EngineeringUnits,
                                  ErrorType, EventState, PropertyIdentifier,
                                  Reliability)
-from bacpypes3.constructeddata import AnyAtomic
+from bacpypes3.constructeddata import AnyAtomic, Array, List, SequenceOf
 from bacpypes3.errors import *
 from bacpypes3.ipv4.app import ForeignApplication, NormalApplication
 from bacpypes3.object import get_vendor_info
 from bacpypes3.pdu import Address
-from bacpypes3.primitivedata import BitString, ObjectIdentifier, ObjectType
+from bacpypes3.primitivedata import BitString, ObjectIdentifier, ObjectType, Unsigned, Time, Null, Date
 from const import (device_properties_to_read, object_properties_to_read_once,
                    object_properties_to_read_periodically)
 
@@ -259,9 +259,43 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         try:
             device_identifier = ObjectIdentifier(apdu.iAmDeviceIdentifier)
             for property_id in device_properties_to_read:
+                logging.info(f"Reading device {device_identifier}, {property_id}")
+                
+                """
                 response = await self.read_property(
                     address=apdu.pduSource, objid=device_identifier, prop=property_id
                 )
+                """
+                
+                read_property_request = ReadPropertyRequest(
+                    objectIdentifier=device_identifier,
+                    propertyIdentifier=property_id,
+                    destination=apdu.pduSource,
+                )
+
+                response = await self.request(read_property_request)
+                
+                if isinstance(response, ErrorRejectAbortNack):
+                    return response
+                if not isinstance(response, ReadPropertyACK):
+                    return None
+
+                # get information about the device from the cache
+                device_info = await self.device_info_cache.get_device_info(address)
+                
+                vendor_info = get_vendor_info(0)
+                
+                object_class = vendor_info.get_object_class(objid[0])
+                
+                # now get the property type from the class
+                property_type = object_class.get_property_type(property_id)
+                
+                if not property_type:
+                    return "-no property type-"
+                
+                logging.info(f"Response device {device_identifier}, {property_id}, {response.propertyValue}, {response}")
+                
+                property_value = response.propertyValue.cast_out(property_type)
 
                 if response:
                     self.dict_updater(
@@ -296,6 +330,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             logging.error(f"Nack error: {device_identifier}: {err}")
         except AttributeError as err:
             logging.error(f"Attribute error: {err}")
+        except Exception as err:
+            logging.error(f"Other error: {err}")
+
 
     async def read_object_list(self, device_identifier):
         """Read all objects from a device."""
