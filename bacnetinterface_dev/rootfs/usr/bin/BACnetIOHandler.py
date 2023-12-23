@@ -281,7 +281,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     return None
 
                 # get information about the device from the cache
-                device_info = await self.device_info_cache.get_device_info(address)
+                device_info = await self.device_info_cache.get_device_info(apdu.pduSource)
                 
                 vendor_info = get_vendor_info(0)
                 
@@ -332,6 +332,21 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             logging.error(f"Attribute error: {err}")
         except Exception as err:
             logging.error(f"Other error: {err}")
+            logging.info("Last resort for this device...")
+            
+            response = await self.read_property(
+                address=apdu.pduSource,
+                objid=device_identifier,
+                prop=PropertyIdentifier("objectList"),
+            )
+
+            if response:
+                self.dict_updater(
+                    device_identifier=device_identifier,
+                    object_identifier=device_identifier,
+                    property_identifier=PropertyIdentifier("objectList"),
+                    property_value=response,
+                )
 
 
     async def read_object_list(self, device_identifier):
