@@ -256,93 +256,60 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 )
 
     async def read_device_props_non_segmented(self, apdu):
-        try:
-            device_identifier = ObjectIdentifier(apdu.iAmDeviceIdentifier)
-            for property_id in device_properties_to_read:
-                logging.info(f"Reading device {device_identifier}, {property_id}")
-                
-                """
+        address = apdu.pduSource
+        device_identifier = apdu.iAmDeviceIdentifier
+            
+        for property_id in device_properties_to_read:
+            if property_id == PropertyIdentifier("objectList"):
+                continue
+            
+            try:
+
                 response = await self.read_property(
-                    address=apdu.pduSource, objid=device_identifier, prop=property_id
+                    address=address, objid=device_identifier, prop=property_id
                 )
-                """
                 
-                read_property_request = ReadPropertyRequest(
-                    objectIdentifier=device_identifier,
-                    propertyIdentifier=property_id,
-                    destination=apdu.pduSource,
+            except AbortPDU as err:
+                logging.error(
+                    f"Abort PDU error while reading device properties without segmentation: {device_identifier}: {err}"
                 )
-
-                response = await self.request(read_property_request)
-                
-                if isinstance(response, ErrorRejectAbortNack):
-                    return response
-                if not isinstance(response, ReadPropertyACK):
-                    return None
-
-                # get information about the device from the cache
-                device_info = await self.device_info_cache.get_device_info(apdu.pduSource)
-                
-                vendor_info = get_vendor_info(0)
-                
-                object_class = vendor_info.get_object_class(device_identifier[0])
-                
-                # now get the property type from the class
-                property_type = object_class.get_property_type(property_id)
-                
-                if not property_type or property_type == None:
-                    return "-no property type-"
-                
-                logging.info(f"Response device {device_identifier}, {property_id}, {response.propertyValue}, {response}")
-                
-                property_value = response.propertyValue.cast_out(property_type)
-
+            except ErrorRejectAbortNack as err:
+                logging.error(f"Nack error: {device_identifier}: {err}")
+            except AttributeError as err:
+                logging.error(f"Attribute error: {err}")
+            else:
                 if response:
                     self.dict_updater(
                         device_identifier=device_identifier,
                         object_identifier=device_identifier,
                         property_identifier=property_id,
-                        property_value=property_value,
+                        property_value=response,
                     )
 
-        except AbortPDU as err:
-            logging.error(
-                f"Abort PDU error while reading device properties without segmentation: {device_identifier}: {err}"
-            )
+        object_amount = await self.read_property(
+            address=address,
+            objid=device_identifier,
+            prop=PropertyIdentifier("objectList"),
+            array_index=0,
+        )
 
-            object_amount = await self.read_property(
-                address=apdu.pduSource,
+        object_list = []  
+            
+        for number in range(1,object_amount):
+            object_type = await self.read_property(
+                address=address,
                 objid=device_identifier,
                 prop=PropertyIdentifier("objectList"),
-                array_index=0,
+                array_index=number,
             )
-
-            logging.warning(f"{object_amount} objects in objectList")
-            
-            object_list = []  
-            
-            for number in range(1,object_amount):
-                object_type = await self.read_property(
-                    address=apdu.pduSource,
-                    objid=device_identifier,
-                    prop=PropertyIdentifier("objectList"),
-                    array_index=number,
-                )
-                object_list.append(object_type)
+            object_list.append(object_type)
                 
-            self.dict_updater(
-                device_identifier=device_identifier,
-                object_identifier=device_identifier,
-                property_identifier=PropertyIdentifier("objectList"),
-                property_value=object_list,
-            )
-            
-        except ErrorRejectAbortNack as err:
-            logging.error(f"Nack error: {device_identifier}: {err}")
-        except AttributeError as err:
-            logging.error(f"Attribute error: {err}")
-        except Exception as err:
-            logging.error(f"Other error: {err} {apdu.iAmDeviceIdentifier}")
+        self.dict_updater(
+            device_identifier=device_identifier,
+            object_identifier=device_identifier,
+            property_identifier=PropertyIdentifier("objectList"),
+            property_value=object_list,
+        )
             
 
     async def read_object_list(self, device_identifier):

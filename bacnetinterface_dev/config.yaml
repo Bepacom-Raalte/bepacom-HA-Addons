@@ -63,4 +63,6 @@ schema:
   foreignBBMD: str?
   foreignTTL: str?
   vendorID: int?
+  maxApduLenghtAccepted: int?
   segmentation: list(segmentedBoth|segmentedTransmit|segmentedReceive|noSegmentation||)?
+  maxSegmentsAccepted: int?
