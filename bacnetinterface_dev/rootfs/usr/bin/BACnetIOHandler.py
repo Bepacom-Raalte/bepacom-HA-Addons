@@ -285,7 +285,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 
                 vendor_info = get_vendor_info(0)
                 
-                object_class = vendor_info.get_object_class(objid[0])
+                object_class = vendor_info.get_object_class(device_identifier[0])
                 
                 # now get the property type from the class
                 property_type = object_class.get_property_type(property_id)
@@ -302,7 +302,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         device_identifier=device_identifier,
                         object_identifier=device_identifier,
                         property_identifier=property_id,
-                        property_value=response,
+                        property_value=property_value,
                     )
 
         except AbortPDU as err:
@@ -310,44 +310,40 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 f"Abort PDU error while reading device properties without segmentation: {device_identifier}: {err}"
             )
 
-            response = await self.read_property(
+            object_amount = await self.read_property(
                 address=apdu.pduSource,
                 objid=device_identifier,
                 prop=PropertyIdentifier("objectList"),
+                array_index=0,
             )
 
-            logging.error(response)
-
-            if response:
-                self.dict_updater(
-                    device_identifier=device_identifier,
-                    object_identifier=device_identifier,
-                    property_identifier=PropertyIdentifier("objectList"),
-                    property_value=response,
+            logging.warning(f"{object_amount} objects in objectList")
+            
+            object_list = []  
+            
+            for number in range(1,object_amount):
+                object_type = await self.read_property(
+                    address=apdu.pduSource,
+                    objid=device_identifier,
+                    prop=PropertyIdentifier("objectList"),
+                    array_index=number,
                 )
-
+                object_list.append(object_type)
+                
+            self.dict_updater(
+                device_identifier=device_identifier,
+                object_identifier=device_identifier,
+                property_identifier=PropertyIdentifier("objectList"),
+                property_value=object_list,
+            )
+            
         except ErrorRejectAbortNack as err:
             logging.error(f"Nack error: {device_identifier}: {err}")
         except AttributeError as err:
             logging.error(f"Attribute error: {err}")
         except Exception as err:
-            logging.error(f"Other error: {err}")
-            logging.info("Last resort for this device...")
+            logging.error(f"Other error: {err} {apdu.iAmDeviceIdentifier}")
             
-            response = await self.read_property(
-                address=apdu.pduSource,
-                objid=device_identifier,
-                prop=PropertyIdentifier("objectList"),
-            )
-
-            if response:
-                self.dict_updater(
-                    device_identifier=device_identifier,
-                    object_identifier=device_identifier,
-                    property_identifier=PropertyIdentifier("objectList"),
-                    property_value=response,
-                )
-
 
     async def read_object_list(self, device_identifier):
         """Read all objects from a device."""
@@ -523,14 +519,14 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 for property_id in object_properties_to_read_periodically:
                     response = await self.read_property(
                         address=self.dev_to_addr(device_identifier),
-                        objid=device_identifier,
+                        objid=obj_id,
                         prop=property_id,
                     )
 
                     if response:
                         self.dict_updater(
                             device_identifier=device_identifier,
-                            object_identifier=device_identifier,
+                            object_identifier=obj_id,
                             property_identifier=property_id,
                             property_value=response,
                         )
@@ -543,19 +539,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             except AttributeError as err:
                 logging.error(f"Attribute error: {obj_id}: {err}")
 
-            else:
-                for (
-                    object_identifier,
-                    property_identifier,
-                    property_array_index,
-                    property_value,
-                ) in response:
-                    self.dict_updater(
-                        device_identifier=device_identifier,
-                        object_identifier=object_identifier,
-                        property_identifier=property_identifier,
-                        property_value=property_value,
-                    )
 
     async def subscribe_object_list(self, device_identifier):
         """ "Subscribe to selected objects."""  # Maybe make a blacklist to exclude objects we dont want to subscribe to.
