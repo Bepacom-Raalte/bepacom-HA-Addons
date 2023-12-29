@@ -290,7 +290,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 # now get the property type from the class
                 property_type = object_class.get_property_type(property_id)
                 
-                if not property_type:
+                if not property_type or property_type == None:
                     return "-no property type-"
                 
                 logging.info(f"Response device {device_identifier}, {property_id}, {response.propertyValue}, {response}")
@@ -654,24 +654,34 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
     ) -> None:
         # await super().do_ConfirmedCOVNotificationRequest(apdu)
 
-        for value in apdu.listOfValues:
-            vendor_info = get_vendor_info(0)
-            object_class = vendor_info.get_object_class(
-                apdu.monitoredObjectIdentifier[0]
-            )
-            property_type = object_class.get_property_type(value.propertyIdentifier)
-            property_value = value.value.cast_out(property_type)
+        try:
 
-            logging.debug(
-                f"COV: {apdu.initiatingDeviceIdentifier}, {apdu.monitoredObjectIdentifier}, {value.propertyIdentifier}, {property_value}"
-            )
+            for value in apdu.listOfValues:
+                vendor_info = get_vendor_info(0)
+                object_class = vendor_info.get_object_class(
+                    apdu.monitoredObjectIdentifier[0]
+                )
+                property_type = object_class.get_property_type(value.propertyIdentifier)
+                
+                if property_type == None:
+                    logging.warning(f"NoneType property: {apdu.monitoredObjectIdentifier[0]} {value.propertyIdentifier} {value.value}")
+                    continue
+                else:
+                    property_value = value.value.cast_out(property_type)
 
-            self.dict_updater(
-                device_identifier=apdu.initiatingDeviceIdentifier,
-                object_identifier=apdu.monitoredObjectIdentifier,
-                property_identifier=value.propertyIdentifier,
-                property_value=property_value,
-            )
+                logging.debug(
+                    f"COV: {apdu.initiatingDeviceIdentifier}, {apdu.monitoredObjectIdentifier}, {value.propertyIdentifier}, {property_value}"
+                )
+
+                self.dict_updater(
+                    device_identifier=apdu.initiatingDeviceIdentifier,
+                    object_identifier=apdu.monitoredObjectIdentifier,
+                    property_identifier=value.propertyIdentifier,
+                    property_value=property_value,
+                )
+                
+        except Exception as err:
+            logging.error(f"{apdu.monitoredObjectIdentifier[0]}: {apdu.listOfValues} + {err}")
 
         # success
         resp = SimpleAckPDU(context=apdu)
