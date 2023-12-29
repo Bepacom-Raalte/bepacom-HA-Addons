@@ -127,11 +127,12 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         await super().do_WhoIsRequest(apdu)
 
     async def do_IAmRequest(self, apdu) -> None:
+        
         logging.info(f"I Am from {apdu.iAmDeviceIdentifier}")
 
         if apdu.iAmDeviceIdentifier[1] in self.device_info_cache.instance_cache:
             logging.debug(f"Device {apdu.iAmDeviceIdentifier} already in cache!")
-
+            
         await super().do_IAmRequest(apdu)
 
         await self.read_device_props(apdu=apdu)
@@ -277,6 +278,10 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 logging.error(f"Nack error: {device_identifier}: {err}")
             except AttributeError as err:
                 logging.error(f"Attribute error: {err}")
+            except ValueError as err:
+                logging.error(f"ValueError: {err}")
+            except Exception as err:
+                logging.error(f"Exception: {err}")
             else:
                 if response:
                     self.dict_updater(
