@@ -1,9 +1,15 @@
 ﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
 # 1.2.1
-17/12/2023
+30/12/2023
 
-- Devices that don't support segmentation should get read now.
+- Forced ForeignTTL to be integer.
+- "No segmentation supported" way for reading object list added.
+- Fixed defaultPriority not being sent by default.
+- maxApduLenghtAccepted and maxSegmentsAccepted back in configuration as unused options.
+- Added name and description to the Subscriptions configuration option.
+- ⬆️ Bumped FastAPI to version 0.108.0.
+- ⬆️ Bumped Uvicorn to version 0.25.0.
 
 
 # 1.2.0

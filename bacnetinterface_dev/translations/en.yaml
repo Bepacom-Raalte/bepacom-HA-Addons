@@ -36,5 +36,8 @@ configuration:
   updateInterval:
     name: Update Interval
     description: Time between periodic updates in seconds.
+  subscriptions:
+    name: CoV subscriptions
+    description: For which object types have to be subscribed to.
 network:
   47808/udp: Used for BACnet devices.

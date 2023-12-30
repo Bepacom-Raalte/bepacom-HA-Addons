@@ -35,5 +35,8 @@ configuration:
   updateInterval:
     name: Update Interval
     description: Tijd tussen periodieke updates in seconden.
+  subscriptions:
+    name: CoV abonnementen
+    description: Welke object-typen er op geabonneerd moeten worden.
 network:
   47808/udp: BACnet poort.

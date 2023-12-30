@@ -45,10 +45,9 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
         logging.warning(f"Updater task cancelled: {err}")
 
 
-async def writer_task(app: Application, write_queue: asyncio.Queue) -> None:
+async def writer_task(app: Application, write_queue: asyncio.Queue, default_write_prio: int) -> None:
     """Task to handle the write queue"""
     try:
-        global default_write_prio
         while True:
             queue_result = await write_queue.get()
             device_id = queue_result[0]
@@ -57,9 +56,10 @@ async def writer_task(app: Application, write_queue: asyncio.Queue) -> None:
             property_val = queue_result[3]
             array_index = queue_result[4]
             priority = queue_result[5]
-
-            if queue_result[5] is None:
-                queue_result[5] = default_write_prio
+            
+            if not priority:
+                priority = default_write_prio
+                
             await app.write_property(
                 address=app.dev_to_addr(device_id),
                 objid=object_id,
@@ -155,8 +155,6 @@ async def main():
 
     config.read("/usr/bin/BACpypes.ini")
 
-    global default_write_prio
-
     default_write_prio = config.get("BACpypes", "defaultPriority")
 
     loglevel = config.get("BACpypes", "loglevel")
@@ -217,7 +215,7 @@ async def main():
     )
 
     write_task = asyncio.create_task(
-        writer_task(app=app, write_queue=webAPI.events.write_queue)
+        writer_task(app=app, write_queue=webAPI.events.write_queue, default_write_prio=default_write_prio)
     )
 
     sub_task = asyncio.create_task(
