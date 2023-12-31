@@ -5,9 +5,10 @@
 
 - Forced ForeignTTL to be integer.
 - "No segmentation supported" way for reading object list added.
-- Fixed defaultPriority not being sent by default.
 - maxApduLenghtAccepted and maxSegmentsAccepted back in configuration as unused options.
 - Added name and description to the Subscriptions configuration option.
+- Fixed defaultPriority not being sent by default.
+- Fixed update event for websocket not getting set.
 - ⬆️ Bumped FastAPI to version 0.108.0.
 - ⬆️ Bumped Uvicorn to version 0.25.0.
 

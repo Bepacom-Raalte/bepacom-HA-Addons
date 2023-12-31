@@ -45,7 +45,9 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
         logging.warning(f"Updater task cancelled: {err}")
 
 
-async def writer_task(app: Application, write_queue: asyncio.Queue, default_write_prio: int) -> None:
+async def writer_task(
+    app: Application, write_queue: asyncio.Queue, default_write_prio: int
+) -> None:
     """Task to handle the write queue"""
     try:
         while True:
@@ -56,10 +58,10 @@ async def writer_task(app: Application, write_queue: asyncio.Queue, default_writ
             property_val = queue_result[3]
             array_index = queue_result[4]
             priority = queue_result[5]
-            
+
             if not priority:
                 priority = default_write_prio
-                
+
             await app.write_property(
                 address=app.dev_to_addr(device_id),
                 objid=object_id,
@@ -188,6 +190,7 @@ async def main():
         local_ip=ipv4_address,
         foreign_ip=foreign_ip,
         ttl=config.get("BACpypes", "foreignTTL"),
+        update_event=webAPI.events.val_updated_event,
     )
 
     app.asap.maxApduLengthAccepted = int(
@@ -215,7 +218,11 @@ async def main():
     )
 
     write_task = asyncio.create_task(
-        writer_task(app=app, write_queue=webAPI.events.write_queue, default_write_prio=default_write_prio)
+        writer_task(
+            app=app,
+            write_queue=webAPI.events.write_queue,
+            default_write_prio=default_write_prio,
+        )
     )
 
     sub_task = asyncio.create_task(
@@ -230,7 +237,6 @@ async def main():
     webAPI.bacnet_device_dict = app.bacnet_device_dict
     webAPI.who_is_func = app.who_is
     webAPI.i_am_func = app.i_am
-    webAPI.events.val_updated_event = app.update_event
     webAPI.events.startup_complete_event = app.startup_complete
 
     if loglevel == "DEBUG":

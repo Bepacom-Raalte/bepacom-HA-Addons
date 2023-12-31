@@ -9,7 +9,7 @@ This add-on works on Home Assistant OS as well as Home Assistant Supervised.
 
 ## Installation
 
-1. Click the Home Assistant My button below to open the add-on on your Home
+1. Click the Home Assistant button below to open the add-on on your Home
    Assistant instance.
 
    [![Open this add-on in your Home Assistant instance.][addon-badge]][addon]
