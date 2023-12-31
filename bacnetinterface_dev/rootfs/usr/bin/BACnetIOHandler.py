@@ -127,16 +127,22 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 )
 
     async def do_WhoIsRequest(self, apdu) -> None:
+        """Handle incoming Who Is request."""
         logging.info(f"Received Who Is Request from {apdu.pduSource}")
         await super().do_WhoIsRequest(apdu)
 
     async def do_IAmRequest(self, apdu) -> None:
+        """Handle incoming I Am request."""
 
         logging.info(f"I Am from {apdu.iAmDeviceIdentifier}")
 
         if apdu.iAmDeviceIdentifier[1] in self.device_info_cache.instance_cache:
             logging.debug(f"Device {apdu.iAmDeviceIdentifier} already in cache!")
-
+            in_cache = True
+        else:
+            await self.device_info_cache.set_device_info(apdu)
+            in_cache = False
+            
         await super().do_IAmRequest(apdu)
 
         await self.read_device_props(apdu=apdu)

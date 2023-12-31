@@ -9,6 +9,7 @@
 - Added name and description to the Subscriptions configuration option.
 - Fixed defaultPriority not being sent by default.
 - Fixed update event for websocket not getting set.
+- Fixed handling of uncalled for I Am requests. These will now also be cached.
 - ⬆️ Bumped FastAPI to version 0.108.0.
 - ⬆️ Bumped Uvicorn to version 0.25.0.
 
