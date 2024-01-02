@@ -19,7 +19,8 @@ RUN \
     'jinja2<=3.1.2' \
     'uvicorn<=0.25.0' \
     'websockets<=12.0' \
-    'python-multipart<=0.0.6'
+    'python-multipart<=0.0.6' \
+    'requests<=2.31.0 '
 
 WORKDIR /
 

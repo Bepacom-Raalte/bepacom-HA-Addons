@@ -1,12 +1,14 @@
 # Bepacom BACnet/IP interface
 
-_Bepacom BACnet/IP interface. It'll discover BACnet devices on your network. On the WebUI you'll be able to browse detected devices and interact with them!_
+_Bepacom BACnet/IP interface. Discover BACnet devices on your network. On the WebUI you'll be able to browse detected devices and interact with them!_
+
+To get entities on your Home Assistant dashboard, use our integration in combination with this add-on!
 
 The accompanying integration can be found on Bepacom's Custom Component Components Repository!
 
 ## [Bepacom Custom Integration Repository](https://github.com/Bepacom-Raalte/bepacom-custom_components)
 
-If you have any issues, please check the logs and contact the add-on developer.
+If you have any issues, please check the logs and contact the add-on developer at the GitHub repository.
 
 ![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]

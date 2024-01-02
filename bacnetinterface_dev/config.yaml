@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: Bepacom EcoPanel BACnet/IP Interface Development Version
-version: "1.2.1"
+version: "1.3.0"
 slug: bacnetinterface_dev
 description: Bepacom BACnet/IP interface for the Bepacom EcoPanel. Allows BACnet devices to be available to Home Assistant through an API
 url: "https://github.com/Bepacom-Raalte/bepacom-HA-Addons/tree/main/bacnetinterface"
@@ -15,8 +15,11 @@ ingress: true
 # Mind to use webapp instead of webapp/... This causes ingress to misbehave.
 ingress_entry: webapp
 host_network: true
+hassio_api: true
+homeassistant_api: true
+hassio_role: "default"
 panel_icon: mdi:router-wireless-settings
-startup: services
+startup: application
 map:
   - config:rw
 ports:
@@ -43,6 +46,11 @@ options:
     multiStateValue: true
   loglevel: WARNING
   segmentation: segmentedBoth
+  pollHomeAssistantAPI: 5
+  analogValueObjects:
+    - entityID: ""
+  binaryValueObjects:
+    - entityID: ""
 schema:
   objectName: str
   address: str
@@ -60,6 +68,11 @@ schema:
     multiStateInput: bool
     multiStateOutput: bool
     multiStateValue: bool
+  pollHomeAssistantAPI: int
+  analogValueObjects:
+    - entityID: str?
+  binaryValueObjects:
+    - entityID: str?
   foreignBBMD: str?
   foreignTTL: str?
   vendorID: int?

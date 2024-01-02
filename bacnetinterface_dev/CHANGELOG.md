@@ -1,15 +1,28 @@
 ﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.2.1
-30/12/2023
+# 1.3.0
+02/01/2024
 
-- Forced ForeignTTL to be integer.
+Happy new year everyone!
+
+## Added
+
+- Entities can now become BACnet objects! Currently supporting numeric and binary only.
+- Using Home Assistant API to fetch data from entities.
 - "No segmentation supported" way for reading object list added.
 - maxApduLenghtAccepted and maxSegmentsAccepted back in configuration as unused options.
 - Added name and description to the Subscriptions configuration option.
+- WebUI components like .css should now always be served through https.
+
+## Fixed
+
 - Fixed defaultPriority not being sent by default.
 - Fixed update event for websocket not getting set.
 - Fixed handling of uncalled for I Am requests. These will now also be cached.
+- Forced ForeignTTL to be integer.
+
+## Dependencies
+
 - ⬆️ Bumped FastAPI to version 0.108.0.
 - ⬆️ Bumped Uvicorn to version 0.25.0.
 
@@ -25,6 +38,7 @@
 - ⬆️ Bumped FastAPI to version 0.104.1.
 - ⬆️ Bumped Uvicorn to version 0.24.0.
 - ⬆️ Bumped Websockets to version 12.0.
+
 
 # 1.1.3
 15/9/2023

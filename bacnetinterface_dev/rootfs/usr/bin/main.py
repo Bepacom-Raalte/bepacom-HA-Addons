@@ -10,7 +10,7 @@ from typing import TypeVar
 
 import uvicorn
 import webAPI
-from BACnetIOHandler import BACnetIOHandler
+from BACnetIOHandler import BACnetIOHandler, ObjectManager
 from bacpypes3.argparse import INIArgumentParser
 from bacpypes3.basetypes import (Null, ObjectType, PropertyIdentifier,
                                  Segmentation)
@@ -26,7 +26,7 @@ KeyType = TypeVar("KeyType")
 def exception_handler(loop, context):
     """Handle uncaught exceptions"""
     try:
-        logging.error(f'An error occurred: {context["exception"]}')
+        logging.exception(f'An uncaught error occurred: {context["exception"]}')
     except:
         logging.error("Tried to log error, but something went horribly wrong!!!")
 
@@ -192,6 +192,13 @@ async def main():
         ttl=config.get("BACpypes", "foreignTTL"),
         update_event=webAPI.events.val_updated_event,
     )
+    
+    entity_ids = {"binaryValue": options['binaryValueObjects'],"analogValue": options['analogValueObjects']}
+    
+    with open("/usr/bin/auth_token.ini", "r") as auth_token:
+        token = auth_token.read()
+    
+    object_manager = ObjectManager(app=app, objects_to_create=entity_ids, api_token=token, interval=options.get("pollHomeAssistantAPI"))
 
     app.asap.maxApduLengthAccepted = int(
         config.get("BACpypes", "maxApduLengthAccepted")
