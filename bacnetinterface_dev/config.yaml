@@ -17,9 +17,7 @@ ingress_entry: webapp
 host_network: true
 hassio_api: true
 homeassistant_api: true
-hassio_role: "default"
 panel_icon: mdi:router-wireless-settings
-startup: application
 map:
   - config:rw
 ports:
