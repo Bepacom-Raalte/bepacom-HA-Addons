@@ -1,8 +1,6 @@
 ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
-COPY requirements.txt /usr/src/requirements.txt
-
 # Install requirements for add-on
 WORKDIR /usr/src
 RUN \
