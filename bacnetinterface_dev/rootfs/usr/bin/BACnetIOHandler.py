@@ -745,7 +745,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 					# return the result
 					await self.response(resp)
 			
-					logging.warning("Rejected write!")
+					logging.info(f"Rejected write for {apdu.objectIdentifier} {apdu.propertyIdentifier}!")
 				
 				else:
 					# Acknowledge
@@ -754,7 +754,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 					# return the result
 					await self.response(resp)
 			
-					logging.warning("Ack'd write!")
+					logging.info(f"Ack'd write for {apdu.objectIdentifier} {apdu.propertyIdentifier}!")
 					
 			elif apdu.propertyIdentifier == PropertyIdentifier("covIncrement"):
 				
@@ -767,6 +767,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
 				# return the result
 				await self.response(resp)
+				
+				logging.info(f"Ack'd' write for {apdu.objectIdentifier} {apdu.propertyIdentifier}!")
 			
 			else:
 				resp = ErrorPDU(context=apdu)
@@ -774,7 +776,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 				# return the result
 				await self.response(resp)
 			
-				logging.warning("Rejected write!")
+				logging.warning(f"Rejected write for {apdu.objectIdentifier} {apdu.propertyIdentifier}!")
 		
 		except Exception as err:
 			logging.exception(f"Something went wrong while getting object written! {apdu.pduSource}")
@@ -785,6 +787,7 @@ class ObjectManager():
 	
 	binary_entity_ids = []
 	analog_entity_ids = []
+	services = {}
 	
 	def __init__(self, app: BACnetIOHandler, objects_to_create: dict, api_token: str, interval: int = 5):
 		"""Initialize objects."""
@@ -817,24 +820,7 @@ class ObjectManager():
 		asyncio.create_task(
 			self.data_write_task()
 		)
-		
 
-	def fetch_services(self):
-		"""Fetch data from API."""
-		url = f"http://supervisor/core/api/services"
-		headers = {
-			"Authorization": f"Bearer {self.api_token}",
-			"content-type": "application/json",
-		}
-
-		response = requests.get(url, headers=headers)
-	
-		if response.status_code == 200:
-			return json.loads(response.text)
-		else:
-			logging.error(f"Failed to get {entity_id}. {response.status_code}")
-			return False
-		
 		
 	def fetch_entity_data(self, entity_id):
 		"""Fetch data from API."""
@@ -853,6 +839,23 @@ class ObjectManager():
 			return False
 		
 
+	def fetch_services(self):
+		"""Fetch data from API."""
+		url = f"http://supervisor/core/api/services"
+		headers = {
+			"Authorization": f"Bearer {self.api_token}",
+			"content-type": "application/json",
+		}
+
+		response = requests.get(url, headers=headers)
+	
+		if response.status_code == 200:
+			return json.loads(response.text)
+		else:
+			logging.error(f"Failed to get services. {response.status_code}")
+			return False
+	
+
 	def post_services(self, entity_id, value):
 		"""Write value to API."""
 		
@@ -868,7 +871,7 @@ class ObjectManager():
 		elif domain in ("switch", "light", "camera", "climate", "water_heater", "media_player", "input_boolean"):
 			service = "turn_on" if value else "turn_off"
 		else:
-			logging.error(f"Can not write to {entity_id}")
+			logging.error(f"Can not write to {entity_id} as it's deemed not writable'")
 			return False	
 
 		url = f"http://supervisor/core/api/services/{domain}/{service}"
@@ -878,18 +881,14 @@ class ObjectManager():
 		}
 
 		response = requests.post(url, headers=headers, json=data)
-		
-		logging.error(url)
-		
-		logging.error(domain)
 	
 		if response.status_code == 200:
 			return json.loads(response.text)
 		else:
 			logging.error(f"Failed to post {entity_id}: HTTP Code {response.status_code}")
-			return False
-		
-	
+			return False	
+
+
 	def add_object(self, object_type: str ,index: int, entity: dict):
 		"""Add object to application"""
 		if object_type == "binaryValue":
@@ -924,6 +923,10 @@ class ObjectManager():
 			
 	def determine_units(self, unit):
 		"""EngineeringUnits for objects from Home Assistant units"""
+		
+		if not unit:
+			return None
+
 		if "C" in unit and len(unit) == 2: 
 			bacnetUnits = EngineeringUnits("degreesCelsius")
 		elif "F" in unit and len(unit) == 2: 
@@ -977,7 +980,7 @@ class ObjectManager():
 
 		except asyncio.CancelledError as err:
 			logging.warning(f"data_update_task cancelled: {err}")
-			
+
 
 	async def data_write_task(self):
 		"""Updater task to write data to Home Assistant."""
