@@ -34,6 +34,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 	subscription_tasks: list = []
 	update_event: asyncio.Event = asyncio.Event()
 	startup_complete: asyncio.Event = asyncio.Event()
+	write_to_api: asyncio.Event = asyncio.Event()
+	write_to_api_queue: asyncio.Queue = asyncio.Queue()
 	id_to_object = {}
 	object_to_id = {}
 	available_ids = set()
@@ -707,15 +709,72 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
 	async def do_WritePropertyRequest(self, apdu: WritePropertyRequest):
 		try:
-			# await super().do_ReadPropertyRequest(apdu)
+			# await super().do_WritePropertyRequest(apdu)
 
-			# Reject
-			resp = ErrorPDU(context=apdu)
+			obj_id = apdu.objectIdentifier
 
-			# return the result
-			await self.response(resp)
+			obj = self.get_object_id(obj_id)
 			
-			logging.warning("Rejected write!")
+			if not obj:
+				raise ExecutionError(errorClass="object", errorCode="unknownObject")
+			
+			property_type = obj.get_property_type(apdu.propertyIdentifier)
+			
+			array_index = apdu.propertyArrayIndex
+			
+			priority = apdu.priority
+			
+			property_value = apdu.propertyValue.cast_out(
+				property_type, null=(priority is not None)
+			)
+			
+			if apdu.propertyIdentifier == PropertyIdentifier("presentValue"):
+				await self.write_to_api_queue.put((obj_id, property_type, array_index, priority, property_value))
+
+				self.write_to_api.set()
+
+				while self.write_to_api.is_set():
+					await asyncio.sleep(0.1)
+				
+				response = await self.write_to_api_queue.get()
+
+				if not response:
+					# Reject
+					resp = ErrorPDU(context=apdu)
+
+					# return the result
+					await self.response(resp)
+			
+					logging.warning("Rejected write!")
+				
+				else:
+					# Acknowledge
+					resp = SimpleAckPDU(context=apdu)
+
+					# return the result
+					await self.response(resp)
+			
+					logging.warning("Ack'd write!")
+					
+			elif apdu.propertyIdentifier == PropertyIdentifier("covIncrement"):
+				
+				await obj.write_property(
+					apdu.propertyIdentifier, property_value, array_index, priority
+				)
+
+				# success
+				resp = SimpleAckPDU(context=apdu)
+
+				# return the result
+				await self.response(resp)
+			
+			else:
+				resp = ErrorPDU(context=apdu)
+
+				# return the result
+				await self.response(resp)
+			
+				logging.warning("Rejected write!")
 		
 		except Exception as err:
 			logging.exception(f"Something went wrong while getting object written! {apdu.pduSource}")
@@ -732,6 +791,8 @@ class ObjectManager():
 		self.app = app
 		self.api_token = api_token
 		self.interval = interval
+		
+		self.services = self.fetch_services()
 		
 		for entityID in objects_to_create['binaryValue']:
 			if entityID.get('entityID'):
@@ -752,7 +813,28 @@ class ObjectManager():
 		asyncio.create_task(
 			self.data_update_task(interval=self.interval)
 		)
+		
+		asyncio.create_task(
+			self.data_write_task()
+		)
+		
 
+	def fetch_services(self):
+		"""Fetch data from API."""
+		url = f"http://supervisor/core/api/services"
+		headers = {
+			"Authorization": f"Bearer {self.api_token}",
+			"content-type": "application/json",
+		}
+
+		response = requests.get(url, headers=headers)
+	
+		if response.status_code == 200:
+			return json.loads(response.text)
+		else:
+			logging.error(f"Failed to get {entity_id}. {response.status_code}")
+			return False
+		
 		
 	def fetch_entity_data(self, entity_id):
 		"""Fetch data from API."""
@@ -769,7 +851,44 @@ class ObjectManager():
 		else:
 			logging.error(f"Failed to get {entity_id}. {response.status_code}")
 			return False
+		
+
+	def post_services(self, entity_id, value):
+		"""Write value to API."""
+		
+		split_id = entity_id.split(".")
+
+		domain = split_id[0]
+		
+		data = {"entity_id": f"{entity_id}"}
+		
+		if domain in ("number", "input_number", "counter" ):
+			service = "set_value"
+			data.update({"value": value})
+		elif domain in ("switch", "light", "camera", "climate", "water_heater", "media_player", "input_boolean"):
+			service = "turn_on" if value else "turn_off"
+		else:
+			logging.error(f"Can not write to {entity_id}")
+			return False	
+
+		url = f"http://supervisor/core/api/services/{domain}/{service}"
+		headers = {
+			"Authorization": f"Bearer {self.api_token}",
+			"content-type": "application/json",
+		}
+
+		response = requests.post(url, headers=headers, json=data)
+		
+		logging.error(url)
+		
+		logging.error(domain)
 	
+		if response.status_code == 200:
+			return json.loads(response.text)
+		else:
+			logging.error(f"Failed to post {entity_id}: HTTP Code {response.status_code}")
+			return False
+		
 	
 	def add_object(self, object_type: str ,index: int, entity: dict):
 		"""Add object to application"""
@@ -787,6 +906,8 @@ class ObjectManager():
 			
 		if object_type == "analogValue":
 			
+			units = self.determine_units(entity["attributes"].get("unit_of_measurement")) if entity["attributes"].get("unit_of_measurement") is not None else None
+			
 			ana_val_obj = AnalogValueObject(
 				objectIdentifier=f"analogValue,{index}",
 				objectName=entity["attributes"].get("friendly_name"),
@@ -796,7 +917,7 @@ class ObjectManager():
 				eventState=EventState.normal,
 				outOfService=False,
 				covIncrement=0.1,
-				units=self.determine_units(entity["attributes"].get("unit_of_measurement"))
+				units=units
 				)
 			self.app.add_object(ana_val_obj)
 			
@@ -856,4 +977,35 @@ class ObjectManager():
 
 		except asyncio.CancelledError as err:
 			logging.warning(f"data_update_task cancelled: {err}")
-		
+			
+
+	async def data_write_task(self):
+		"""Updater task to write data to Home Assistant."""
+		try:
+			while True:
+				
+				await self.app.write_to_api.wait()
+				
+				obj, property_type, array_index, priority, property_value = await self.app.write_to_api_queue.get()
+				
+				entity_index = obj[1]
+
+				if obj[0].attr == "binaryValue":
+					entity_id = self.binary_entity_ids[entity_index]
+				elif obj[0].attr == "analogValue":
+					entity_id = self.analog_entity_ids[entity_index]
+				else:
+					entity_id = None
+					
+				write_response = self.post_services(entity_id=entity_id, value=property_value)
+				
+				self.app.write_to_api.clear()
+				
+				if write_response:
+					self.update_object(object_type=obj[0].attr, index=entity_index, entity=write_response[0])
+					await self.app.write_to_api_queue.put(True)
+				else:
+					await self.app.write_to_api_queue.put(False)
+
+		except asyncio.CancelledError as err:
+			logging.warning(f"data_update_task cancelled: {err}")		
