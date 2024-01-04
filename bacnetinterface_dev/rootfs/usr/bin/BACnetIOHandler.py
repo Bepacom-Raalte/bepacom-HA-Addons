@@ -728,7 +728,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 				property_type, null=(priority is not None)
 			)
 			
-			if apdu.propertyIdentifier == PropertyIdentifier("presentValue"):
+			obj_out_of_service = getattr(obj, "outOfService", None)
+			
+			if apdu.propertyIdentifier == PropertyIdentifier("presentValue") and not obj_out_of_service:
 				await self.write_to_api_queue.put((obj_id, property_type, array_index, priority, property_value))
 
 				self.write_to_api.set()
@@ -756,7 +758,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 			
 					logging.info(f"Ack'd write for {apdu.objectIdentifier} {apdu.propertyIdentifier}!")
 					
-			elif apdu.propertyIdentifier == PropertyIdentifier("covIncrement"):
+			elif (apdu.propertyIdentifier == PropertyIdentifier("presentValue") and obj_out_of_service) or (apdu.propertyIdentifier == PropertyIdentifier("covIncrement")) or (apdu.propertyIdentifier == PropertyIdentifier("outOfService")):
 				
 				await obj.write_property(
 					apdu.propertyIdentifier, property_value, array_index, priority
@@ -821,6 +823,18 @@ class ObjectManager():
 			self.data_write_task()
 		)
 
+
+	def entity_to_obj(self, entity):
+		
+		if entity in self.binary_entity_ids:
+			object_type = "binaryValue"
+			index = self.binary_entity_ids.index(entity)
+		elif entity in self.analog_entity_ids:
+			object_type = "analogValue"
+			index = self.analog_entity_ids.index(entity)
+		
+		return self.app.get_object_id(ObjectIdentifier(str(object_type + ":" + str(index))))
+	
 		
 	def fetch_entity_data(self, entity_id):
 		"""Fetch data from API."""
@@ -883,7 +897,7 @@ class ObjectManager():
 		response = requests.post(url, headers=headers, json=data)
 	
 		if response.status_code == 200:
-			return json.loads(response.text)
+			return True
 		else:
 			logging.error(f"Failed to post {entity_id}: HTTP Code {response.status_code}")
 			return False	
@@ -971,10 +985,16 @@ class ObjectManager():
 				except asyncio.TimeoutError:
 					
 					for index, entity in enumerate(self.binary_entity_ids):
+						obj = self.entity_to_obj(entity=entity)
+						if getattr(obj, "outOfService", None):
+							continue
 						data = self.fetch_entity_data(entity)
 						self.update_object(object_type="binaryValue", index=index, entity=data)
 						
 					for index, entity in enumerate(self.analog_entity_ids):
+						obj = self.entity_to_obj(entity=entity)
+						if getattr(obj, "outOfService", None):
+							continue						
 						data = self.fetch_entity_data(entity)
 						self.update_object(object_type="analogValue", index=index, entity=data)
 
@@ -1004,8 +1024,11 @@ class ObjectManager():
 				
 				self.app.write_to_api.clear()
 				
+				data = self.fetch_entity_data(entity_id)
+				
+				self.update_object(object_type=obj[0].attr, index=entity_index, entity=data)
+				
 				if write_response:
-					self.update_object(object_type=obj[0].attr, index=entity_index, entity=write_response[0])
 					await self.app.write_to_api_queue.put(True)
 				else:
 					await self.app.write_to_api_queue.put(False)
