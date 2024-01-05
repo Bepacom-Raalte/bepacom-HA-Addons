@@ -921,13 +921,21 @@ class ObjectManager():
 			
 			units = self.determine_units(entity["attributes"].get("unit_of_measurement")) if entity["attributes"].get("unit_of_measurement") is not None else None
 			
+			pres_val = entity.get("state")
+			
+			if pres_val == "unavailable":
+				pres_val = int(0)
+				event_state = EventState.offnormal
+			else:
+				event_state = EventState.normal
+
 			ana_val_obj = AnalogValueObject(
 				objectIdentifier=f"analogValue,{index}",
 				objectName=entity["attributes"].get("friendly_name"),
-				presentValue= entity.get("state"),
+				presentValue= pres_val,
 				description=f"Home Assistant entity {entity["attributes"].get("friendly_name")}",
 				# statusFlags=[0, 0, 0, 0],  # inAlarm, fault, overridden, outOfService
-				eventState=EventState.normal,
+				eventState=event_state,
 				outOfService=False,
 				covIncrement=0.1,
 				units=units
@@ -965,15 +973,21 @@ class ObjectManager():
 		
 		obj = self.app.get_object_id(ObjectIdentifier(str(object_type + ":" + str(index))))
 		
-		prop = PropertyIdentifier("presentValue")
+		pres_val = entity.get("state")
+		
+		if pres_val == "unavailable":
+			setattr(obj, "eventState", EventState.offnormal)
+			return
+		else:
+			setattr(obj, "eventState", EventState.normal)
 		
 		if object_type == BinaryValueObject or object_type == "binaryValue":
-			value = True if entity.get("state").lower() == "on" else False
+			value = True if pres_val.lower() == "on" else False
 			
 		elif object_type == AnalogValueObject or object_type == "analogValue":
-			value = entity.get("state")
+			value = pres_val
 		
-		setattr(obj, prop.attr, value)
+		setattr(obj, "presentValue", value)
 
 			
 	async def data_update_task(self, interval: int = 5):
