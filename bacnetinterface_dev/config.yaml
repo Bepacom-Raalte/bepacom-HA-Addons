@@ -44,7 +44,6 @@ options:
     multiStateValue: true
   loglevel: WARNING
   segmentation: segmentedBoth
-  pollHomeAssistantAPI: 5
   analogValueObjects:
     - entityID: ""
   binaryValueObjects:
@@ -66,7 +65,6 @@ schema:
     multiStateInput: bool
     multiStateOutput: bool
     multiStateValue: bool
-  pollHomeAssistantAPI: int
   analogValueObjects:
     - entityID: str?
   binaryValueObjects:

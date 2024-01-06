@@ -3,6 +3,7 @@ import logging
 import traceback
 import json
 import requests
+import websockets
 from math import isinf, isnan
 from typing import Any, Dict, TypeVar
 
@@ -791,11 +792,10 @@ class ObjectManager():
 	analog_entity_ids = []
 	services = {}
 	
-	def __init__(self, app: BACnetIOHandler, objects_to_create: dict, api_token: str, interval: int = 5):
+	def __init__(self, app: BACnetIOHandler, objects_to_create: dict, api_token: str):
 		"""Initialize objects."""
 		self.app = app
 		self.api_token = api_token
-		self.interval = interval
 		
 		self.services = self.fetch_services()
 		
@@ -816,7 +816,7 @@ class ObjectManager():
 			self.add_object(object_type="analogValue", index=index, entity=data)
 			
 		asyncio.create_task(
-			self.data_update_task(interval=self.interval)
+			self.data_websocket_task()
 		)
 		
 		asyncio.create_task(
@@ -990,30 +990,67 @@ class ObjectManager():
 		setattr(obj, "presentValue", value)
 
 			
-	async def data_update_task(self, interval: int = 5):
-		"""Updater task to update objects with fresh data."""
-		try:
-			while True:
-				try:
-					await asyncio.wait_for(asyncio.sleep(interval+1), timeout=interval)
-				except asyncio.TimeoutError:
-					
-					for index, entity in enumerate(self.binary_entity_ids):
-						obj = self.entity_to_obj(entity=entity)
-						if getattr(obj, "outOfService", None):
-							continue
-						data = self.fetch_entity_data(entity)
-						self.update_object(object_type="binaryValue", index=index, entity=data)
-						
-					for index, entity in enumerate(self.analog_entity_ids):
-						obj = self.entity_to_obj(entity=entity)
-						if getattr(obj, "outOfService", None):
-							continue						
-						data = self.fetch_entity_data(entity)
-						self.update_object(object_type="analogValue", index=index, entity=data)
+	async def data_websocket_task(self):
+		
+		auth = {
+			  "type": "auth",
+			  "access_token": f"{self.api_token}"
+			}
+			
+		message_id = 1
+			
+		async for websocket in websockets.connect("ws://supervisor/core/api/websocket"):
+			try:
+				data = json.loads(await websocket.recv())
+				await websocket.send(json.dumps(auth))
+				data = json.loads(await websocket.recv())
+				if data.get("type") != "auth_ok":
+					logging.error("Authentication with API failed!")
+					continue
+				
+				subscribe_to_state = {
+					"id": message_id,
+					"type": "subscribe_trigger",
+					"trigger": {
+						"platform": "state",
+						"entity_id": self.binary_entity_ids + self.analog_entity_ids,
+					}
+				}
 
-		except asyncio.CancelledError as err:
-			logging.warning(f"data_update_task cancelled: {err}")
+				await websocket.send(json.dumps(subscribe_to_state))
+				data = json.loads(await websocket.recv())
+				if data.get("success"):
+					logging.debug(f"Subscribed to selected entities!")
+					message_id = message_id + 1
+						
+				while True:
+					data = json.loads(await websocket.recv())
+					logging.debug(f"Received: {str(data)}")
+					
+					new_state = data["event"]["variables"]["trigger"]["to_state"]
+					
+					entity_id = new_state.get("entity_id")
+					
+					if entity_id in self.binary_entity_ids:
+						object_type = "binaryValue"
+						index = self.binary_entity_ids.index(entity_id)
+					elif entity_id in self.analog_entity_ids:
+						object_type = "analogValue"
+						index = self.analog_entity_ids.index(entity_id)
+					else:
+						continue
+					
+					obj = self.entity_to_obj(entity=entity_id)
+					if getattr(obj, "outOfService", None):
+						continue
+					
+					self.update_object(object_type=object_type, index=index, entity=new_state)
+
+			except websockets.ConnectionClosed as err:
+				logging.warning(f"Websocket connection to Home Assistant API closed! Attempting to reconnect...")
+				continue
+			except Exception as err:
+				logging.error(f"Websocket connection to Home Assistant API failed! {err}")
 
 
 	async def data_write_task(self):
