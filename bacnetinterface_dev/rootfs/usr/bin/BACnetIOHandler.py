@@ -18,9 +18,9 @@ from bacpypes3.constructeddata import AnyAtomic, Array, List, SequenceOf
 from bacpypes3.errors import *
 from bacpypes3.ipv4.app import ForeignApplication, NormalApplication
 from bacpypes3.local.device import DeviceObject
-from bacpypes3.local.binary import BinaryValueObject
-from bacpypes3.local.analog import AnalogValueObject
-from bacpypes3.object import get_vendor_info
+from bacpypes3.local.binary import BinaryValueObject, BinaryInputObject
+from bacpypes3.local.analog import AnalogValueObject, AnalogInputObject
+from bacpypes3.object import get_vendor_info, MultiStateInputObject, MultiStateValueObject, CharacterStringValueObject
 from bacpypes3.pdu import Address
 from bacpypes3.primitivedata import (BitString, Date, Null, ObjectIdentifier,
 									 ObjectType, Time, Unsigned)
@@ -743,7 +743,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
 				if not response:
 					# Reject
-					resp = ErrorPDU(context=apdu)
+					resp = RejectPDU(context=apdu, reason=0)
 
 					# return the result
 					await self.response(resp)
@@ -774,7 +774,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 				logging.info(f"Ack'd' write for {apdu.objectIdentifier} {apdu.propertyIdentifier}!")
 			
 			else:
-				resp = ErrorPDU(context=apdu)
+				resp = RejectPDU(context=apdu, reason=0)
 
 				# return the result
 				await self.response(resp)
@@ -788,57 +788,126 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 class ObjectManager():
 	"""Manages BACpypes3 application objects."""
 	
-	binary_entity_ids = []
-	analog_entity_ids = []
+	binary_val_entity_ids = []
+	binary_in_entity_ids = []
+	analog_val_entity_ids = []
+	analog_in_entity_ids = []
+	multi_state_val_entity_ids = []
+	multi_state_in_entity_ids = []
+	char_string_val_entity_ids = []
 	services = {}
 	
-	def __init__(self, app: BACnetIOHandler, objects_to_create: dict, api_token: str):
+	def __init__(self, app: BACnetIOHandler, entity_list: list, api_token: str):
 		"""Initialize objects."""
 		self.app = app
 		self.api_token = api_token
+		self.entity_list = entity_list
 		
 		self.services = self.fetch_services()
 		
-		for entityID in objects_to_create['binaryValue']:
-			if entityID.get('entityID'):
-				self.binary_entity_ids.append(entityID.get('entityID'))
-				
-		for entityID in objects_to_create['analogValue']:
-			if entityID.get('entityID'):
-				self.analog_entity_ids.append(entityID.get('entityID'))
+		self.process_entity_list(entity_list=entity_list)
 		
-		for index, entity in enumerate(self.binary_entity_ids):
+		for index, entity in enumerate(self.binary_val_entity_ids):
 			data = self.fetch_entity_data(entity)
 			self.add_object(object_type="binaryValue", index=index, entity=data)
 			
-		for index, entity in enumerate(self.analog_entity_ids):
+		for index, entity in enumerate(self.binary_in_entity_ids):
+			data = self.fetch_entity_data(entity)
+			self.add_object(object_type="binaryInput", index=index, entity=data)
+			
+		for index, entity in enumerate(self.analog_val_entity_ids):
 			data = self.fetch_entity_data(entity)
 			self.add_object(object_type="analogValue", index=index, entity=data)
+			
+		for index, entity in enumerate(self.analog_in_entity_ids):
+			data = self.fetch_entity_data(entity)
+			self.add_object(object_type="analogInput", index=index, entity=data)
+			
+		for index, entity in enumerate(self.char_string_val_entity_ids):
+			data = self.fetch_entity_data(entity)
+			self.add_object(object_type="characterstringValue", index=index, entity=data)
 			
 		asyncio.create_task(
 			self.data_websocket_task()
 		)
-		
+
 		asyncio.create_task(
 			self.data_write_task()
 		)
 
 
+	def process_entity_list(self, entity_list: list) -> None:
+		for entity in entity_list:
+			split_entity = entity.split(".")
+			
+			if split_entity[0] in ("number", "input_number", "counter"): # analog val
+				self.analog_val_entity_ids.append(entity)
+			
+			elif split_entity[0] in ("sensor"): # analog in of character string val wanneer string
+				
+				data = self.fetch_entity_data(entity)
+				
+				state = data.get("state")
+				
+				try:
+					state = float(state)
+				except ValueError:
+					logging.debug(f"state {state} is not a number")
+
+				if isinstance(state, (int, float, complex)):
+					self.analog_in_entity_ids.append(entity)
+				elif state == "unavailable":
+					logging.warning(f"Assuming {entity} is analogInput as it's currently unavailable!'")
+					self.analog_in_entity_ids.append(entity)
+				else:
+					self.char_string_val_entity_ids.append(entity)
+			
+			#elif split_entity[0] in ("climate"): # multistate value, analog val voor set, analog in voor temperatuur
+			#	self.multi_state_val_entity_ids.append(entity) state
+			#	self.analog_val_entity_ids.append(entity) setpoint
+			#	self.analog_in_entity_ids.append(entity) temp
+			
+			#elif split_entity[0] in ("water_heater"): # character string en analog input voor temp
+			#	self.char_string_val_entity_ids.append(entity) state
+			#	self.analog_in_entity_ids.append(entity) temp
+			
+			elif split_entity[0] in ("switch", "input_boolean", "light"): # binary value
+				self.binary_val_entity_ids.append(entity)
+				
+			elif split_entity[0] in ("binary_sensor", "schedule"): # binary in
+				self.binary_in_entity_ids.append(entity)
+			
+			#elif split_entity[0] in ("media_player", "vacuum"): # multistate in
+			#	self.multi_state_in_entity_ids.append(entity) state
+				
+			else:
+				logging.error(f"Entity {entity} can't be turned into an object as it's not supported!")
+
+
 	def entity_to_obj(self, entity):
 		
-		if entity in self.binary_entity_ids:
+		if entity in self.binary_val_entity_ids:
 			object_type = "binaryValue"
-			index = self.binary_entity_ids.index(entity)
-		elif entity in self.analog_entity_ids:
+			index = self.binary_val_entity_ids.index(entity)
+		elif entity in self.binary_in_entity_ids:
+			object_type = "binaryInput"
+			index = self.binary_in_entity_ids.index(entity)
+		elif entity in self.analog_val_entity_ids:
 			object_type = "analogValue"
-			index = self.analog_entity_ids.index(entity)
+			index = self.analog_val_entity_ids.index(entity)
+		elif entity in self.analog_in_entity_ids:
+			object_type = "analogInput"
+			index = self.analog_in_entity_ids.index(entity)
+		elif entity in self.char_string_val_entity_ids:
+			object_type = "characterstringValue"
+			index = self.char_string_val_entity_ids.index(entity)
 		
 		return self.app.get_object_id(ObjectIdentifier(str(object_type + ":" + str(index))))
 	
 		
 	def fetch_entity_data(self, entity_id):
 		"""Fetch data from API."""
-		url = f"http://supervisor/core/api/states/{entity_id}"
+		url = f"http://supervisor/core/api/states/{entity_id}" #http://supervisor/discovery post laat onze eigen service maken... GEBRUIKEN VOOR INTEGRATION?
 		headers = {
 			"Authorization": f"Bearer {self.api_token}",
 			"content-type": "application/json",
@@ -907,17 +976,27 @@ class ObjectManager():
 		"""Add object to application"""
 		if object_type == "binaryValue":
 			bin_val_obj = BinaryValueObject(
-				objectIdentifier=f"binaryValue,{index}",
+				objectIdentifier=f"{object_type},{index}",
 				objectName=entity["attributes"].get("friendly_name"),
 				presentValue= True if entity.get("state").lower() == "on" else False,
 				description=f"Home Assistant entity {entity["attributes"].get("friendly_name")}",
-				# statusFlags=[0, 0, 0, 0],  # inAlarm, fault, overridden, outOfService
 				eventState=EventState.normal,
 				outOfService=False,
 				)
 			self.app.add_object(bin_val_obj)
 			
-		if object_type == "analogValue":
+		elif object_type == "binaryInput":
+			bin_val_obj = BinaryInputObject(
+				objectIdentifier=f"{object_type},{index}",
+				objectName=entity["attributes"].get("friendly_name"),
+				presentValue= True if entity.get("state").lower() == "on" else False,
+				description=f"Home Assistant entity {entity["attributes"].get("friendly_name")}",
+				eventState=EventState.normal,
+				outOfService=False,
+				)
+			self.app.add_object(bin_val_obj)
+			
+		elif object_type == "analogValue":
 			
 			units = self.determine_units(entity["attributes"].get("unit_of_measurement")) if entity["attributes"].get("unit_of_measurement") is not None else None
 			
@@ -930,17 +1009,51 @@ class ObjectManager():
 				event_state = EventState.normal
 
 			ana_val_obj = AnalogValueObject(
-				objectIdentifier=f"analogValue,{index}",
+				objectIdentifier=f"{object_type},{index}",
 				objectName=entity["attributes"].get("friendly_name"),
 				presentValue= pres_val,
 				description=f"Home Assistant entity {entity["attributes"].get("friendly_name")}",
-				# statusFlags=[0, 0, 0, 0],  # inAlarm, fault, overridden, outOfService
 				eventState=event_state,
 				outOfService=False,
 				covIncrement=0.1,
 				units=units
 				)
 			self.app.add_object(ana_val_obj)
+			
+		elif object_type == "analogInput":
+			
+			units = self.determine_units(entity["attributes"].get("unit_of_measurement")) if entity["attributes"].get("unit_of_measurement") is not None else None
+			
+			pres_val = entity.get("state")
+			
+			if pres_val == "unavailable":
+				pres_val = int(0)
+				event_state = EventState.offnormal
+			else:
+				event_state = EventState.normal
+
+			ana_in_obj = AnalogInputObject(
+				objectIdentifier=f"{object_type},{index}",
+				objectName=entity["attributes"].get("friendly_name"),
+				presentValue= pres_val,
+				description=f"Home Assistant entity {entity["attributes"].get("friendly_name")}",
+				eventState=event_state,
+				outOfService=False,
+				covIncrement=0.1,
+				units=units
+				)
+			self.app.add_object(ana_in_obj)	
+			
+		elif object_type == "characterstringValue":
+			char_val_obj = CharacterStringValueObject(
+				objectIdentifier=f"{object_type},{index}",
+				objectName=entity["attributes"].get("friendly_name"),
+				presentValue= entity.get("state"),
+				description=f"Home Assistant entity {entity["attributes"].get("friendly_name")}",
+				eventState=EventState.normal,
+				outOfService=False,
+				)
+			self.app.add_object(char_val_obj)
 			
 			
 	def determine_units(self, unit):
@@ -971,6 +1084,8 @@ class ObjectManager():
 	def update_object(self, object_type, index, entity):
 		"""Update objects with API data."""
 		
+		logging.debug(f"UPDATING {object_type} {index} {entity}")
+		
 		obj = self.app.get_object_id(ObjectIdentifier(str(object_type + ":" + str(index))))
 		
 		pres_val = entity.get("state")
@@ -981,10 +1096,10 @@ class ObjectManager():
 		else:
 			setattr(obj, "eventState", EventState.normal)
 		
-		if object_type == BinaryValueObject or object_type == "binaryValue":
+		if object_type == "binaryValue" or object_type == "binaryInput":
 			value = True if pres_val.lower() == "on" else False
 			
-		elif object_type == AnalogValueObject or object_type == "analogValue":
+		elif object_type == "analogValue" or object_type == "analogInput" or object_type == "characterstringValue":
 			value = pres_val
 		
 		setattr(obj, "presentValue", value)
@@ -1013,7 +1128,7 @@ class ObjectManager():
 					"type": "subscribe_trigger",
 					"trigger": {
 						"platform": "state",
-						"entity_id": self.binary_entity_ids + self.analog_entity_ids,
+						"entity_id": self.entity_list,
 					}
 				}
 
@@ -1031,12 +1146,21 @@ class ObjectManager():
 					
 					entity_id = new_state.get("entity_id")
 					
-					if entity_id in self.binary_entity_ids:
+					if entity_id in self.binary_val_entity_ids:
 						object_type = "binaryValue"
-						index = self.binary_entity_ids.index(entity_id)
-					elif entity_id in self.analog_entity_ids:
+						index = self.binary_val_entity_ids.index(entity_id)
+					elif entity_id in self.binary_in_entity_ids:
+						object_type = "binaryInput"
+						index = self.binary_in_entity_ids.index(entity_id)
+					elif entity_id in self.analog_val_entity_ids:
 						object_type = "analogValue"
-						index = self.analog_entity_ids.index(entity_id)
+						index = self.analog_val_entity_ids.index(entity_id)
+					elif entity_id in self.analog_in_entity_ids:
+						object_type = "analogInput"
+						index = self.analog_in_entity_ids.index(entity_id)
+					elif entity_id in self.char_string_val_entity_ids:
+						object_type = "characterstringValue"
+						index = self.char_string_val_entity_ids.index(entity_id)
 					else:
 						continue
 					
@@ -1065,9 +1189,9 @@ class ObjectManager():
 				entity_index = obj[1]
 
 				if obj[0].attr == "binaryValue":
-					entity_id = self.binary_entity_ids[entity_index]
+					entity_id = self.binary_val_entity_ids[entity_index]
 				elif obj[0].attr == "analogValue":
-					entity_id = self.analog_entity_ids[entity_index]
+					entity_id = self.analog_val_entity_ids[entity_index]
 				else:
 					entity_id = None
 					

@@ -1,13 +1,13 @@
 ﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
 # 1.3.0
-02/01/2024
+07/01/2024
 
 Happy new year everyone!
 
 ## Added
 
-- Entities can now become BACnet objects! Currently supporting numeric and binary only.
+- Certain entity types can now become BACnet objects!
 - Using Home Assistant API to fetch data from entities.
 - "No segmentation supported" way for reading object list added.
 - maxApduLenghtAccepted and maxSegmentsAccepted back in configuration as unused options.
@@ -23,6 +23,7 @@ Happy new year everyone!
 
 ## Dependencies
 
+- ⬆️ Bumped base-python image to version v13.0.0.
 - ⬆️ Bumped FastAPI to version 0.108.0.
 - ⬆️ Bumped Uvicorn to version 0.25.0.
 

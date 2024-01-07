@@ -92,10 +92,10 @@ subscriptions:
   multiStateOutput: false
   multiStateValue: false
 pollHomeAssistantAPI: 5
-analogValueObjects:
-  - entityID: sensor.incomfort_cv_temp
-binaryValueObjects:
-  - entityID: ""
+entity_list:
+  - input_number.coolnumber
+  - sensor.incomfort_cv_pressure
+  - input_boolean.cooltoggle
 loglevel: WARNING
 segmentation: segmentedBoth
 vendorID: 15
@@ -154,42 +154,34 @@ multiStateValue: false
 Pollrate in seconds to the Home Assistant API. This is to get data for the following 2 options. Recommended to not set it too fast.
 This determines how fast the device's objects update their presentValue property.
 
-### Option: `Analog Value Objects`
-The entity ID's of what entities you want to make available as a BACnet analogValue object. 
-To keep it empty:
+### Option: `Entities to BACnet objects`
+The entity ID's of what entities you want to make available as a BACnet objects. 
+Keeping it empty will result in no additional objects next to your virtual device on the BACnet network.
 
-```yaml
-- entityID: ""
-```
+Entities resulting in Analog Input object type:
+- "sensor" if it's a numerical sensor.
 
-To add multiple entities:
+Entities resulting in Analog Value object type:
+- "number"
+- "input_number"
+- "counter"
 
-```yaml
-- entityID: sensor.incomfort_cv_temp
-- entityID: sensor.incomfort_tap_temp
-- entityID: sensor.incomfort_cv_pressure
-```
+Entities resulting in Binary Input object type:
+- "binary_sensor"
+- "schedule"
 
-The order of entities determines the object ID of the entity. Starting at object 0.
-These objects can NOT be written to (yet).
+Entities resulting in Binary Value object type:
+- "switch"
+- "input_boolean"
+- "light"
 
-### Option: `Binary Value Objects`
-The entity ID's of what entities you want to make available as a BACnet binaryValue object. Please do mind that the state has to be On or Off for it to work. Otherwise the add-on will assume off for now.
-To keep it empty:
+Entities resulting in Character String Value object type:
+- "sensor" if it's a string.
 
-```yaml
-- entityID: ""
-```
+The order of entities determines the object identifier of the entity, starting at object 0.
+All the -Value objects can be written to!
 
-To add multiple entities:
-
-```yaml
-- entityID: light.wiz_tunable_white
-- entityID: binary_sensor.some_presence_detector
-```
-
-The order of entities determines the object ID of the entity. Starting at object 0.
-These objects can NOT be written to (yet).
+Plans to include "climate", "water_heater", "media_player" and "vacuum" as supported entity types in the future.
 
 ### Option: `BACnet/IP Broadcast Management Device Address`
 If you have your BACnet/IP network on another subnet, write the IP of your BBMD device here. This way, the add-on can communicate with the BBMD.
