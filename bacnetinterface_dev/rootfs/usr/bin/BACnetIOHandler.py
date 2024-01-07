@@ -797,13 +797,16 @@ class ObjectManager():
 	char_string_val_entity_ids = []
 	services = {}
 	
-	def __init__(self, app: BACnetIOHandler, entity_list: list, api_token: str):
+	def __init__(self, app: BACnetIOHandler, api_token: str, entity_list: list = None):
 		"""Initialize objects."""
 		self.app = app
 		self.api_token = api_token
 		self.entity_list = entity_list
 		
 		self.services = self.fetch_services()
+
+		if not self.entity_list:
+			return None
 		
 		self.process_entity_list(entity_list=entity_list)
 		

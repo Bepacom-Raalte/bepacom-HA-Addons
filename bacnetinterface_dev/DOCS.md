@@ -91,7 +91,6 @@ subscriptions:
   multiStateInput: false
   multiStateOutput: false
   multiStateValue: false
-pollHomeAssistantAPI: 5
 entity_list:
   - input_number.coolnumber
   - sensor.incomfort_cv_pressure
