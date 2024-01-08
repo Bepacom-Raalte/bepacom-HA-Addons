@@ -196,7 +196,7 @@ async def main():
     with open("/usr/bin/auth_token.ini", "r") as auth_token:
         token = auth_token.read()
     
-    object_manager = ObjectManager(app=app, entity_list=options['entity_list'], api_token=token)
+    object_manager = ObjectManager(app=app, entity_list=options.get('entity_list'), api_token=token)
 
     app.asap.maxApduLengthAccepted = int(
         config.get("BACpypes", "maxApduLengthAccepted")
