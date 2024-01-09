@@ -1,7 +1,7 @@
 ﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
 # 1.3.0
-07/01/2024
+09/01/2024
 
 Happy new year everyone!
 
@@ -12,7 +12,7 @@ Happy new year everyone!
 - "No segmentation supported" way for reading object list added.
 - maxApduLenghtAccepted and maxSegmentsAccepted back in configuration as unused options.
 - Added name and description to the Subscriptions configuration option. 
-- WebUI components like .css should now always be served through https.
+- WebUI components like .css should now be available when served through https.
 
 ## Fixed
 
