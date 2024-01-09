@@ -10,6 +10,8 @@ The accompanying integration can be found on Bepacom's Custom Component Componen
 
 If you have any issues, please check the logs and contact the add-on developer at the GitHub repository.
 
+## [Bepacom Add-on Repository](https://github.com/Bepacom-Raalte/bepacom-HA-Addons)
+
 ![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]
 ![Supports armhf Architecture][armhf-shield]

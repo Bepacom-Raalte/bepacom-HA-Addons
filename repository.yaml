@@ -1,4 +1,4 @@
 # https://developers.home-assistant.io/docs/add-ons/repository#repository-configuration
 name: Bepacom Add-on Repository
 url: 'https://github.com/Bepacom-Raalte/bepacom-HA-Addons'
-maintainer: Bepacom
+maintainer: Bepacom B.V.

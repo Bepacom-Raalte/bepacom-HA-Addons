@@ -11,7 +11,7 @@ Happy new year everyone!
 - Using Home Assistant API to fetch data from entities.
 - "No segmentation supported" way for reading object list added.
 - maxApduLenghtAccepted and maxSegmentsAccepted back in configuration as unused options.
-- Added name and description to the Subscriptions configuration option.
+- Added name and description to the Subscriptions configuration option. 
 - WebUI components like .css should now always be served through https.
 
 ## Fixed

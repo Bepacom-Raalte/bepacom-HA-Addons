@@ -2,7 +2,7 @@
 name: Bepacom BACnet/IP Interface Development Version
 version: "1.3.0"
 slug: bacnetinterface_dev
-description: Bepacom BACnet/IP interface for the Bepacom EcoPanel. Allows BACnet devices to be available to Home Assistant through an API
+description: Bepacom BACnet/IP interface for the Bepacom EcoPanel. Allows BACnet/IP devices to be available to Home Assistant through an API.
 url: "https://github.com/Bepacom-Raalte/bepacom-HA-Addons/tree/main/bacnetinterface"
 arch:
   - armhf
@@ -42,6 +42,7 @@ options:
     multiStateInput: true
     multiStateOutput: true
     multiStateValue: true
+  entity_list: []
   loglevel: WARNING
   segmentation: segmentedBoth
 schema:

@@ -1,6 +1,6 @@
-# Bepacom EcoPanel BACnet/IP interface
+# Bepacom BACnet/IP interface
 
-The Bepacom EcoPanel BACnet/IP interface add-on is intended to be a bridge between the BACnet/IP network and Home Assistant.
+The Bepacom BACnet/IP interface add-on is intended to be a bridge between the BACnet/IP network and Home Assistant.
 
 The goal of this add-on is to add BACnet functionality to Home Assistant so these devices can be displayed on the dashboard.
 
@@ -17,7 +17,7 @@ Created and maintained by [Bepacom B.V. Raalte](https://www.bepacom.nl/)
    [![Open this add-on in your Home Assistant instance.][addon-badge]][addon]
 
 1. Click the "Install" button to install the add-on.
-1. Start the "Bepacom EcoPanel BACnet/IP Interface" add-on.
+1. Start the "Bepacom BACnet/IP Interface" add-on.
 1. Check the logs of the "Bepacom EcoPanel BACnet/IP Interface" add-on to see if everything went
    well.
 1. Now your Home Assistant host is a virtual BACnet/IP device!
