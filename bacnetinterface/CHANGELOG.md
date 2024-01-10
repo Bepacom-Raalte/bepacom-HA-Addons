@@ -1,7 +1,34 @@
 ﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.3.0
+09/01/2024
+
+Happy new year everyone!
+
+## Added
+
+- Certain entity types can now become BACnet objects!
+- Using Home Assistant API to fetch data from entities.
+- "No segmentation supported" way for reading object list added.
+- maxApduLenghtAccepted and maxSegmentsAccepted back in configuration as unused options.
+- Added name and description to the Subscriptions configuration option. 
+
+## Fixed
+
+- Fixed defaultPriority not being sent by default.
+- Fixed update event for websocket not getting set.
+- Fixed handling of uncalled for I Am requests. These will now also be cached.
+- Forced ForeignTTL to be integer.
+
+## Dependencies
+
+- ⬆️ Bumped base-python image to version v13.0.0.
+- ⬆️ Bumped FastAPI to version 0.108.0.
+- ⬆️ Bumped Uvicorn to version 0.25.0.
+
+
 # 1.2.0
-13/12/2023
+9/12/2023
 
 - Foreign device mode is working. Use the Foreign BBMD Address in the configuration.
 - Added configurable subscriptions in the add-on configuration!
@@ -11,6 +38,7 @@
 - ⬆️ Bumped FastAPI to version 0.104.1.
 - ⬆️ Bumped Uvicorn to version 0.24.0.
 - ⬆️ Bumped Websockets to version 12.0.
+
 
 # 1.1.3
 15/9/2023

@@ -1,12 +1,12 @@
 configuration:
   objectName:
-    name: Object Name
+    name: Device Name
     description: The name of the interface in the BACnet network.
   address:
     name: Interface IP
     description: BACnet/IP host address. "auto" tries to automatically get your IP. x.x.x.x/24 format.
   objectIdentifier:
-    name: Object ID
+    name: Device ID
     description: The identifier (number) of the interface.
   defaultPriority:
     name: BACnet write priority
@@ -19,8 +19,7 @@ configuration:
     description: Maximum amount of Application Layer Protocol Data Units allowed.
   segmentation:
     name: Segmentation Supported
-    description: >-
-      Supported type of segmentation of the interface.
+    description: Supported segmentation type of the interface.
   vendorID:
     name: Vendor Identifier
     description: The vendor ID of the interface.
@@ -36,5 +35,11 @@ configuration:
   updateInterval:
     name: Update Interval
     description: Time between periodic updates in seconds.
+  subscriptions:
+    name: CoV subscriptions
+    description: For which object types have to be subscribed to.
+  entity_list:
+    name: Entities to BACnet objects
+    description: Home Assistant entity IDs that will be turned into BACnet objects. Please read the documentation to see which entity types are supported and how BACnet object identifiers are determined.
 network:
-  47808/udp: Used for BACnet devices.
+  47808/udp: BACnet port.

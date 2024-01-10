@@ -1,31 +1,34 @@
 import asyncio
+import json
 import logging
 import traceback
-import json
-import requests
-import websockets
 from math import isinf, isnan
 from typing import Any, Dict, TypeVar
 
+import backoff
+import requests
+import websockets
 from bacpypes3.apdu import (AbortPDU, ConfirmedCOVNotificationRequest,
-							ErrorPDU, ErrorRejectAbortNack, ReadPropertyACK,
-							ReadPropertyRequest, RejectPDU, SimpleAckPDU,
-							SubscribeCOVRequest, WritePropertyRequest)
+                            ErrorPDU, ErrorRejectAbortNack, ReadPropertyACK,
+                            ReadPropertyRequest, RejectPDU, SimpleAckPDU,
+                            SubscribeCOVRequest, WritePropertyRequest)
 from bacpypes3.basetypes import (BinaryPV, DeviceStatus, EngineeringUnits,
-								 ErrorType, EventState, PropertyIdentifier,
-								 Reliability)
+                                 ErrorType, EventState, PropertyIdentifier,
+                                 Reliability)
 from bacpypes3.constructeddata import AnyAtomic, Array, List, SequenceOf
 from bacpypes3.errors import *
 from bacpypes3.ipv4.app import ForeignApplication, NormalApplication
+from bacpypes3.local.analog import AnalogInputObject, AnalogValueObject
+from bacpypes3.local.binary import BinaryInputObject, BinaryValueObject
 from bacpypes3.local.device import DeviceObject
-from bacpypes3.local.binary import BinaryValueObject, BinaryInputObject
-from bacpypes3.local.analog import AnalogValueObject, AnalogInputObject
-from bacpypes3.object import get_vendor_info, MultiStateInputObject, MultiStateValueObject, CharacterStringValueObject
+from bacpypes3.object import (CharacterStringValueObject,
+                              MultiStateInputObject, MultiStateValueObject,
+                              get_vendor_info)
 from bacpypes3.pdu import Address
 from bacpypes3.primitivedata import (BitString, Date, Null, ObjectIdentifier,
-									 ObjectType, Time, Unsigned)
+                                     ObjectType, Time, Unsigned)
 from const import (device_properties_to_read, object_properties_to_read_once,
-				   object_properties_to_read_periodically)
+                   object_properties_to_read_periodically)
 
 KeyType = TypeVar("KeyType")
 
@@ -710,8 +713,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
 	async def do_WritePropertyRequest(self, apdu: WritePropertyRequest):
 		try:
-			# await super().do_WritePropertyRequest(apdu)
-
 			obj_id = apdu.objectIdentifier
 
 			obj = self.get_object_id(obj_id)
@@ -838,8 +839,17 @@ class ObjectManager():
 			self.data_write_task()
 		)
 
-
+	@backoff.on_exception(backoff.expo, Exception, max_time=60)
 	def process_entity_list(self, entity_list: list) -> None:
+		"""Fill bacnet object list"""
+		self.binary_val_entity_ids = []
+		self.binary_in_entity_ids = []
+		self.analog_val_entity_ids = []
+		self.analog_in_entity_ids = []
+		self.multi_state_val_entity_ids = []
+		self.multi_state_in_entity_ids = []
+		self.char_string_val_entity_ids = []
+		
 		for entity in entity_list:
 			split_entity = entity.split(".")
 			
@@ -884,7 +894,7 @@ class ObjectManager():
 			#	self.multi_state_in_entity_ids.append(entity) state
 				
 			else:
-				logging.error(f"Entity {entity} can't be turned into an object as it's not supported!")
+				logging.warning(f"Entity {entity} can't be turned into an object as it's not supported!")
 
 
 	def entity_to_obj(self, entity):
@@ -910,7 +920,7 @@ class ObjectManager():
 		
 	def fetch_entity_data(self, entity_id):
 		"""Fetch data from API."""
-		url = f"http://supervisor/core/api/states/{entity_id}" #http://supervisor/discovery post laat onze eigen service maken... GEBRUIKEN VOOR INTEGRATION?
+		url = f"http://supervisor/core/api/states/{entity_id}"
 		headers = {
 			"Authorization": f"Bearer {self.api_token}",
 			"content-type": "application/json",
@@ -1079,6 +1089,18 @@ class ObjectManager():
 			bacnetUnits = EngineeringUnits("kilowattHours")
 		elif unit == "W":
 			bacnetUnits = EngineeringUnits("watts")
+		elif unit == "km/h":
+			bacnetUnits = EngineeringUnits("kilometersPerHour")
+		elif unit == "m/s":
+			bacnetUnits = EngineeringUnits("metersPerSecond")	
+		elif unit == "mph":
+			bacnetUnits = EngineeringUnits("milesPerHour")
+		elif unit == "ft/s":
+			bacnetUnits = EngineeringUnits("feetPerSecond")
+		elif unit == "\u0057\u002f\u006d\u00b2":
+			bacnetUnits = EngineeringUnits("wattsPerSquareMeter")
+		elif unit == "lx":
+			bacnetUnits = EngineeringUnits("luxes")
 		else:
 			bacnetUnits = None
 		return bacnetUnits

@@ -1,12 +1,12 @@
 configuration:
   objectName:
-    name: Object Naam
+    name: Device Naam
     description: Naam van het BACnet apparaat op het netwerk.
   address:
     name: Interface IP
     description: BACnet/IP host adres. "auto" probeert je LAN IP automatisch op te halen. {interface IP}/24 format.
   objectIdentifier:
-    name: Object ID
+    name: Device ID
     description: De identifier die je apparaat mee krijgt.
   defaultPriority:
     name: BACnet write priority
@@ -35,5 +35,11 @@ configuration:
   updateInterval:
     name: Update Interval
     description: Tijd tussen periodieke updates in seconden.
+  subscriptions:
+    name: CoV abonnementen
+    description: Welke object-typen er op geabonneerd moeten worden.
+  entity_list:
+    name: Entities naar BACnet objecten
+    description: Home Assistant entity IDs die als BACnet objecten moeten gaan dienen. Lees de documentatie om te weten welke entity typen ondersteund worden en hoe de object identifiers bepaald worden.
 network:
   47808/udp: BACnet poort.

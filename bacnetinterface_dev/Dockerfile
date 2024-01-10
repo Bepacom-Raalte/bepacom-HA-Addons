@@ -18,7 +18,8 @@ RUN \
     'uvicorn<=0.25.0' \
     'websockets<=12.0' \
     'python-multipart<=0.0.6' \
-    'requests<=2.31.0 '
+    'requests<=2.31.0 ' \
+    'backoff<=2.2.1'
 
 WORKDIR /
 

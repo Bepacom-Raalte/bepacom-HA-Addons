@@ -101,3 +101,4 @@ printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLe
 cat /usr/bin/BACpypes.ini
 
 printf "$(bashio::addon.ingress_url)" > /usr/bin/ingress.ini
+printf "${__BASHIO_SUPERVISOR_TOKEN}" > /usr/bin/auth_token.ini

@@ -10,9 +10,10 @@ from typing import TypeVar
 
 import uvicorn
 import webAPI
-from BACnetIOHandler import BACnetIOHandler
+from BACnetIOHandler import BACnetIOHandler, ObjectManager
 from bacpypes3.argparse import INIArgumentParser
-from bacpypes3.basetypes import Null, ObjectType, PropertyIdentifier, Segmentation
+from bacpypes3.basetypes import (Null, ObjectType, PropertyIdentifier,
+                                 Segmentation)
 from bacpypes3.ipv4.app import Application
 from bacpypes3.local.device import DeviceObject
 from bacpypes3.pdu import Address, IPv4Address
@@ -25,7 +26,7 @@ KeyType = TypeVar("KeyType")
 def exception_handler(loop, context):
     """Handle uncaught exceptions"""
     try:
-        logging.error(f'An error occurred: {context["exception"]}')
+        logging.exception(f'An uncaught error occurred: {context["exception"]}')
     except:
         logging.error("Tried to log error, but something went horribly wrong!!!")
 
@@ -44,10 +45,11 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
         logging.warning(f"Updater task cancelled: {err}")
 
 
-async def writer_task(app: Application, write_queue: asyncio.Queue) -> None:
+async def writer_task(
+    app: Application, write_queue: asyncio.Queue, default_write_prio: int
+) -> None:
     """Task to handle the write queue"""
     try:
-        global default_write_prio
         while True:
             queue_result = await write_queue.get()
             device_id = queue_result[0]
@@ -57,8 +59,9 @@ async def writer_task(app: Application, write_queue: asyncio.Queue) -> None:
             array_index = queue_result[4]
             priority = queue_result[5]
 
-            if queue_result[5] is None:
-                queue_result[5] = default_write_prio
+            if not priority:
+                priority = default_write_prio
+
             await app.write_property(
                 address=app.dev_to_addr(device_id),
                 objid=object_id,
@@ -154,8 +157,6 @@ async def main():
 
     config.read("/usr/bin/BACpypes.ini")
 
-    global default_write_prio
-
     default_write_prio = config.get("BACpypes", "defaultPriority")
 
     loglevel = config.get("BACpypes", "loglevel")
@@ -178,9 +179,9 @@ async def main():
         maxApduLengthAccepted=int(config.get("BACpypes", "maxApduLengthAccepted")),
         maxSegmentsAccepted=int(config.get("BACpypes", "maxSegmentsAccepted")),
     )
-    
+
     foreign_ip = config.get("BACpypes", "foreignBBMD")
-    
+
     if foreign_ip == "-":
         foreign_ip = None
 
@@ -189,6 +190,14 @@ async def main():
         local_ip=ipv4_address,
         foreign_ip=foreign_ip,
         ttl=config.get("BACpypes", "foreignTTL"),
+        update_event=webAPI.events.val_updated_event,
+    )
+
+    with open("/usr/bin/auth_token.ini", "r") as auth_token:
+        token = auth_token.read()
+
+    object_manager = ObjectManager(
+        app=app, entity_list=options.get("entity_list"), api_token=token
     )
 
     app.asap.maxApduLengthAccepted = int(
@@ -216,7 +225,11 @@ async def main():
     )
 
     write_task = asyncio.create_task(
-        writer_task(app=app, write_queue=webAPI.events.write_queue)
+        writer_task(
+            app=app,
+            write_queue=webAPI.events.write_queue,
+            default_write_prio=default_write_prio,
+        )
     )
 
     sub_task = asyncio.create_task(
@@ -231,7 +244,6 @@ async def main():
     webAPI.bacnet_device_dict = app.bacnet_device_dict
     webAPI.who_is_func = app.who_is
     webAPI.i_am_func = app.i_am
-    webAPI.events.val_updated_event = app.update_event
     webAPI.events.startup_complete_event = app.startup_complete
 
     if loglevel == "DEBUG":
