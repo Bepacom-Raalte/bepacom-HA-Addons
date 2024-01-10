@@ -84,7 +84,7 @@ async def lifespan(app: FastAPI):
 
 
 description = """
-The Bepacom EcoPanel BACnet/IP Interface API
+# Bepacom BACnet/IP Interface API
 
 ## Use
 
@@ -130,9 +130,9 @@ def get_ingress_url() -> str:
 
 app = FastAPI(
     lifespan=lifespan,
-    title="Bepacom EcoPanel BACnet/IP Interface API",
+    title="Bepacom BACnet/IP Interface API",
     description=description,
-    version="1.2.0",
+    version="1.3.0",
     contact={
         "name": "Bepacom B.V. Contact",
         "url": "https://www.bepacom.nl/contact/",

@@ -1,8 +1,6 @@
 ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
-COPY requirements.txt /usr/src/requirements.txt
-
 # Install requirements for add-on
 WORKDIR /usr/src
 RUN \
@@ -15,11 +13,13 @@ RUN \
   && pip3 install --no-cache-dir --upgrade pip \
     'bacpypes3<=0.0.86' \
     'pydantic<=1.10.12' \
-    'fastapi<=0.104.1' \
+    'fastapi<=0.108.0' \
     'jinja2<=3.1.2' \
-    'uvicorn<=0.24.0' \
+    'uvicorn<=0.25.0' \
     'websockets<=12.0' \
-    'python-multipart<=0.0.6'
+    'python-multipart<=0.0.6' \
+    'requests<=2.31.0 ' \
+    'backoff<=2.2.1'
 
 WORKDIR /
 

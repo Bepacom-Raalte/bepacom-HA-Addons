@@ -45,6 +45,7 @@ object_properties_to_read_once: list = [
     PropertyIdentifier("activeText"),
     PropertyIdentifier("inactiveText"),
     PropertyIdentifier("polarity"),
+    PropertyIdentifier("relinquishDefault"),
 ]
 
 object_properties_to_read_periodically: list = [
