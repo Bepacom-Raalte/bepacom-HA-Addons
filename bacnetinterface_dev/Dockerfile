@@ -12,7 +12,7 @@ RUN \
     py3-wheel \
   && pip3 install --no-cache-dir --upgrade pip \
     'bacpypes3<=0.0.86' \
-    'pydantic<=1.10.12' \
+    'pydantic<=2.5.3' \
     'fastapi<=0.108.0' \
     'jinja2<=3.1.2' \
     'uvicorn<=0.25.0' \
