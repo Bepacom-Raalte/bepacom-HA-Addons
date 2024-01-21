@@ -2,6 +2,7 @@
 import asyncio
 import codecs
 import csv
+from email.policy import default
 import json
 import logging
 import random
@@ -574,7 +575,7 @@ async def write_property(
     deviceid: str = Path(description="device:instance"),
     objectid: str = Path(description="object:instance"),
     property: str = Path(description="property"),
-    value: str | int | float = Query(description="Property value"),
+    value: str | int | float | None = Query(default=None, description="Property value"),
     priority: int | None = Query(default=None, description="Write priority"),
 ):
     """Write to a property of an object from a device."""
@@ -585,7 +586,8 @@ async def write_property(
         deviceid = ObjectIdentifier(deviceid)
         objectid = ObjectIdentifier(objectid)
         property = PropertyIdentifier(property)
-    except Exception:
+    except Exception as err:
+        logging.error(f"Error while trying to make a write request: {err}")
         return status.HTTP_400_BAD_REQUEST
 
     await events.write_queue.put([deviceid, objectid, property, value, None, priority])

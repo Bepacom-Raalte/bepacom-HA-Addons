@@ -869,8 +869,8 @@ class ObjectManager():
 
 				if isinstance(state, (int, float, complex)):
 					self.analog_in_entity_ids.append(entity)
-				elif state == "unavailable":
-					logging.warning(f"Assuming {entity} is analogInput as it's currently unavailable!'")
+				elif state == "unavailable" and entity["attributes"].get("unit_of_measurement"):
+					logging.warning(f"Assuming {entity} is analogInput as it's currently unavailable and has units!'")
 					self.analog_in_entity_ids.append(entity)
 				else:
 					self.char_string_val_entity_ids.append(entity)

@@ -1,5 +1,19 @@
 ﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+
+# 1.3.1
+21/01/2024
+
+## Changed
+
+- Apiv2 write now allows for empty value. Can be used as a release when writing with priorities.
+- Based on whether an entity has units when it's unavailable, the add-on will turn the entity into an analog or character object.
+
+## Dependencies
+
+- ⬆️ Bumped base-python image to version v13.0.1.
+
+
 # 1.3.0
 09/01/2024
 
