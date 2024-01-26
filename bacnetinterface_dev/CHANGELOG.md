@@ -2,11 +2,16 @@
 
 
 # 1.3.1
-21/01/2024
+26/01/2024
+
+## Added
+
+- Add-on port for the integration can now be changed. _Please update your integration with the latest version (0.0.6) from GitHub!_
 
 ## Changed
 
 - Apiv2 write now allows for empty value. Can be used as a release when writing with priorities.
+- Web UI page now uses apiv2 for writing. This allows for sending with priorities.
 - Based on whether an entity has units when it's unavailable, the add-on will turn the entity into an analog or character object.
 
 ## Dependencies

@@ -66,6 +66,9 @@
                 <label for="value">Value:</label>
                 <input type="text" id="value" name="value" title="Value to write to property.">
                 <br>
+                <label for="priority">Priority:</label>
+                <input type="text" id="priority" name="priority" title="Priority to write with.">
+                <br>
                 <input type="button" value="Write" onclick="submitForm()" title="Send Write Request.">
             </form>
         </div>
@@ -77,6 +80,13 @@
         var refreshing = false; // flag to check if the page is already
         var devicedict = null;
 
+        fetch(API_URL)
+            .then((response) => response.json())
+            .then((data) => {
+                devicedict = data;
+                updateProperties(devicedict)
+                fillOptions()
+            });
 
         function command(text) {
             if (refreshing) return; // if the page is already refreshing, return and don't call the function again
@@ -110,14 +120,14 @@
         ws.onmessage = function (event) {
             event.JSON
             devicedict = JSON.parse(event.data)
-            fillOptions()
             updateProperties(devicedict)
+            fillOptions()
         }
 
-        function updateProperties (devicedict) {
-            for (let device in devicedict){
-                for (let object in devicedict[device]){
-                    for (let property in devicedict[device][object]){
+        function updateProperties(devicedict) {
+            for (let device in devicedict) {
+                for (let object in devicedict[device]) {
+                    for (let property in devicedict[device][object]) {
                         propertyItem = document.getElementById(device + "-" + object + "-" + property);
                         propertyItem.textContent = property + " : " + devicedict[device][object][property]
                     }
@@ -126,11 +136,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", function () {
-            updateCheckboxes()
-
-
-            //call the updateTable function every 2 seconds
-            //setInterval(updateCheckboxes, 2000);
+            updateCheckboxes();
         });
         let devices = [];
         let objects = [];
@@ -195,7 +201,7 @@
             // Add event listeners to make the list collapsible
             const checkboxes = document.querySelectorAll("input[type='checkbox']");
             checkboxes.forEach((checkbox) => {
-                checkbox.addEventListener("change", function() {
+                checkbox.addEventListener("change", function () {
                     const listItem = this.parentNode;
                     const childList = listItem.querySelector("ul");
                     if (childList) {
@@ -206,7 +212,6 @@
         }
 
         function cool(event) {
-
 
             var checkbox = document.getElementById(event.target.id);
             //console.log(checkbox.children)
@@ -220,20 +225,17 @@
             for (var i = 0; i < children.length; i++) {
                 //console.log(children[i])
                 if (children[i].id === dev) {
-                        // Skip the checkbox element
-                        return; // Continue to the next iteration
-                    }
+                    // Skip the checkbox element
+                    return; // Continue to the next iteration
+                }
 
-                    if (checkbox.checked) {
-                      children[i].style.display = 'block';  // show the nested lists
-                    } else {
-                      children[i].style.display = 'none';   // hide the nested lists
-                    }
+                if (checkbox.checked) {
+                    children[i].style.display = 'block';  // show the nested lists
+                } else {
+                    children[i].style.display = 'none';   // hide the nested lists
                 }
             }
-
-
-
+        }
 
         function cool2(device, object) {
 
@@ -250,16 +252,16 @@
 
             console.log(nestedLi);
 
-            nestedLi.forEach(function(li) {
+            nestedLi.forEach(function (li) {
                 if (li.id === id) {
                     // Skip the checkbox element
                     return; // Continue to the next iteration
                 }
 
                 if (checkbox.checked) {
-                  li.style.display = 'block';  // show the nested lists
+                    li.style.display = 'block';  // show the nested lists
                 } else {
-                  li.style.display = 'none';   // hide the nested lists
+                    li.style.display = 'none';   // hide the nested lists
                 }
             });
         }
@@ -291,6 +293,8 @@
                     }
                 }
             }
+            console.log(selectDevice)
+            console.log(selectObject)
         }
 
         function submitForm() {
@@ -298,7 +302,21 @@
             let object = document.getElementById("object").value;
             let property = document.getElementById("property").value;
             let value = document.getElementById("value").value;
-            let url = `./apiv1/${device}/${object}?${property}=${value}`;
+            let priority = document.getElementById("priority").value;
+            let url = `./apiv2/${device}/${object}/${property}?`;
+
+            if (value) {
+                url += `value=${value}`;
+            }
+
+            if (priority) {
+                if (value) {
+                    url += `&priority=${priority}`;
+                } else {
+                    url += `priority=${priority}`;
+                }
+            }
+
             let data = {
                 property: value
             };
@@ -308,10 +326,14 @@
                 headers: {
                     "Content-Type": "application/json"
                 }
-            }).then(response => response.json()).then(data => {
-                console.log(data);
+            }).then((response) => {
+                if (response.status == 200) {
+                    alert("Write request is being processed!")
+
+                } else {
+                    alert("Error during parsing of the write inputs!")
+                }
             });
-            alert("Write Request Processing! See logs whether it's successful")
         }
     </script>
 </body>

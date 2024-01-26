@@ -196,6 +196,16 @@ Identifier of the vendor of the interface. As we don't have an official identifi
 Segmentation type of the add-on. Recommended to leave on SegmentedBoth for the best compatibility.
 
 
+## Problems
+
+### I can't start the add-on when my Node-Red is also running
+
+If you're using Node-Red for BACnet applications, chances are very high it's also using the BACnet port 47808.
+This is causing a conflict between te add-ons, as we need the 47808 port as well for our BACnet/IP duties.
+Removing the BACnet part from your Node-Red should solve this issue. 
+If this doesn't work, please check the webserver port isn't conflicting with another add-on either.
+
+
 ## Credits
 
 **Bepacom B.V. Raalte**

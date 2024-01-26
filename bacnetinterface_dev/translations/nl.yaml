@@ -43,3 +43,4 @@ configuration:
     description: Home Assistant entity IDs die als BACnet objecten moeten gaan dienen. Lees de documentatie om te weten welke entity typen ondersteund worden en hoe de object identifiers bepaald worden.
 network:
   47808/udp: BACnet poort.
+  80/tcp: Poort waarmee de integration moet verbinden. Wanneer je deze poort leeg laat, moet de integration met poort 8099 verbinden.

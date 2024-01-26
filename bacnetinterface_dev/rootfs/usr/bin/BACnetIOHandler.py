@@ -1,3 +1,4 @@
+"""BACnet handler classes for BACnet add-on."""
 import asyncio
 import json
 import logging

@@ -2,7 +2,6 @@
 import asyncio
 import codecs
 import csv
-from email.policy import default
 import json
 import logging
 import random
@@ -10,6 +9,7 @@ import sys
 import threading
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from email.policy import default
 from io import StringIO
 from pathlib import Path
 from queue import Queue
@@ -133,7 +133,7 @@ app = FastAPI(
     lifespan=lifespan,
     title="Bepacom BACnet/IP Interface API",
     description=description,
-    version="1.3.0",
+    version="1.3.1",
     contact={
         "name": "Bepacom B.V. Contact",
         "url": "https://www.bepacom.nl/contact/",
@@ -574,7 +574,7 @@ async def websocket_writer(websocket: WebSocket):
 async def write_property(
     deviceid: str = Path(description="device:instance"),
     objectid: str = Path(description="object:instance"),
-    property: str = Path(description="property"),
+    property: str = Path(description="property, for example presentValue"),
     value: str | int | float | None = Query(default=None, description="Property value"),
     priority: int | None = Query(default=None, description="Write priority"),
 ):

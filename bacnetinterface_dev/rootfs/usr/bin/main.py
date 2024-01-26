@@ -49,46 +49,56 @@ async def writer_task(
     app: Application, write_queue: asyncio.Queue, default_write_prio: int
 ) -> None:
     """Task to handle the write queue"""
-    try:
-        while True:
-            queue_result = await write_queue.get()
-            device_id = queue_result[0]
-            object_id = queue_result[1]
-            property_id = queue_result[2]
-            property_val = queue_result[3]
-            array_index = queue_result[4]
-            priority = queue_result[5]
+    # try:
+    while True:
+        queue_result = await write_queue.get()
+        device_id = queue_result[0]
+        object_id = queue_result[1]
+        property_id = queue_result[2]
+        property_val = queue_result[3]
+        array_index = queue_result[4]
+        priority = queue_result[5]
 
-            if not priority:
-                priority = default_write_prio
+        if not priority:
+            priority = default_write_prio
 
-            await app.write_property(
-                address=app.dev_to_addr(device_id),
-                objid=object_id,
-                prop=property_id,
-                value=property_val,
-                array_index=array_index,
-                priority=priority,
-            )
-            read = await app.read_property(
-                address=app.dev_to_addr(device_id),
-                objid=object_id,
-                prop=property_id,
-                array_index=array_index,
-            )
-            logging.info(f"Write result: {read}")
+        if property_val == None:
+            property_val = Null("null")
 
-            app.dict_updater(
-                device_identifier=device_id,
-                object_identifier=object_id,
-                property_identifier=property_id,
-                property_value=property_val,
-            )
+        logging.debug(
+            f"Writing: {device_id}, {object_id}, {property_id}, {property_val}, {priority}"
+        )
 
-    except Exception as err:
+        response = await app.write_property(
+            address=app.dev_to_addr(device_id),
+            objid=object_id,
+            prop=property_id,
+            value=property_val,
+            array_index=array_index,
+            priority=priority,
+        )
+
+        logging.info(f"response: {response if response else 'Acknowledged'}")
+
+        read = await app.read_property(
+            address=app.dev_to_addr(device_id),
+            objid=object_id,
+            prop=property_id,
+            array_index=array_index,
+        )
+        logging.info(f"Write result: {read}")
+
+        app.dict_updater(
+            device_identifier=device_id,
+            object_identifier=object_id,
+            property_identifier=property_id,
+            property_value=property_val,
+        )
+
+    """except Exception as err:
         logging.error(f" Writer task error: {err}")
     except asyncio.CancelledError as err:
-        logging.warning(f"Writer task cancelled: {err}")
+        logging.warning(f"Writer task cancelled: {err}")"""
 
 
 async def subscribe_handler_task(app: Application, sub_queue: asyncio.Queue) -> None:
