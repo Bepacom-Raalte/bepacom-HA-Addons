@@ -195,6 +195,11 @@ Identifier of the vendor of the interface. As we don't have an official identifi
 ### Option: `Segmentation Supported`
 Segmentation type of the add-on. Recommended to leave on SegmentedBoth for the best compatibility.
 
+### Network port: `80/TCP`
+Port which the integration should connect to. If you leave this empty, the integration should connect to port 8099.
+
+### Network port: `47808/UDP`
+BACnet/IP port. The add-on seems to work if you leave this empty. Feel free to set it to empty if opening it causes issues.
 
 ## Problems
 
