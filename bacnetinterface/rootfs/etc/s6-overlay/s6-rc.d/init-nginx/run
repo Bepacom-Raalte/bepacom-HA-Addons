@@ -14,14 +14,18 @@ ip_array=()
 
 for address in $ip_addresses
 do
-    ip_array+=("$address")
+    ip_address="${address%/*}"
+    subnet_mask="${address#*/}"
+    ip_array+=("$ip_address")
 done
 
-bashio::log.info "Allowed interfaces for NGINX: ${ip_array[@]}"
+bashio::log.info "Allowed addresses for NGINX: ${ip_array[@]}"
 
-# Generate Ingress configuration
-tempio \
+bashio::var.json \
+    port "$(bashio::addon.port 80)" \
+    ip_array "^$(printf '%s\n' "${ip_array[@]}" | jq -R . | jq -s .)" \
+    | tempio \
         -template /etc/nginx/templates/ingress.gtpl \
         -out /etc/nginx/servers/ingress.conf
 
-bashio::log.info "Generated ingress configuration!"
+bashio::log.info "Generated ingress configuration successfully!"

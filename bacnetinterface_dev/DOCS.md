@@ -43,6 +43,7 @@ sensor:
   - platform: rest
     name: Humidity
     state_class: measurement
+    unit_of_measurement: "%"
     method: GET
     resource: http://97683af0-bacnetinterface:8099/apiv1/device:100/analogInput:1/presentValue
 '''

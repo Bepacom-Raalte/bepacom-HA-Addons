@@ -62,7 +62,14 @@ async def writer_task(
             if not priority:
                 priority = default_write_prio
 
-            await app.write_property(
+            if property_val == None:
+                property_val = Null("null")
+
+            logging.debug(
+                f"Writing: {device_id}, {object_id}, {property_id}, {property_val}, {priority}"
+            )
+
+            response = await app.write_property(
                 address=app.dev_to_addr(device_id),
                 objid=object_id,
                 prop=property_id,
@@ -70,6 +77,9 @@ async def writer_task(
                 array_index=array_index,
                 priority=priority,
             )
+
+            logging.info(f"response: {response if response else 'Acknowledged'}")
+
             read = await app.read_property(
                 address=app.dev_to_addr(device_id),
                 objid=object_id,

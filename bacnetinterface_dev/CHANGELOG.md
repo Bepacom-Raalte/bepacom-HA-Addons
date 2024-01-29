@@ -2,11 +2,11 @@
 
 
 # 1.3.1
-26/01/2024
+29/01/2024
 
 ## Added
 
-- Add-on port for the integration can now be changed. _Please update your integration with the latest version (0.0.6) from GitHub!_
+- Add-on port for the integration can now be changed. _Please update your integration with the latest version (0.1.0) from GitHub!_
 
 ## Changed
 

@@ -1,7 +1,10 @@
 server {
     # listen on port
     listen 8099;
-    listen 80;
+    {{if .port}}
+        listen {{.port}};
+    {{end}}
+
 
     allow 172.30.32.0/24;
     allow 127.0.0.0/24;
@@ -10,7 +13,7 @@ server {
         allow {{ . }};
     {{ end }}
 
-    # deny all;
+    deny all;
 
     # forward request to backend
     location / {

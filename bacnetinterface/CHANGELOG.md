@@ -1,5 +1,23 @@
 ﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.3.1
+29/01/2024
+
+## Added
+
+- Add-on port for the integration can now be changed. _Please update your integration with the latest version (0.1.0) from GitHub!_
+
+## Changed
+
+- Apiv2 write now allows for empty value. Can be used as a release when writing with priorities.
+- Web UI page now uses apiv2 for writing. This allows for sending with priorities.
+- Based on whether an entity has units when it's unavailable, the add-on will turn the entity into an analog or character object.
+
+## Dependencies
+
+- ⬆️ Bumped base-python image to version v13.0.1.
+
+
 # 1.3.0
 09/01/2024
 
@@ -12,6 +30,7 @@ Happy new year everyone!
 - "No segmentation supported" way for reading object list added.
 - maxApduLenghtAccepted and maxSegmentsAccepted back in configuration as unused options.
 - Added name and description to the Subscriptions configuration option. 
+- WebUI components like .css should now be available when served through https.
 
 ## Fixed
 

@@ -16,11 +16,37 @@ Created and maintained by [Bepacom B.V. Raalte](https://www.bepacom.nl/)
 
    [![Open this add-on in your Home Assistant instance.][addon-badge]][addon]
 
-1. Click the "Install" button to install the add-on.
-1. Start the "Bepacom BACnet/IP Interface" add-on.
-1. Check the logs of the "Bepacom EcoPanel BACnet/IP Interface" add-on to see if everything went
+2. Click the "Install" button to install the add-on.
+3. Start the "Bepacom BACnet/IP Interface" add-on.
+4. Check the logs of the "Bepacom EcoPanel BACnet/IP Interface" add-on to see if everything went
    well.
-1. Now your Home Assistant host is a virtual BACnet/IP device!
+5. Now your Home Assistant host is a virtual BACnet/IP device!
+
+
+## Usage
+
+After installing the add-on, there are 2 ways you can turn data into Home Assistant entities.
+
+### Integration
+
+The first and recommended way is to use the accompanying integration made by us. This is the [Bepacom BACnet/IP Interface integration](https://github.com/Bepacom-Raalte/bepacom-custom_components/tree/main/custom_components/bacnet_interface).
+Installation instructions are included in the README.md file. The installation is straightforward, like any other custom integration.
+
+### RESTful Sensor
+
+The second way to use this add-on to get data into Home Assistant is through the [RESTful Sensor](https://www.home-assistant.io/integrations/sensor.rest/) or through [RESTful](https://www.home-assistant.io/integrations/rest).
+These are Home Assistant native integrations that will do requests to API endpoints. This has to be configured in your Configuration.yaml file.
+An example of setting up one RESTful sensor:
+
+'''
+sensor:
+  - platform: rest
+    name: Humidity
+    state_class: measurement
+    unit_of_measurement: "%"
+    method: GET
+    resource: http://97683af0-bacnetinterface:8099/apiv1/device:100/analogInput:1/presentValue
+'''
 
 
 ## API Points
@@ -194,6 +220,21 @@ Identifier of the vendor of the interface. As we don't have an official identifi
 
 ### Option: `Segmentation Supported`
 Segmentation type of the add-on. Recommended to leave on SegmentedBoth for the best compatibility.
+
+### Network port: `80/TCP`
+Port which the integration should connect to. If you leave this empty, the integration should connect to port 8099.
+
+### Network port: `47808/UDP`
+BACnet/IP port. The add-on seems to work if you leave this empty. Feel free to set it to empty if opening it causes issues.
+
+## Problems
+
+### I can't start the add-on when my Node-Red is also running
+
+If you're using Node-Red for BACnet applications, chances are very high it's also using the BACnet port 47808.
+This is causing a conflict between te add-ons, as we need the 47808 port as well for our BACnet/IP duties.
+Removing the BACnet part from your Node-Red should solve this issue. 
+If this doesn't work, please check the webserver port isn't conflicting with another add-on either.
 
 
 ## Credits

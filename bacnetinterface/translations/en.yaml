@@ -43,3 +43,4 @@ configuration:
     description: Home Assistant entity IDs that will be turned into BACnet objects. Please read the documentation to see which entity types are supported and how BACnet object identifiers are determined.
 network:
   47808/udp: BACnet port.
+  80/tcp: Port which the integration should connect to. If you leave this empty, the integration should connect to port 8099.
