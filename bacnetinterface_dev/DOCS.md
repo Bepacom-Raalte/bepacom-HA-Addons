@@ -38,7 +38,7 @@ The second way to use this add-on to get data into Home Assistant is through the
 These are Home Assistant native integrations that will do requests to API endpoints. This has to be configured in your Configuration.yaml file.
 An example of setting up one RESTful sensor:
 
-'''
+```
 sensor:
   - platform: rest
     name: Humidity
@@ -46,7 +46,7 @@ sensor:
     unit_of_measurement: "%"
     method: GET
     resource: http://97683af0-bacnetinterface:8099/apiv1/device:100/analogInput:1/presentValue
-'''
+```
 
 
 ## API Points
