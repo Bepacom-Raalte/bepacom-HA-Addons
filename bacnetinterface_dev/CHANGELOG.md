@@ -1,5 +1,18 @@
 ﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.3.2
+01/02/2024
+
+_You can add our integration repository now on HACS as custom repository!_
+
+## Added
+
+- serialNumber property now gets read from device.
+
+## Fixed
+
+- Fixed apiv1 not doing anything with an empty presentValue.
+
 
 # 1.3.1
 29/01/2024

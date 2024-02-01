@@ -234,6 +234,7 @@ BACnet/IP port. The add-on seems to work if you leave this empty. Feel free to s
 If you're using Node-Red for BACnet applications, chances are very high it's also using the BACnet port 47808.
 This is causing a conflict between te add-ons, as we need the 47808 port as well for our BACnet/IP duties.
 Removing the BACnet part from your Node-Red should solve this issue. 
+You could also try to remove all ports to see if this works, but this hasn't been tested.
 If this doesn't work, please check the webserver port isn't conflicting with another add-on either.
 
 
