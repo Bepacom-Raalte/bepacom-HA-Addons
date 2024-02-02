@@ -11,6 +11,7 @@ from typing import TypeVar
 import uvicorn
 import webAPI
 from BACnetIOHandler import BACnetIOHandler, ObjectManager
+from bacpypes3.apdu import AbortPDU, ErrorPDU, RejectPDU
 from bacpypes3.argparse import INIArgumentParser
 from bacpypes3.basetypes import (Null, ObjectType, PropertyIdentifier,
                                  Segmentation)
@@ -69,14 +70,21 @@ async def writer_task(
                 f"Writing: {device_id}, {object_id}, {property_id}, {property_val}, {priority}"
             )
 
-            response = await app.write_property(
-                address=app.dev_to_addr(device_id),
-                objid=object_id,
-                prop=property_id,
-                value=property_val,
-                array_index=array_index,
-                priority=priority,
-            )
+            try:
+                response = await app.write_property(
+                    address=app.dev_to_addr(device_id),
+                    objid=object_id,
+                    prop=property_id,
+                    value=property_val,
+                    array_index=array_index,
+                    priority=priority,
+                )
+            except (AbortPDU, ErrorPDU, RejectPDU) as err:
+                logging.error(f"response: {err}")
+                continue
+            except Exception as err:
+                logging.error(f"response: {err}")
+                continue
 
             logging.info(f"response: {response if response else 'Acknowledged'}")
 

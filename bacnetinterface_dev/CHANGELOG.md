@@ -12,6 +12,7 @@ _You can add our integration repository now on HACS as custom repository!_
 ## Fixed
 
 - Fixed apiv1 not doing anything with an empty presentValue.
+- Fixed write error not being caught causing the writer task to fail.
 
 
 # 1.3.1
