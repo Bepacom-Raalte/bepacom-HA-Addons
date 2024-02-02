@@ -408,27 +408,26 @@ async def write_property(
         if covIncrement != None:
             property_dict.update({"covIncrement": covIncrement})
 
-        for key, val in property_dict.items():
-            await events.write_queue.put(
-                [
-                    ObjectIdentifier(deviceid),
-                    ObjectIdentifier(objectid),
-                    PropertyIdentifier(key),
-                    val,
-                    None,
-                    None,
-                ]
-            )
+        if property_dict:
+            for key, val in property_dict.items():
+                await events.write_queue.put(
+                    [
+                        ObjectIdentifier(deviceid),
+                        ObjectIdentifier(objectid),
+                        PropertyIdentifier(key),
+                        val,
+                        None,
+                        None,
+                    ]
+                )
         else:
-            write_req = (
-                ObjectIdentifier(deviceid),
-                ObjectIdentifier(objectid),
-                PropertyIdentifier("presentValue"),
-                None,
-                None,
-                None,
-            )
-
+            write_req = (ObjectIdentifier(deviceid),
+                         ObjectIdentifier(objectid),
+                         PropertyIdentifier("presentValue"),
+                         None,
+                         None,
+                         None,
+                         )
             await events.write_queue.put(write_req)
 
         logging.info("Successfully put in Write Queue")
