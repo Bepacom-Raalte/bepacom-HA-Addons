@@ -12,7 +12,6 @@ arch:
   - i386
 init: false
 ingress: true
-# Mind to use webapp instead of webapp/... This causes ingress to misbehave.
 ingress_entry: webapp
 host_network: true
 hassio_api: true
@@ -21,7 +20,7 @@ panel_icon: mdi:router-wireless-settings
 map:
   - config:rw
 ports:
-  80/tcp: 80
+  80/tcp: null
   47808/udp: 47808
 ports_description:
   80/tcp: Default webserver port

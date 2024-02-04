@@ -13,11 +13,11 @@ RUN \
   && pip3 install --no-cache-dir --upgrade pip \
     'bacpypes3<=0.0.86' \
     'pydantic<=1.10.13' \
-    'fastapi<=0.108.0' \
-    'jinja2<=3.1.2' \
-    'uvicorn<=0.25.0' \
+    'fastapi<=0.109.1' \
+    'jinja2<=3.1.3' \
+    'uvicorn<=0.27.0' \
     'websockets<=12.0' \
-    'python-multipart<=0.0.6' \
+    'python-multipart<=0.0.7' \
     'requests<=2.31.0 ' \
     'backoff<=2.2.1'
 
