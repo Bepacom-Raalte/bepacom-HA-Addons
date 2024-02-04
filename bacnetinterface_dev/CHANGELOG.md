@@ -21,7 +21,7 @@ _You can add our integration repository now on HACS as custom repository!_
 ## Dependencies
 
 - ⬆️ Bumped base-python image to version v13.1.0.
-- ⬆️ Bumped FastAPI to version 0.109.1.
+- ⬆️ Bumped FastAPI to version 0.108.0.
 - ⬆️ Bumped python-multipart to version 0.0.7.
 - ⬆️ Bumped Jinja2 to version 3.1.3.
 - ⬆️ Bumped Uvicorn to version 0.27.0.
