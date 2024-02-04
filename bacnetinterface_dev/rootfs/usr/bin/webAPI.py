@@ -4,15 +4,10 @@ import codecs
 import csv
 import json
 import logging
-import random
-import sys
-import threading
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from email.policy import default
-from io import StringIO
 from pathlib import Path
-from queue import Queue
 from random import choice, randint
 from typing import Annotated, Any, Callable, Union
 
@@ -26,7 +21,6 @@ from fastapi import (FastAPI, File, Path, Query, Request, Response, UploadFile,
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from starlette.status import HTTP_200_OK
 
 # ===================================================
 # Global variables
@@ -421,13 +415,14 @@ async def write_property(
                     ]
                 )
         else:
-            write_req = (ObjectIdentifier(deviceid),
-                         ObjectIdentifier(objectid),
-                         PropertyIdentifier("presentValue"),
-                         None,
-                         None,
-                         None,
-                         )
+            write_req = (
+                ObjectIdentifier(deviceid),
+                ObjectIdentifier(objectid),
+                PropertyIdentifier("presentValue"),
+                None,
+                None,
+                None,
+            )
             await events.write_queue.put(write_req)
 
         logging.info("Successfully put in Write Queue")

@@ -4,8 +4,6 @@ import asyncio
 import configparser
 import json
 import logging
-import os
-from re import A, L
 from typing import TypeVar
 
 import uvicorn
