@@ -30,7 +30,7 @@ options:
   address: auto
   objectIdentifier: 420
   defaultPriority: 15
-  updateInterval: 60
+  updateInterval: 600
   subscriptions:
     analogInput: true
     analogOutput: true

@@ -4,15 +4,10 @@ import codecs
 import csv
 import json
 import logging
-import random
-import sys
-import threading
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from email.policy import default
-from io import StringIO
 from pathlib import Path
-from queue import Queue
 from random import choice, randint
 from typing import Annotated, Any, Callable, Union
 
@@ -133,7 +128,7 @@ app = FastAPI(
     lifespan=lifespan,
     title="Bepacom BACnet/IP Interface API",
     description=description,
-    version="1.3.1",
+    version="1.3.2",
     contact={
         "name": "Bepacom B.V. Contact",
         "url": "https://www.bepacom.nl/contact/",
@@ -144,7 +139,7 @@ app = FastAPI(
 
 app.mount(
     "/static",
-    StaticFiles(directory=str("/usr/bin/static")),
+    StaticFiles(directory="/usr/bin/static"),
     name="static",
 )
 
@@ -395,33 +390,47 @@ async def write_property(
     property_dict: dict[dict, Any] = {}
     global writeQueue
 
-    if objectName != None:
-        property_dict.update({"objectName": objectName})
-    if description != None:
-        property_dict.update({"description": description})
-    if presentValue != None:
-        property_dict.update({"presentValue": presentValue})
-    if outOfService != None:
-        property_dict.update({"outOfService": outOfService})
-    if covIncrement != None:
-        property_dict.update({"covIncrement": covIncrement})
+    try:
+        if objectName != None:
+            property_dict.update({"objectName": objectName})
+        if description != None:
+            property_dict.update({"description": description})
+        if presentValue != None:
+            property_dict.update({"presentValue": presentValue})
+        if outOfService != None:
+            property_dict.update({"outOfService": outOfService})
+        if covIncrement != None:
+            property_dict.update({"covIncrement": covIncrement})
 
-    if property_dict == {}:
-        return "No property values"
-
-    for key, val in property_dict.items():
-        await events.write_queue.put(
-            [
+        if property_dict:
+            for key, val in property_dict.items():
+                await events.write_queue.put(
+                    [
+                        ObjectIdentifier(deviceid),
+                        ObjectIdentifier(objectid),
+                        PropertyIdentifier(key),
+                        val,
+                        None,
+                        None,
+                    ]
+                )
+        else:
+            write_req = (
                 ObjectIdentifier(deviceid),
                 ObjectIdentifier(objectid),
-                PropertyIdentifier(key),
-                val,
+                PropertyIdentifier("presentValue"),
                 None,
                 None,
-            ]
-        )
+                None,
+            )
+            await events.write_queue.put(write_req)
 
-    return "Successfully put in Write Queue"
+        logging.info("Successfully put in Write Queue")
+        return status.HTTP_200_OK
+
+    except Exception as err:
+        logging.warning(f"Failed write request: {err}")
+        return status.HTTP_400_BAD_REQUEST
 
 
 @app.post("/apiv1/subscribe/{deviceid}/{objectid}", tags=["apiv1"])

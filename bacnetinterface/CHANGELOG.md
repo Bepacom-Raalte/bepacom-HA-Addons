@@ -1,5 +1,33 @@
 ﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.3.2
+01/02/2024
+
+_You can add our integration repository now on HACS as custom repository!_
+
+## Added
+
+- serialNumber device property now gets read from device.
+
+## Fixed
+
+- Fixed apiv1 not doing anything with an empty presentValue.
+- Fixed write error not being caught causing the writer task to fail.
+
+## Changed
+
+- Port 80 now disabled by default. Can be turned on if you want to use a custom port.
+- Update interval default value changed to 600.
+
+## Dependencies
+
+- ⬆️ Bumped base-python image to version v13.1.0.
+- ⬆️ Bumped FastAPI to version 0.108.0.
+- ⬆️ Bumped python-multipart to version 0.0.7.
+- ⬆️ Bumped Jinja2 to version 3.1.3.
+- ⬆️ Bumped Uvicorn to version 0.27.0.
+
+
 # 1.3.1
 29/01/2024
 

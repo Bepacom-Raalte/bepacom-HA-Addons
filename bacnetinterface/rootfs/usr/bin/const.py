@@ -23,6 +23,7 @@ device_properties_to_read: list = [
     PropertyIdentifier("maxApduLengthAccepted"),
     PropertyIdentifier("maxSegmentsAccepted"),
     PropertyIdentifier("objectList"),
+    PropertyIdentifier("serialNumber"),
 ]
 
 object_properties_to_read_once: list = [

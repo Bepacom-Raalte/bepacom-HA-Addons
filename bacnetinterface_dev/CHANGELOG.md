@@ -17,6 +17,7 @@ _You can add our integration repository now on HACS as custom repository!_
 ## Changed
 
 - Port 80 now disabled by default. Can be turned on if you want to use a custom port.
+- Update interval default value changed to 600.
 
 ## Dependencies
 
