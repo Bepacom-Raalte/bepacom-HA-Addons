@@ -4,6 +4,7 @@ import codecs
 import csv
 import json
 import logging
+import os
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from email.policy import default
@@ -128,7 +129,7 @@ app = FastAPI(
     lifespan=lifespan,
     title="Bepacom BACnet/IP Interface API",
     description=description,
-    version="1.3.2",
+    version="1.3.3",
     contact={
         "name": "Bepacom B.V. Contact",
         "url": "https://www.bepacom.nl/contact/",
@@ -137,13 +138,16 @@ app = FastAPI(
     openapi_tags=tags_metadata,
 )
 
+
+path_str = os.path.dirname(os.path.realpath(__file__))
+
 app.mount(
     "/static",
-    StaticFiles(directory="/usr/bin/static"),
+    StaticFiles(directory=f"{path_str}/static"),
     name="static",
 )
 
-templates = Jinja2Templates(directory="/usr/bin/templates")
+templates = Jinja2Templates(directory=f"{path_str}/templates")
 
 
 @app.get("/webapp", response_class=HTMLResponse, tags=["Webpages"])

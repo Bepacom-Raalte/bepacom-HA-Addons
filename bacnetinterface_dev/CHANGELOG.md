@@ -1,5 +1,18 @@
 ﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.3.3
+10/02/2024
+
+## Fixed
+
+- Fixed handling for devices that don't support ReadMultipleServices. Reading will now look at device property protocolServicesSupported.
+- Made configuration sequence more universal. This is irrelevant for users, but great for debugging.
+
+## Dependencies
+
+- ⬆️ Bumped base-python image to version v13.1.1.
+
+
 # 1.3.2
 01/02/2024
 
