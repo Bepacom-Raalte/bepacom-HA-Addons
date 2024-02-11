@@ -277,6 +277,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             logging.error(
                 f"Nack error reading device props: {device_identifier}: {err}"
             )
+            if "unrecognized-service" in str(err):
+                await self.read_device_props(apdu)
+            
         except AttributeError as err:
             logging.error(
                 f"Attribute error reading device props: {device_identifier}: {err}"
@@ -397,6 +400,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
             except ErrorRejectAbortNack as err:
                 logging.error(f"Nack error while reading object list: {obj_id}: {err}")
+                
+                if "unrecognized-service" in str(err):
+                    await self.read_object_list(device_identifier)
 
             except AssertionError as err:
                 logging.error(f"Assertion error for: {device_identifier}: {obj_id}")
@@ -483,7 +489,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 )
 
                 response = await self.read_property_multiple(
-                    address=self.dev_to_addr(ObjectIdentifier(dev_id)),
+                    address=self.dev_to_addr(ObjectIdentifier(device_identifier)),
                     parameter_list=parameter_list,
                 )
             except AbortPDU as err:
@@ -498,6 +504,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 logging.error(
                     f"Nack error reading objects periodically: {obj_id}: {err}"
                 )
+                if "unrecognized-service" in str(err):
+                    await self.read_multiple_object_list(device_identifier)
 
             except AttributeError as err:
                 logging.error(f"Attribute error: {obj_id}: {err}")
