@@ -314,18 +314,19 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
             except AbortPDU as err:
                 logging.error(
-                    f"Abort PDU error while reading device properties one by one: {device_identifier}: {err}"
+                    f"Abort PDU error while reading device properties one by one: {device_identifier}: {property_id} {err}"
                 )
             except ErrorRejectAbortNack as err:
                 logging.error(
-                    f"Nack error reading device props one by one: {device_identifier}: {err}"
+                    f"Nack error reading device props one by one: {device_identifier}: {property_id} {err}"
                 )
+                continue
             except AttributeError as err:
-                logging.error(f"Attribute error reading device props one by one: {err}")
+                logging.error(f"Attribute error reading device props one by one:{property_id} {err}")
             except ValueError as err:
-                logging.error(f"ValueError reading device props one by one: {err}")
+                logging.error(f"ValueError reading device props one by one:{property_id} {err}")
             except Exception as err:
-                logging.error(f"Exception reading device props one by one: {err}")
+                logging.error(f"Exception reading device props one by one:{property_id} {err}")
             else:
                 if response and response is not ErrorType:
                     self.dict_updater(
@@ -442,28 +443,30 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     continue
 
                 for property_id in object_properties_to_read_once:
-                    response = await self.read_property(
-                        address=self.dev_to_addr(device_identifier),
-                        objid=device_identifier,
-                        prop=property_id,
-                    )
-
-                    if response and response is not ErrorType:
-                        self.dict_updater(
-                            device_identifier=device_identifier,
-                            object_identifier=device_identifier,
-                            property_identifier=property_id,
-                            property_value=response,
+                    try: 
+                        response = await self.read_property(
+                            address=self.dev_to_addr(device_identifier),
+                            objid=device_identifier,
+                            prop=property_id,
                         )
+                    except AbortPDU as err:
+                        logging.error(
+                            f"Abort PDU error while reading device object list without segmentation: {device_identifier}: {err}"
+                        )
+                    except ErrorRejectAbortNack as err:
+                        logging.error(f"Nack error reading object list one by one: {device_identifier}: {err}")
+                        continue
+                    else:
+                        if response and response is not ErrorType:
+                            self.dict_updater(
+                                device_identifier=device_identifier,
+                                object_identifier=device_identifier,
+                                property_identifier=property_id,
+                                property_value=response,
+                            )
 
-        except AbortPDU as err:
-            logging.error(
-                f"Abort PDU error while reading device object list without segmentation: {device_identifier}: {err}"
-            )
-        except ErrorRejectAbortNack as err:
-            logging.error(f"Nack error: {device_identifier}: {err}")
         except AttributeError as err:
-            logging.error(f"Attribute error: {err}")
+            logging.error(f"Attribute error reading object list one by one: {device_identifier}: {err}")
 
     async def read_multiple_objects_periodically(self, device_identifier):
         """Read objects after a set time."""
@@ -540,14 +543,23 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             ):
                 continue
 
-            try:
-                for property_id in object_properties_to_read_periodically:
+            
+            for property_id in object_properties_to_read_periodically:
+                try:    
                     response = await self.read_property(
                         address=self.dev_to_addr(device_identifier),
                         objid=obj_id,
                         prop=property_id,
                     )
+                except AbortPDU as err:
+                    logging.error(f"Abort PDU Errorreading objects one by one periodically: {obj_id}: {err}")
 
+                except ErrorRejectAbortNack as err:
+                    logging.error(f"Nack error reading objects one by one periodically: {device_identifier} {obj_id}: {err}")
+                    continue
+                except AttributeError as err:
+                    logging.error(f"Attribute error: {obj_id}: {err}")
+                else:
                     if response:
                         self.dict_updater(
                             device_identifier=device_identifier,
@@ -555,14 +567,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                             property_identifier=property_id,
                             property_value=response,
                         )
-            except AbortPDU as err:
-                logging.error(f"Abort PDU Error: {obj_id}: {err}")
-
-            except ErrorRejectAbortNack as err:
-                logging.error(f"Nack error: {obj_id}: {err}")
-
-            except AttributeError as err:
-                logging.error(f"Attribute error: {obj_id}: {err}")
 
     async def subscribe_object_list(self, device_identifier):
         """ "Subscribe to selected objects."""  # Maybe make a blacklist to exclude objects we dont want to subscribe to.
