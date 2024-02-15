@@ -464,12 +464,12 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 					try: 
 						response = await self.read_property(
 							address=self.dev_to_addr(device_identifier),
-							objid=device_identifier,
+							objid=obj_id,
 							prop=property_id,
 						)
 					except AbortPDU as err:
 						logging.error(
-							f"Abort PDU error while reading device object list one by one: {device_identifier} {obj_id} {property_id}: {err}"
+							f"Abort PDU while reading device object list one by one: {device_identifier} {obj_id} {property_id}: {err}"
 						)
 					except ErrorPDU as err:
 						logging.error(f"Error PDU reading object list one by one: {device_identifier} {obj_id} {property_id}: {err}")
@@ -481,7 +481,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 						if response and response is not ErrorType:
 							self.dict_updater(
 								device_identifier=device_identifier,
-								object_identifier=device_identifier,
+								object_identifier=obj_id,
 								property_identifier=property_id,
 								property_value=response,
 							)
