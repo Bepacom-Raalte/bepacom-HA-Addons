@@ -220,14 +220,11 @@ def get_configuration() -> tuple:
 
     loglevel = config.get("BACpypes", "loglevel", fallback="INFO")
 
-    try: 
-        ipv4_address = IPv4Address(
-            config.get(
-                "BACpypes", "address", fallback=None
-            )
-        )
-    except Exception as err: 
+    ipv4_address = config.get("BACpypes", "address", fallback=None)
+    if not ipv4_address:
         ipv4_address = input("BACnet IP Address as *x.x.x.x/24*: ")
+
+    ipv4_address = IPv4Address(ipv4_address)
 
     object_identifier = config.get("BACpypes", "objectIdentifier", fallback=60)
 
