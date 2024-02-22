@@ -5,19 +5,16 @@ import configparser
 import json
 import logging
 import os
-import socket
 from typing import TypeVar
 
 import uvicorn
 import webAPI
 from BACnetIOHandler import BACnetIOHandler, ObjectManager
 from bacpypes3.apdu import AbortPDU, ErrorPDU, RejectPDU
-from bacpypes3.argparse import INIArgumentParser
-from bacpypes3.basetypes import (Null, ObjectType, PropertyIdentifier,
-                                 Segmentation)
+from bacpypes3.basetypes import Null, ObjectType, Segmentation
 from bacpypes3.ipv4.app import Application
 from bacpypes3.local.device import DeviceObject
-from bacpypes3.pdu import Address, IPv4Address
+from bacpypes3.pdu import IPv4Address
 from bacpypes3.primitivedata import ObjectIdentifier
 from webAPI import app as fastapi_app
 
@@ -181,7 +178,6 @@ async def unsubscribe_handler_task(
 
 
 def get_configuration() -> tuple:
-
     if os.name == "nt":
         config_file = "BACpypes.ini"
     else:
@@ -192,7 +188,6 @@ def get_configuration() -> tuple:
     try:
         config.read(config_file)
     except Exception as err:
-
         logging.warning(f"No BACpypes.ini detected! {err}")
 
     try:
@@ -221,29 +216,24 @@ def get_configuration() -> tuple:
         logging.warning(f"No Token received! {err}")
         token = None
 
-    try:
-        # fallback_addr = socket.gethostbyname(socket.gethostname())
-        fallback_addr = "192.168.2.144"
-    except Exception as err:
-        logging.warning(f"Failed to get IP through Python! {err}")
-        fallback_addr = "0.0.0.0"
-
     default_write_prio = config.get("BACpypes", "defaultPriority", fallback=15)
 
-    loglevel = config.get("BACpypes", "loglevel", fallback="WARNING")
+    loglevel = config.get("BACpypes", "loglevel", fallback="INFO")
 
     ipv4_address = IPv4Address(
-        config.get("BACpypes", "address", fallback=f"{fallback_addr}/24")
+        config.get(
+            "BACpypes", "address", fallback=input("BACnet IP Address as *x.x.x.x/24*: ")
+        )
     )
 
-    object_identifier = config.get("BACpypes", "objectIdentifier", fallback=420)
+    object_identifier = config.get("BACpypes", "objectIdentifier", fallback=60)
 
     object_name = config.get("BACpypes", "objectName", fallback="EcoPanel")
 
     vendor_id = config.get("BACpypes", "vendorIdentifier", fallback=15)
 
     segmentation_supported = config.get(
-        "BACpypes", "segmentation", fallback="segmentedBoth"
+        "BACpypes", "segmentation", fallback=Segmentation.noSegmentation
     )
 
     max_apdu = config.get("BACpypes", "maxApduLengthAccepted", fallback=1476)

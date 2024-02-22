@@ -7,17 +7,14 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from email.policy import default
-from pathlib import Path
 from random import choice, randint
 from typing import Annotated, Any, Callable, Union
 
-from BACnetIOHandler import BACnetIOHandler
 from bacpypes3.basetypes import (EngineeringUnits, ObjectIdentifier,
                                  ObjectType, ObjectTypesSupported,
                                  PropertyIdentifier)
 from bacpypes3.ipv4.app import Application
-from fastapi import (FastAPI, File, Path, Query, Request, Response, UploadFile,
+from fastapi import (FastAPI, Path, Query, Request, Response, UploadFile,
                      WebSocket, WebSocketDisconnect, status)
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
