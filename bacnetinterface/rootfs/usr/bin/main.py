@@ -4,18 +4,17 @@ import asyncio
 import configparser
 import json
 import logging
+import os
 from typing import TypeVar
 
 import uvicorn
 import webAPI
 from BACnetIOHandler import BACnetIOHandler, ObjectManager
 from bacpypes3.apdu import AbortPDU, ErrorPDU, RejectPDU
-from bacpypes3.argparse import INIArgumentParser
-from bacpypes3.basetypes import (Null, ObjectType, PropertyIdentifier,
-                                 Segmentation)
+from bacpypes3.basetypes import Null, ObjectType, Segmentation
 from bacpypes3.ipv4.app import Application
 from bacpypes3.local.device import DeviceObject
-from bacpypes3.pdu import Address, IPv4Address
+from bacpypes3.pdu import IPv4Address
 from bacpypes3.primitivedata import ObjectIdentifier
 from webAPI import app as fastapi_app
 
@@ -36,9 +35,25 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
         while True:
             try:
                 await asyncio.wait_for(event.wait(), timeout=interval)
+                for device_id in app.bacnet_device_dict:
+                    services_supported = app.bacnet_device_dict[device_id][
+                        device_id
+                    ].get("protocolServicesSupported")
+                    if services_supported["read-property-multiple"] == 1:
+                        await app.read_multiple_object_list(device_identifier=device_id)
+                    else:
+                        await app.read_object_list(device_identifier=device_id)
                 event.clear()
+
             except asyncio.TimeoutError:
-                await app.read_objects_periodically()
+                for device_id in app.bacnet_device_dict:
+                    services_supported = app.bacnet_device_dict[device_id][
+                        device_id
+                    ].get("protocolServicesSupported")
+                    if services_supported["read-property-multiple"] == 1:
+                        await app.read_multiple_object_list(device_identifier=device_id)
+                    else:
+                        await app.read_object_list(device_identifier=device_id)
 
     except asyncio.CancelledError as err:
         logging.warning(f"Updater task cancelled: {err}")
@@ -162,6 +177,94 @@ async def unsubscribe_handler_task(
         logging.warning(f"Unsubscribe task cancelled: {err}")
 
 
+def get_configuration() -> tuple:
+    if os.name == "nt":
+        config_file = "BACpypes.ini"
+    else:
+        config_file = "/usr/bin/BACpypes.ini"
+
+    config = configparser.ConfigParser()
+
+    try:
+        config.read(config_file)
+    except Exception as err:
+        logging.warning(f"No BACpypes.ini detected! {err}")
+
+    try:
+        with open("/data/options.json") as f:
+            options = json.load(f)
+    except Exception as err:
+        logging.warning(f"No options.json detected! {err}")
+        options = {
+            "subscriptions": {
+                "analogInput": True,
+                "analogOutput": True,
+                "analogValue": True,
+                "binaryInput": True,
+                "binaryOutput": True,
+                "binaryValue": True,
+                "multiStateInput": True,
+                "multiStateOutput": True,
+                "multiStateValue": True,
+            }
+        }
+
+    try:
+        with open("/usr/bin/auth_token.ini", "r") as auth_token:
+            token = auth_token.read()
+    except Exception as err:
+        logging.warning(f"No Token received! {err}")
+        token = None
+
+    default_write_prio = config.get("BACpypes", "defaultPriority", fallback=15)
+
+    loglevel = config.get("BACpypes", "loglevel", fallback="INFO")
+
+    ipv4_address = config.get("BACpypes", "address", fallback=None)
+    
+    if not ipv4_address:
+        ipv4_address = input("BACnet IP Address as *x.x.x.x/24*: ")
+
+    ipv4_address = IPv4Address(ipv4_address)
+
+    object_identifier = config.get("BACpypes", "objectIdentifier", fallback=60)
+
+    object_name = config.get("BACpypes", "objectName", fallback="EcoPanel")
+
+    vendor_id = config.get("BACpypes", "vendorIdentifier", fallback=15)
+
+    segmentation_supported = config.get(
+        "BACpypes", "segmentation", fallback=Segmentation.noSegmentation
+    )
+
+    max_apdu = config.get("BACpypes", "maxApduLengthAccepted", fallback=1476)
+
+    max_segments = config.get("BACpypes", "maxSegmentsAccepted", fallback=64)
+
+    foreign_ip = config.get("BACpypes", "foreignBBMD", fallback=None)
+
+    foreign_ttl = config.get("BACpypes", "foreignTTL", fallback=255)
+
+    update_interval = config.get("BACpypes", "updateInterval", fallback=600)
+
+    return (
+        default_write_prio,
+        loglevel,
+        ipv4_address,
+        object_identifier,
+        object_name,
+        vendor_id,
+        segmentation_supported,
+        max_apdu,
+        max_segments,
+        foreign_ip,
+        foreign_ttl,
+        update_interval,
+        options,
+        token,
+    )
+
+
 async def main():
     """Main function of the application."""
 
@@ -169,34 +272,34 @@ async def main():
 
     loop.set_exception_handler(exception_handler)
 
-    config = configparser.ConfigParser()
-
-    config.read("/usr/bin/BACpypes.ini")
-
-    default_write_prio = config.get("BACpypes", "defaultPriority")
-
-    loglevel = config.get("BACpypes", "loglevel")
+    (
+        default_write_prio,
+        loglevel,
+        ipv4_address,
+        object_identifier,
+        object_name,
+        vendor_id,
+        segmentation_supported,
+        max_apdu,
+        max_segments,
+        foreign_ip,
+        foreign_ttl,
+        update_interval,
+        options,
+        token,
+    ) = get_configuration()
 
     logging.basicConfig(format="%(levelname)s:    %(message)s", level=loglevel)
 
-    with open("/data/options.json") as f:
-        options = json.load(f)
-
-    ipv4_address = IPv4Address(config.get("BACpypes", "address"))
-
     this_device = DeviceObject(
-        objectIdentifier=ObjectIdentifier(
-            f"device,{config.get('BACpypes', 'objectIdentifier')}"
-        ),
-        objectName=config.get("BACpypes", "objectName"),
+        objectIdentifier=ObjectIdentifier(f"device,{object_identifier}"),
+        objectName=object_name,
         description="BACnet Add-on for Home Assistant",
-        vendorIdentifier=int(config.get("BACpypes", "vendorIdentifier")),
-        segmentationSupported=Segmentation(config.get("BACpypes", "segmentation")),
-        maxApduLengthAccepted=int(config.get("BACpypes", "maxApduLengthAccepted")),
-        maxSegmentsAccepted=int(config.get("BACpypes", "maxSegmentsAccepted")),
+        vendorIdentifier=int(vendor_id),
+        segmentationSupported=Segmentation(segmentation_supported),
+        maxApduLengthAccepted=int(max_apdu),
+        maxSegmentsAccepted=int(max_segments),
     )
-
-    foreign_ip = config.get("BACpypes", "foreignBBMD")
 
     if foreign_ip == "-":
         foreign_ip = None
@@ -205,37 +308,34 @@ async def main():
         device=this_device,
         local_ip=ipv4_address,
         foreign_ip=foreign_ip,
-        ttl=config.get("BACpypes", "foreignTTL"),
+        ttl=int(foreign_ttl),
         update_event=webAPI.events.val_updated_event,
     )
 
-    with open("/usr/bin/auth_token.ini", "r") as auth_token:
-        token = auth_token.read()
-
     object_manager = ObjectManager(
-        app=app, entity_list=options.get("entity_list"), api_token=token
+        app=app, entity_list=options.get("entity_list", None), api_token=token
     )
 
-    app.asap.maxApduLengthAccepted = int(
-        config.get("BACpypes", "maxApduLengthAccepted")
+    app.asap.maxApduLengthAccepted = int(max_apdu)
+
+    app.asap.segmentationSupported = Segmentation(segmentation_supported)
+
+    app.asap.maxSegmentsAccepted = int(max_segments)
+
+    app.subscription_list = (
+        [
+            ObjectType(subscription)
+            for subscription, value in options["subscriptions"].items()
+            if value == True
+        ]
+        if options
+        else None
     )
-
-    app.asap.segmentationSupported = Segmentation(
-        config.get("BACpypes", "segmentation")
-    )
-
-    app.asap.maxSegmentsAccepted = int(config.get("BACpypes", "maxSegmentsAccepted"))
-
-    app.subscription_list = [
-        ObjectType(subscription)
-        for subscription, value in options["subscriptions"].items()
-        if value == True
-    ]
 
     update_task = asyncio.create_task(
         updater_task(
             app=app,
-            interval=int(config.get("BACpypes", "updateInterval")),
+            interval=int(update_interval),
             event=webAPI.events.read_event,
         )
     )

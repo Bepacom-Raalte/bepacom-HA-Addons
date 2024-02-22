@@ -2,7 +2,6 @@
 import asyncio
 import json
 import logging
-import traceback
 from math import isinf, isnan
 from typing import Any, Dict, TypeVar
 
@@ -10,24 +9,20 @@ import backoff
 import requests
 import websockets
 from bacpypes3.apdu import (AbortPDU, ConfirmedCOVNotificationRequest,
-                            ErrorPDU, ErrorRejectAbortNack, ReadPropertyACK,
+                            ErrorPDU, ErrorRejectAbortNack,
                             ReadPropertyRequest, RejectPDU, SimpleAckPDU,
                             SubscribeCOVRequest, WritePropertyRequest)
 from bacpypes3.basetypes import (BinaryPV, DeviceStatus, EngineeringUnits,
                                  ErrorType, EventState, PropertyIdentifier,
                                  Reliability)
-from bacpypes3.constructeddata import AnyAtomic, Array, List, SequenceOf
+from bacpypes3.constructeddata import AnyAtomic
 from bacpypes3.errors import *
 from bacpypes3.ipv4.app import ForeignApplication, NormalApplication
 from bacpypes3.local.analog import AnalogInputObject, AnalogValueObject
 from bacpypes3.local.binary import BinaryInputObject, BinaryValueObject
-from bacpypes3.local.device import DeviceObject
-from bacpypes3.object import (CharacterStringValueObject,
-                              MultiStateInputObject, MultiStateValueObject,
-                              get_vendor_info)
+from bacpypes3.object import CharacterStringValueObject, get_vendor_info
 from bacpypes3.pdu import Address
-from bacpypes3.primitivedata import (BitString, Date, Null, ObjectIdentifier,
-                                     ObjectType, Time, Unsigned)
+from bacpypes3.primitivedata import ObjectIdentifier, ObjectType
 from const import (device_properties_to_read, object_properties_to_read_once,
                    object_properties_to_read_periodically)
 
@@ -148,7 +143,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         logging.info(f"I Am from {apdu.iAmDeviceIdentifier}")
 
-        if apdu.iAmDeviceIdentifier[1] in self.device_info_cache.instance_cache:
+        device_id = apdu.iAmDeviceIdentifier[1]
+
+        if device_id in self.device_info_cache.instance_cache:
             logging.debug(f"Device {apdu.iAmDeviceIdentifier} already in cache!")
             in_cache = True
         else:
@@ -157,9 +154,18 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         await super().do_IAmRequest(apdu)
 
-        await self.read_device_props(apdu=apdu)
+        await self.read_multiple_device_props(apdu=apdu)
 
-        await self.read_object_list(device_identifier=apdu.iAmDeviceIdentifier)
+        services_supported = self.bacnet_device_dict[f"device:{device_id}"][
+            f"device:{device_id}"
+        ].get("protocolServicesSupported")
+
+        if services_supported["read-property-multiple"] == 1:
+            await self.read_multiple_object_list(
+                device_identifier=apdu.iAmDeviceIdentifier
+            )
+        else:
+            await self.read_object_list(device_identifier=apdu.iAmDeviceIdentifier)
 
         await self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
 
@@ -239,7 +245,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 },
             )
 
-    async def read_device_props(self, apdu) -> bool:
+    async def read_multiple_device_props(self, apdu) -> bool:
         try:  # Send readPropertyMultiple and get response
             device_identifier = ObjectIdentifier(apdu.iAmDeviceIdentifier)
             parameter_list = [device_identifier, device_properties_to_read]
@@ -255,15 +261,25 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 f"Abort PDU error while reading device properties: {device_identifier}: {err}"
             )
 
-            if not "segmentation-not-supported" in str(err):
-                return False
+            if "segmentation-not-supported" in str(err):
+                await self.read_device_props(apdu)
+            elif "unrecognized-service" in str(err):
+                await self.read_device_props(apdu)
             else:
-                await self.read_device_props_non_segmented(apdu)
+                return False
+
+        except ErrorPDU as err:
+            logging.error(f"Error PDU reading device props: {device_identifier}: {err}")
+            if "unrecognized-service" in str(err):
+                await self.read_device_props(apdu)
 
         except ErrorRejectAbortNack as err:
             logging.error(
                 f"Nack error reading device props: {device_identifier}: {err}"
             )
+            if "unrecognized-service" in str(err):
+                await self.read_device_props(apdu)
+
         except AttributeError as err:
             logging.error(
                 f"Attribute error reading device props: {device_identifier}: {err}"
@@ -283,7 +299,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         property_value=property_value,
                     )
 
-    async def read_device_props_non_segmented(self, apdu):
+    async def read_device_props(self, apdu):
         address = apdu.pduSource
         device_identifier = apdu.iAmDeviceIdentifier
 
@@ -292,27 +308,36 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 continue
 
             try:
-
                 response = await self.read_property(
                     address=address, objid=device_identifier, prop=property_id
                 )
 
             except AbortPDU as err:
                 logging.error(
-                    f"Abort PDU error while reading device properties without segmentation: {device_identifier}: {err}"
+                    f"Abort PDU error while reading device properties one by one: {device_identifier}: {property_id} {err}"
                 )
+            except ErrorPDU as err:
+                logging.error(
+                    f"Error PDU error reading device props one by one: {device_identifier}: {property_id} {err}"
+                )
+                continue
             except ErrorRejectAbortNack as err:
                 logging.error(
-                    f"Nack error reading device props non segmented: {device_identifier}: {err}"
+                    f"Nack error reading device props one by one: {device_identifier}: {property_id} {err}"
                 )
+                continue
             except AttributeError as err:
                 logging.error(
-                    f"Attribute error reading device props non segmented: {err}"
+                    f"Attribute error reading device props one by one:{property_id} {err}"
                 )
             except ValueError as err:
-                logging.error(f"ValueError reading device props non segmented: {err}")
+                logging.error(
+                    f"ValueError reading device props one by one:{property_id} {err}"
+                )
             except Exception as err:
-                logging.error(f"Exception reading device props non segmented: {err}")
+                logging.error(
+                    f"Exception reading device props one by one:{property_id} {err}"
+                )
             else:
                 if response and response is not ErrorType:
                     self.dict_updater(
@@ -347,9 +372,10 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             property_value=object_list,
         )
 
-    async def read_object_list(self, device_identifier):
+    async def read_multiple_object_list(self, device_identifier):
         """Read all objects from a device."""
         logging.info(f"Reading objectList from {device_identifier}...")
+        device_identifier = ObjectIdentifier(device_identifier)
         for obj_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"][
             f"device:{device_identifier[1]}"
         ]["objectList"]:
@@ -376,23 +402,38 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 )
             except AbortPDU as err:
                 logging.warning(
-                    f"Abort PDU Error while reading object list: {obj_id}: {err}"
+                    f"Abort PDU Error while reading object list: {device_identifier}: {obj_id} {err}"
                 )
 
                 if not "segmentation-not-supported" in str(err):
                     return False
                 else:
-                    await self.read_object_list_non_segmented(device_identifier)
+                    await self.read_object_list(device_identifier)
+
+            except ErrorPDU as err:
+                logging.error(
+                    f"Nack error while reading object list: {device_identifier}: {obj_id} {err}"
+                )
+
+                if "unrecognized-service" in str(err):
+                    await self.read_object_list(device_identifier)
 
             except ErrorRejectAbortNack as err:
-                logging.error(f"Nack error while reading object list: {obj_id}: {err}")
+                logging.error(
+                    f"Nack error while reading object list: {device_identifier}: {obj_id} {err}"
+                )
+
+                if "unrecognized-service" in str(err):
+                    await self.read_object_list(device_identifier)
 
             except AssertionError as err:
-                logging.error(f"Assertion error for: {device_identifier}: {obj_id}")
+                logging.error(
+                    f"Assertion error for: {device_identifier}: {obj_id} {err}"
+                )
 
             except AttributeError as err:
                 logging.error(
-                    f"Attribute error while reading object list: {obj_id}: {err}"
+                    f"Attribute error while reading object list: {device_identifier}: {obj_id} {err}"
                 )
             else:
                 for (
@@ -409,7 +450,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                             property_value=property_value,
                         )
 
-    async def read_object_list_non_segmented(self, device_identifier):
+    async def read_object_list(self, device_identifier):
         try:
             for obj_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"][
                 f"device:{device_identifier[1]}"
@@ -425,88 +466,108 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     continue
 
                 for property_id in object_properties_to_read_once:
-                    response = await self.read_property(
-                        address=self.dev_to_addr(device_identifier),
-                        objid=device_identifier,
-                        prop=property_id,
-                    )
-
-                    if response and response is not ErrorType:
-                        self.dict_updater(
-                            device_identifier=device_identifier,
-                            object_identifier=device_identifier,
-                            property_identifier=property_id,
-                            property_value=response,
+                    try:
+                        response = await self.read_property(
+                            address=self.dev_to_addr(device_identifier),
+                            objid=obj_id,
+                            prop=property_id,
                         )
-
-        except AbortPDU as err:
-            logging.error(
-                f"Abort PDU error while reading device object list without segmentation: {device_identifier}: {err}"
-            )
-        except ErrorRejectAbortNack as err:
-            logging.error(f"Nack error: {device_identifier}: {err}")
-        except AttributeError as err:
-            logging.error(f"Attribute error: {err}")
-
-    async def read_objects_periodically(self):
-        """Read objects after a set time."""
-        logging.info(f"Periodic object reading...")
-        for dev_id in self.bacnet_device_dict:
-            for obj_id in self.bacnet_device_dict[dev_id]:
-                if not isinstance(obj_id, ObjectIdentifier):
-                    obj_id = ObjectIdentifier(obj_id)
-                    device_identifier = ObjectIdentifier(dev_id)
-
-                if (
-                    ObjectType(obj_id[0]) == ObjectType("device")
-                    or ObjectType(obj_id[0])
-                    not in self.vendor_info.registered_object_classes
-                ):
-                    continue
-
-                parameter_list = [obj_id, object_properties_to_read_periodically]
-
-                try:  # Send readPropertyMultiple and get response
-                    logging.debug(
-                        f"Reading object {obj_id} of {device_identifier} during read_objects_periodically"
-                    )
-
-                    response = await self.read_property_multiple(
-                        address=self.dev_to_addr(ObjectIdentifier(dev_id)),
-                        parameter_list=parameter_list,
-                    )
-                except AbortPDU as err:
-                    logging.warning(f"Abort PDU Error: {obj_id}: {err}")
-
-                    if not "segmentation-not-supported" in str(err):
-                        return False
+                    except AbortPDU as err:
+                        logging.error(
+                            f"Abort PDU while reading device object list one by one: {device_identifier} {obj_id} {property_id}: {err}"
+                        )
+                    except ErrorPDU as err:
+                        logging.error(
+                            f"Error PDU reading object list one by one: {device_identifier} {obj_id} {property_id}: {err}"
+                        )
+                        continue
+                    except ErrorRejectAbortNack as err:
+                        logging.error(
+                            f"Nack error reading object list one by one: {device_identifier} {obj_id} {property_id}: {err}"
+                        )
+                        continue
                     else:
-                        await self.read_objects_non_segmented(device_identifier)
-
-                except ErrorRejectAbortNack as err:
-                    logging.error(
-                        f"Nack error reading objects periodically: {obj_id}: {err}"
-                    )
-
-                except AttributeError as err:
-                    logging.error(f"Attribute error: {obj_id}: {err}")
-
-                else:
-                    for (
-                        object_identifier,
-                        property_identifier,
-                        property_array_index,
-                        property_value,
-                    ) in response:
-                        if property_value and property_value is not ErrorType:
+                        if response and response is not ErrorType:
                             self.dict_updater(
                                 device_identifier=device_identifier,
-                                object_identifier=object_identifier,
-                                property_identifier=property_identifier,
-                                property_value=property_value,
+                                object_identifier=obj_id,
+                                property_identifier=property_id,
+                                property_value=response,
                             )
 
-    async def read_objects_non_segmented(self, device_identifier):
+        except AttributeError as err:
+            logging.error(
+                f"Attribute error reading object list one by one: {device_identifier}: {err}"
+            )
+
+    async def read_multiple_objects_periodically(self, device_identifier):
+        """Read objects after a set time."""
+        logging.info(f"Periodic object reading...")
+
+        for obj_id in self.bacnet_device_dict[device_identifier]:
+            if not isinstance(obj_id, ObjectIdentifier):
+                obj_id = ObjectIdentifier(obj_id)
+                device_identifier = ObjectIdentifier(device_identifier)
+
+            if (
+                ObjectType(obj_id[0]) == ObjectType("device")
+                or ObjectType(obj_id[0])
+                not in self.vendor_info.registered_object_classes
+            ):
+                continue
+
+            parameter_list = [obj_id, object_properties_to_read_periodically]
+
+            try:  # Send readPropertyMultiple and get response
+                logging.debug(
+                    f"Reading object {obj_id} of {device_identifier} during read_objects_periodically"
+                )
+
+                response = await self.read_property_multiple(
+                    address=self.dev_to_addr(ObjectIdentifier(device_identifier)),
+                    parameter_list=parameter_list,
+                )
+            except AbortPDU as err:
+                logging.warning(f"Abort PDU Error: {obj_id}: {err}")
+
+                if not "segmentation-not-supported" in str(err):
+                    return False
+                else:
+                    await self.read_objects_periodically(device_identifier)
+
+            except ErrorPDU as err:
+                logging.error(
+                    f"Error PDU reading objects periodically: {obj_id}: {err}"
+                )
+                if "unrecognized-service" in str(err):
+                    await self.read_object_list(device_identifier)
+
+            except ErrorRejectAbortNack as err:
+                logging.error(
+                    f"Nack error reading objects periodically: {obj_id}: {err}"
+                )
+                if "unrecognized-service" in str(err):
+                    await self.read_object_list(device_identifier)
+
+            except AttributeError as err:
+                logging.error(f"Attribute error: {obj_id}: {err}")
+
+            else:
+                for (
+                    object_identifier,
+                    property_identifier,
+                    property_array_index,
+                    property_value,
+                ) in response:
+                    if property_value and property_value is not ErrorType:
+                        self.dict_updater(
+                            device_identifier=device_identifier,
+                            object_identifier=object_identifier,
+                            property_identifier=property_identifier,
+                            property_value=property_value,
+                        )
+
+    async def read_objects_periodically(self, device_identifier):
         """Read objects if regular way failed."""
         logging.info(f"Reading objects non segmented for {device_identifier}...")
         for obj_id in self.bacnet_device_dict[device_identifier]:
@@ -521,14 +582,32 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             ):
                 continue
 
-            try:
-                for property_id in object_properties_to_read_periodically:
+            for property_id in object_properties_to_read_periodically:
+                try:
                     response = await self.read_property(
                         address=self.dev_to_addr(device_identifier),
                         objid=obj_id,
                         prop=property_id,
                     )
+                except AbortPDU as err:
+                    logging.error(
+                        f"Abort PDU Errorreading objects one by one periodically: {obj_id}: {err}"
+                    )
 
+                except ErrorPDU as err:
+                    logging.error(
+                        f"Error PDU reading objects one by one periodically: {device_identifier} {obj_id} {property_id}: {err}"
+                    )
+                    continue
+
+                except ErrorRejectAbortNack as err:
+                    logging.error(
+                        f"Nack error reading objects one by one periodically: {device_identifier} {obj_id} {property_id}: {err}"
+                    )
+                    continue
+                except AttributeError as err:
+                    logging.error(f"Attribute error: {obj_id}: {err}")
+                else:
                     if response:
                         self.dict_updater(
                             device_identifier=device_identifier,
@@ -536,14 +615,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                             property_identifier=property_id,
                             property_value=response,
                         )
-            except AbortPDU as err:
-                logging.error(f"Abort PDU Error: {obj_id}: {err}")
-
-            except ErrorRejectAbortNack as err:
-                logging.error(f"Nack error: {obj_id}: {err}")
-
-            except AttributeError as err:
-                logging.error(f"Attribute error: {obj_id}: {err}")
 
     async def subscribe_object_list(self, device_identifier):
         """ "Subscribe to selected objects."""  # Maybe make a blacklist to exclude objects we dont want to subscribe to.
@@ -660,7 +731,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         # await super().do_ConfirmedCOVNotificationRequest(apdu)
 
         try:
-
             for value in apdu.listOfValues:
                 vendor_info = get_vendor_info(0)
                 object_class = vendor_info.get_object_class(
@@ -778,7 +848,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 or (apdu.propertyIdentifier == PropertyIdentifier("covIncrement"))
                 or (apdu.propertyIdentifier == PropertyIdentifier("outOfService"))
             ):
-
                 await obj.write_property(
                     apdu.propertyIdentifier, property_value, array_index, priority
                 )
@@ -826,6 +895,9 @@ class ObjectManager:
         self.app = app
         self.api_token = api_token
         self.entity_list = entity_list
+
+        if not self.api_token:
+            return None
 
         self.services = self.fetch_services()
 
@@ -880,7 +952,6 @@ class ObjectManager:
             elif split_entity[0] in (
                 "sensor"
             ):  # analog in of character string val wanneer string
-
                 data = self.fetch_entity_data(entity)
 
                 state = data.get("state")
@@ -930,7 +1001,6 @@ class ObjectManager:
                 )
 
     def entity_to_obj(self, entity):
-
         if entity in self.binary_val_entity_ids:
             object_type = "binaryValue"
             index = self.binary_val_entity_ids.index(entity)
@@ -1055,7 +1125,6 @@ class ObjectManager:
             self.app.add_object(bin_val_obj)
 
         elif object_type == "analogValue":
-
             units = (
                 self.determine_units(entity["attributes"].get("unit_of_measurement"))
                 if entity["attributes"].get("unit_of_measurement") is not None
@@ -1083,7 +1152,6 @@ class ObjectManager:
             self.app.add_object(ana_val_obj)
 
         elif object_type == "analogInput":
-
             units = (
                 self.determine_units(entity["attributes"].get("unit_of_measurement"))
                 if entity["attributes"].get("unit_of_measurement") is not None
@@ -1187,7 +1255,6 @@ class ObjectManager:
         setattr(obj, "presentValue", value)
 
     async def data_websocket_task(self):
-
         auth = {"type": "auth", "access_token": f"{self.api_token}"}
 
         message_id = 1
@@ -1264,7 +1331,6 @@ class ObjectManager:
         """Updater task to write data to Home Assistant."""
         try:
             while True:
-
                 await self.app.write_to_api.wait()
 
                 (

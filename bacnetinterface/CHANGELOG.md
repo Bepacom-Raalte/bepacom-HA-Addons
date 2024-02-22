@@ -1,4 +1,18 @@
-﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
+﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
+
+# 1.3.3
+22/02/2024
+
+## Fixed
+
+- Fixed handling for devices that don't support ReadMultipleServices. [#14](https://github.com/Bepacom-Raalte/Bepacom-BACnet-IP-Integration/issues/14)
+- Reading will now look at protocolServicesSupported. 
+- Made configuration sequence more universal. This is irrelevant for users, but great for debugging.
+
+## Dependencies
+
+- ⬆️ Bumped base-python image to version v13.1.2.
+
 
 # 1.3.2
 01/02/2024
