@@ -1,7 +1,20 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.3.4
+22/02/2024
+
+## Fixed
+- Fixed read results being interpreted as a falsy value and thus being discarded.
+
+## Dependencies
+
+- ⬆️ Bumped FastAPI to version 0.109.2.
+- ⬆️ Bumped python-multipart to version 0.0.9.
+- ⬆️ Bumped Uvicorn to version 0.27.1.
+
+
 # 1.3.3
-16/02/2024
+22/02/2024
 
 ## Fixed
 

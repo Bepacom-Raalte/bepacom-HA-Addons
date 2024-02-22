@@ -442,7 +442,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     property_array_index,
                     property_value,
                 ) in response:
-                    if property_value and property_value is not ErrorType:
+                    if property_value is not ErrorType:
                         self.dict_updater(
                             device_identifier=device_identifier,
                             object_identifier=object_identifier,
@@ -487,7 +487,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         )
                         continue
                     else:
-                        if response and response is not ErrorType:
+                        if response is not ErrorType:
                             self.dict_updater(
                                 device_identifier=device_identifier,
                                 object_identifier=obj_id,
@@ -559,7 +559,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     property_array_index,
                     property_value,
                 ) in response:
-                    if property_value and property_value is not ErrorType:
+                    if property_value is not ErrorType:
                         self.dict_updater(
                             device_identifier=device_identifier,
                             object_identifier=object_identifier,
@@ -608,7 +608,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 except AttributeError as err:
                     logging.error(f"Attribute error: {obj_id}: {err}")
                 else:
-                    if response:
+                    if response is not ErrorType:
                         self.dict_updater(
                             device_identifier=device_identifier,
                             object_identifier=obj_id,

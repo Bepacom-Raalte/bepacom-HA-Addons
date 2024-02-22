@@ -221,6 +221,7 @@ def get_configuration() -> tuple:
     loglevel = config.get("BACpypes", "loglevel", fallback="INFO")
 
     ipv4_address = config.get("BACpypes", "address", fallback=None)
+    
     if not ipv4_address:
         ipv4_address = input("BACnet IP Address as *x.x.x.x/24*: ")
 
@@ -244,7 +245,7 @@ def get_configuration() -> tuple:
 
     foreign_ttl = config.get("BACpypes", "foreignTTL", fallback=255)
 
-    update_interval = config.get("BACpypes", "updateInterval", fallback=600)
+    update_interval = config.get("BACpypes", "updateInterval", fallback=60)
 
     return (
         default_write_prio,
