@@ -5,10 +5,11 @@
 
 ## Fixed
 - Fixed read results being interpreted as a falsy value and thus being discarded.
+- Fixed handling of no replies to reading device properties.
+- Infinite or NaN properties now get ignored instead of set to 0.
 
 ## Dependencies
 
-- ⬆️ Bumped FastAPI to version 0.109.2.
 - ⬆️ Bumped python-multipart to version 0.0.9.
 - ⬆️ Bumped Uvicorn to version 0.27.1.
 

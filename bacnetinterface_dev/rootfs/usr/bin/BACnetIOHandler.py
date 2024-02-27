@@ -155,6 +155,14 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         await super().do_IAmRequest(apdu)
 
         await self.read_multiple_device_props(apdu=apdu)
+        
+        if not self.bacnet_device_dict.get(f"device:{device_id}"):
+            logging.error(f"Failed to get: {device_id}")
+            return
+
+        if not self.bacnet_device_dict[f"device:{device_id}"].get(f"device:{device_id}"):
+            logging.error(f"Failed to get: {device_id}, {device_id}")
+            return
 
         services_supported = self.bacnet_device_dict[f"device:{device_id}"][
             f"device:{device_id}"
@@ -181,14 +189,16 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         elif isinstance(property_value, float):
             if isnan(property_value):
                 logging.warning(
-                    f"Replacing with 0: {device_identifier}, {object_identifier}, {property_identifier}... NaN value: {property_value}"
+                    f"Ignoring property: {device_identifier}, {object_identifier}, {property_identifier}... NaN value: {property_value}"
                 )
                 property_value = 0
+                return
             if isinf(property_value):
                 logging.warning(
-                    f"Replacing with 0: {device_identifier}, {object_identifier}, {property_identifier}... Inf value: {property_value}"
+                    f"Ignoring property: {device_identifier}, {object_identifier}, {property_identifier}... Inf value: {property_value}"
                 )
                 property_value = 0
+                return
             property_value = round(property_value, 4)
         elif isinstance(property_value, AnyAtomic):
             return
