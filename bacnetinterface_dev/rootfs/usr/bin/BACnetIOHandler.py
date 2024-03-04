@@ -154,13 +154,19 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         await super().do_IAmRequest(apdu)
 
-        await self.read_multiple_device_props(apdu=apdu)
-        
+        # if failed stop handling response
+        if not await self.read_multiple_device_props(apdu=apdu):
+            if self.bacnet_device_dict.get(f"device:{device_id}"):
+                self.bacnet_device_dict.pop(f"device:{device_id}")
+            return
+
         if not self.bacnet_device_dict.get(f"device:{device_id}"):
             logging.error(f"Failed to get: {device_id}")
             return
 
-        if not self.bacnet_device_dict[f"device:{device_id}"].get(f"device:{device_id}"):
+        if not self.bacnet_device_dict[f"device:{device_id}"].get(
+            f"device:{device_id}"
+        ):
             logging.error(f"Failed to get: {device_id}, {device_id}")
             return
 
@@ -272,9 +278,11 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             )
 
             if "segmentation-not-supported" in str(err):
-                await self.read_device_props(apdu)
+                return await self.read_device_props(apdu)
             elif "unrecognized-service" in str(err):
-                await self.read_device_props(apdu)
+                return await self.read_device_props(apdu)
+            elif "no-response" in str(err):
+                return await self.read_device_props(apdu)
             else:
                 return False
 
@@ -282,6 +290,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             logging.error(f"Error PDU reading device props: {device_identifier}: {err}")
             if "unrecognized-service" in str(err):
                 await self.read_device_props(apdu)
+                return False
 
         except ErrorRejectAbortNack as err:
             logging.error(
@@ -290,10 +299,13 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             if "unrecognized-service" in str(err):
                 await self.read_device_props(apdu)
 
+            return False
+
         except AttributeError as err:
             logging.error(
                 f"Attribute error reading device props: {device_identifier}: {err}"
             )
+            return False
         else:
             for (
                 object_identifier,
@@ -308,6 +320,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         property_identifier=property_identifier,
                         property_value=property_value,
                     )
+            return True
 
     async def read_device_props(self, apdu):
         address = apdu.pduSource
@@ -335,21 +348,20 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 logging.error(
                     f"Nack error reading device props one by one: {device_identifier}: {property_id} {err}"
                 )
-                continue
             except AttributeError as err:
                 logging.error(
-                    f"Attribute error reading device props one by one:{property_id} {err}"
+                    f"Attribute error reading device props one by one: {device_identifier}: {property_id} {err}"
                 )
             except ValueError as err:
                 logging.error(
-                    f"ValueError reading device props one by one:{property_id} {err}"
+                    f"ValueError reading device props one by one: {device_identifier}: {property_id} {err}"
                 )
             except Exception as err:
                 logging.error(
-                    f"Exception reading device props one by one:{property_id} {err}"
+                    f"Exception reading device props one by one: {device_identifier}: {property_id} {err}"
                 )
             else:
-                if response and response is not ErrorType:
+                if response is not ErrorType:
                     self.dict_updater(
                         device_identifier=device_identifier,
                         object_identifier=device_identifier,
@@ -357,30 +369,52 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         property_value=response,
                     )
 
-        object_amount = await self.read_property(
-            address=address,
-            objid=device_identifier,
-            prop=PropertyIdentifier("objectList"),
-            array_index=0,
-        )
+        if not (await self.read_object_list_property(device_identifier)):
+            return False
+        return True
 
-        object_list = []
+    async def read_object_list_property(self, device_identifier):
+        """Read object list property in the smallest possible way."""
+        address = self.dev_to_addr(dev=device_identifier)
 
-        for number in range(1, object_amount + 1):
-            object_type = await self.read_property(
+        try:
+            object_amount = await self.read_property(
                 address=address,
                 objid=device_identifier,
                 prop=PropertyIdentifier("objectList"),
-                array_index=number,
+                array_index=0,
             )
-            object_list.append(object_type)
 
-        self.dict_updater(
-            device_identifier=device_identifier,
-            object_identifier=device_identifier,
-            property_identifier=PropertyIdentifier("objectList"),
-            property_value=object_list,
-        )
+        except Exception as err:
+            logging.warning(
+                f"Error getting object list size for {device_identifier} at {address}"
+            )
+            return False
+
+        object_list = []
+
+        try:
+            for number in range(1, object_amount + 1):
+                object_type = await self.read_property(
+                    address=address,
+                    objid=device_identifier,
+                    prop=PropertyIdentifier("objectList"),
+                    array_index=number,
+                )
+                object_list.append(object_type)
+
+            self.dict_updater(
+                device_identifier=device_identifier,
+                object_identifier=device_identifier,
+                property_identifier=PropertyIdentifier("objectList"),
+                property_value=object_list,
+            )
+        except Exception as err:
+            logging.warning(
+                f"Error getting object list size for {device_identifier} at {address}"
+            )
+            return False
+        return True
 
     async def read_multiple_object_list(self, device_identifier):
         """Read all objects from a device."""

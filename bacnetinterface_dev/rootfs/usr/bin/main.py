@@ -221,7 +221,7 @@ def get_configuration() -> tuple:
     loglevel = config.get("BACpypes", "loglevel", fallback="INFO")
 
     ipv4_address = config.get("BACpypes", "address", fallback=None)
-    
+
     if not ipv4_address:
         ipv4_address = input("BACnet IP Address as *x.x.x.x/24*: ")
 
@@ -237,7 +237,7 @@ def get_configuration() -> tuple:
         "BACpypes", "segmentation", fallback=Segmentation.noSegmentation
     )
 
-    max_apdu = config.get("BACpypes", "maxApduLengthAccepted", fallback=1476)
+    max_apdu = config.get("BACpypes", "maxApduLengthAccepted", fallback=480)
 
     max_segments = config.get("BACpypes", "maxSegmentsAccepted", fallback=64)
 
