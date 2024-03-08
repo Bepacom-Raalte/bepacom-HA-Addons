@@ -301,6 +301,10 @@ async def main():
     time_var = datetime.now().strftime("%H_%M_%S")
 
     log_path = f"{path_str}/bacnet_addon-{date_var}-{time_var}.log"
+    
+    f = open(log_path, "w")
+    
+    f.close()
 
     webAPI.log_path = log_path
 
