@@ -293,11 +293,11 @@ async def main():
 
     path_str = os.path.dirname(os.path.realpath(__file__))
 
-    if os.name != "nt":
+    if os.name is not "nt":
 
         path_str = path_str.rstrip("/usr/bin")
 
-        path_str = path_str + "/share"
+        path_str = path_str + "share"
 
     date_var = datetime.now().date()
 
@@ -309,7 +309,7 @@ async def main():
 
     formatter = Formatter("%(levelname)s:    %(message)s")
 
-    file_handler = FileHandler(filename=log_path, mode="w+")
+    file_handler = FileHandler(filename=log_path, mode="a")
 
     file_handler.setFormatter(formatter)
 
