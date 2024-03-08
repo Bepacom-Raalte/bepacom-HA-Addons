@@ -293,7 +293,7 @@ async def main():
 
     path_str = os.path.dirname(os.path.realpath(__file__))
 
-    if os.name != "nt":
+    if os.name == "posix":
         path_str = path_str.replace("/usr/bin", "/share")
 
     date_var = datetime.now().date()
@@ -301,16 +301,12 @@ async def main():
     time_var = datetime.now().strftime("%H_%M_%S")
 
     log_path = f"{path_str}/bacnet_addon-{date_var}-{time_var}.log"
-    
-    f = open(log_path, "w")
-    
-    f.close()
 
     webAPI.log_path = log_path
 
     formatter = Formatter("%(levelname)s:    %(message)s")
 
-    file_handler = FileHandler(filename=log_path, mode="a")
+    file_handler = FileHandler(filename=log_path, mode="w+")
 
     file_handler.setFormatter(formatter)
 
