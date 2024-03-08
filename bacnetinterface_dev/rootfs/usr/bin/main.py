@@ -293,11 +293,8 @@ async def main():
 
     path_str = os.path.dirname(os.path.realpath(__file__))
 
-    if os.name is not "nt":
-
-        path_str = path_str.rstrip("/usr/bin")
-
-        path_str = path_str + "share"
+    if os.name != "nt":
+        path_str = path_str.replace("/usr/bin", "/share")
 
     date_var = datetime.now().date()
 
