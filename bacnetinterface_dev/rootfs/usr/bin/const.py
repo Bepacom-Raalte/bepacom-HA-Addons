@@ -1,5 +1,6 @@
-from bacpypes3.basetypes import ObjectType, PropertyIdentifier
 import logging
+
+from bacpypes3.basetypes import ObjectType, PropertyIdentifier
 
 LOGGER = logging.getLogger(__package__)
 

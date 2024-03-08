@@ -4,20 +4,20 @@ import codecs
 import csv
 import json
 import os
+import shutil
 from contextlib import asynccontextmanager
-from const import LOGGER
 from dataclasses import dataclass
 from random import choice, randint
-import shutil
 from typing import Annotated, Any, Callable, Union
 
 from bacpypes3.basetypes import (EngineeringUnits, ObjectIdentifier,
                                  ObjectType, ObjectTypesSupported,
                                  PropertyIdentifier)
 from bacpypes3.ipv4.app import Application
+from const import LOGGER
 from fastapi import (FastAPI, Path, Query, Request, Response, UploadFile,
                      WebSocket, WebSocketDisconnect, status)
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -346,10 +346,17 @@ async def download_logs():
     """Download add-on logs."""
     global log_path
     if log_path:
-        dupe_path = shutil.copyfile(log_path,log_path.replace("share","usr/bin")+"2")
-        return FileResponse(path=dupe_path, media_type="application/octet-stream", filename="bacnet_addon_logs.txt")
+        dupe_path = shutil.copyfile(
+            log_path, log_path.replace("share", "usr/bin") + "2"
+        )
+        return FileResponse(
+            path=dupe_path,
+            media_type="application/octet-stream",
+            filename="bacnet_addon_logs.txt",
+        )
     else:
         return status.HTTP_404_NOT_FOUND
+
 
 # Any commands or not variable paths should go above here... FastAPI will use it as a variable if you make a new path below this.
 

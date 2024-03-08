@@ -4,10 +4,9 @@ import asyncio
 import configparser
 import json
 import os
-from re import L
-from tkinter import W
+from datetime import datetime
+from logging import FileHandler, Formatter, Logger, StreamHandler, getLogger
 from typing import TypeVar
-from logging import FileHandler, Formatter, Logger, getLogger, StreamHandler
 
 import uvicorn
 import webAPI
@@ -19,10 +18,10 @@ from bacpypes3.local.device import DeviceObject
 from bacpypes3.pdu import IPv4Address
 from bacpypes3.primitivedata import ObjectIdentifier
 from const import LOGGER
-from datetime import datetime
 from webAPI import app as fastapi_app
 
 KeyType = TypeVar("KeyType")
+
 
 def exception_handler(loop, context):
     """Handle uncaught exceptions"""
@@ -291,39 +290,43 @@ async def main():
         options,
         token,
     ) = get_configuration()
-    
+
     path_str = os.path.dirname(os.path.realpath(__file__))
 
     if os.name != "nt":
-        
+
         path_str = path_str.rstrip("/usr/bin")
-    
+
         path_str = path_str + "/share"
-        
-    log_path = f"{path_str}/bacnet_addon-{datetime.now().date()}-{datetime.now().strftime("%H_%M_%S")}.log"
-    
+
+    date_var = datetime.now().date()
+
+    time_var = datetime.now().strftime("%H_%M_%S")
+
+    log_path = f"{path_str}/bacnet_addon-{date_var}-{time_var}.log"
+
     webAPI.log_path = log_path
 
     formatter = Formatter("%(levelname)s:    %(message)s")
 
-    file_handler = FileHandler(filename = log_path, mode = "w+")
+    file_handler = FileHandler(filename=log_path, mode="w+")
 
     file_handler.setFormatter(formatter)
 
     file_handler.setLevel("DEBUG")
-    
+
     stream_handler = StreamHandler()
-    
+
     stream_handler.setFormatter(formatter)
-    
+
     stream_handler.setLevel(loglevel)
-    
+
     LOGGER.addHandler(file_handler)
 
     LOGGER.addHandler(stream_handler)
-    
+
     LOGGER.setLevel("DEBUG")
-    
+
     this_device = DeviceObject(
         objectIdentifier=ObjectIdentifier(f"device,{object_identifier}"),
         objectName=object_name,

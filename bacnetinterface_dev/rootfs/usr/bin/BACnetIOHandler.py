@@ -22,8 +22,9 @@ from bacpypes3.local.binary import BinaryInputObject, BinaryValueObject
 from bacpypes3.object import CharacterStringValueObject, get_vendor_info
 from bacpypes3.pdu import Address
 from bacpypes3.primitivedata import ObjectIdentifier, ObjectType
-from const import (device_properties_to_read, object_properties_to_read_once,
-                   object_properties_to_read_periodically, LOGGER)
+from const import (LOGGER, device_properties_to_read,
+                   object_properties_to_read_once,
+                   object_properties_to_read_periodically)
 
 KeyType = TypeVar("KeyType")
 
@@ -292,9 +293,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 return False
 
         except ErrorRejectAbortNack as err:
-            LOGGER.error(
-                f"Nack error reading device props: {device_identifier}: {err}"
-            )
+            LOGGER.error(f"Nack error reading device props: {device_identifier}: {err}")
             if "unrecognized-service" in str(err):
                 await self.read_device_props(apdu)
 
@@ -579,9 +578,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     await self.read_objects_periodically(device_identifier)
 
             except ErrorPDU as err:
-                LOGGER.error(
-                    f"Error PDU reading objects periodically: {obj_id}: {err}"
-                )
+                LOGGER.error(f"Error PDU reading objects periodically: {obj_id}: {err}")
                 if "unrecognized-service" in str(err):
                     await self.read_objects_periodically(device_identifier)
 
