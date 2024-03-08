@@ -3,9 +3,9 @@ import asyncio
 import codecs
 import csv
 import json
-import logging
 import os
 from contextlib import asynccontextmanager
+from const import LOGGER
 from dataclasses import dataclass
 from random import choice, randint
 from typing import Annotated, Any, Callable, Union
@@ -126,7 +126,7 @@ app = FastAPI(
     lifespan=lifespan,
     title="Bepacom BACnet/IP Interface API",
     description=description,
-    version="1.3.3",
+    version="1.3.4",
     contact={
         "name": "Bepacom B.V. Contact",
         "url": "https://www.bepacom.nl/contact/",
@@ -310,13 +310,13 @@ async def upload_ede_files(
             liststart = True
 
     if list(deviceDict)[0] in list(bacnet_device_dict):
-        logging.warning("Device ID already in use.")
+        LOGGER.warning("Device ID already in use.")
         response.status_code = status.HTTP_409_CONFLICT
         return "This device already exists as a device in the BACnet/IP network"
 
     for file in EDE_files:
         if file.keys() in deviceDict.keys():
-            logging.warning("EDE already loaded.")
+            LOGGER.warning("EDE already loaded.")
             response.status_code = status.HTTP_409_CONFLICT
             return "This device already exists as EDE file"
 
@@ -328,13 +328,13 @@ async def upload_ede_files(
 @app.delete("/apiv1/commissioning/ede", tags=["apiv1"])
 async def delete_ede_file(device_ids: Annotated[list[str] | None, Query()] = None):
     """Delete EDE files to stop letting them show up in API calls."""
-    logging.debug(f"EDE Files loaded: {len(EDE_files)}")
+    LOGGER.debug(f"EDE Files loaded: {len(EDE_files)}")
     EDE_files[:] = [
         dictionary
         for dictionary in EDE_files
         if all(device not in dictionary for device in device_ids)
     ]
-    logging.debug(f"EDE Files loaded: {len(EDE_files)}")
+    LOGGER.debug(f"EDE Files loaded: {len(EDE_files)}")
     return True
 
 
@@ -426,11 +426,11 @@ async def write_property(
             )
             await events.write_queue.put(write_req)
 
-        logging.info("Successfully put in Write Queue")
+        LOGGER.info("Successfully put in Write Queue")
         return status.HTTP_200_OK
 
     except Exception as err:
-        logging.warning(f"Failed write request: {err}")
+        LOGGER.warning(f"Failed write request: {err}")
         return status.HTTP_400_BAD_REQUEST
 
 
@@ -459,7 +459,7 @@ async def subscribe_objectid(
         await events.sub_queue.put(sub_tuple)
 
     except Exception as e:
-        logging.error(f"{str(e)} on subscribe from API POST request")
+        LOGGER.error(f"{str(e)} on subscribe from API POST request")
         return status.HTTP_400_BAD_REQUEST
 
 
@@ -478,7 +478,7 @@ async def unsubscribe_objectid(deviceid: str, objectid: str):
         await events.unsub_queue.put(sub_tuple)
 
     except Exception as e:
-        logging.error(f"{str(e)} on subscribe from API DELETE request")
+        LOGGER.error(f"{str(e)} on subscribe from API DELETE request")
         return status.HTTP_400_BAD_REQUEST
 
 
@@ -503,10 +503,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 try:
                     message = json.loads(message)
                 except:
-                    logging.warning(
+                    LOGGER.warning(
                         f"message: {message} is not processed as it's not valid JSON"
                     )
-                    logging.warning(
+                    LOGGER.warning(
                         'Do it as the following example: {"device:100":{"analogInput:1":{"presentValue":1}}}'
                     )
                     continue
@@ -539,22 +539,22 @@ async def websocket_endpoint(websocket: WebSocket):
                     )
 
                 else:
-                    logging.warning(f"message: {message} is not processed")
+                    LOGGER.warning(f"message: {message} is not processed")
 
         except (RuntimeError, asyncio.CancelledError) as error:
             write_task.cancel()
             activeSockets.remove(websocket)
-            logging.error("Disconnected with RuntimeError or CancelledError...\n")
+            LOGGER.error("Disconnected with RuntimeError or CancelledError...\n")
             return
         except WebSocketDisconnect:
             write_task.cancel()
             activeSockets.remove(websocket)
-            logging.error("Disconnected...\n")
+            LOGGER.error("Disconnected...\n")
             return
         except Exception as e:
             write_task.cancel()
             activeSockets.remove(websocket)
-            logging.error("Disconnected with Exception" + str(e) + "...\n")
+            LOGGER.error("Disconnected with Exception" + str(e) + "...\n")
 
 
 async def websocket_writer(websocket: WebSocket):
@@ -574,10 +574,10 @@ async def websocket_writer(websocket: WebSocket):
                 await asyncio.sleep(0.5)
 
     except asyncio.CancelledError as error:
-        logging.debug(f"Websocket writer cancelled: {error}")
+        LOGGER.debug(f"Websocket writer cancelled: {error}")
 
     except WebSocketDisconnect:
-        logging.info("Websocket disconnected")
+        LOGGER.info("Websocket disconnected")
 
 
 @app.post("/apiv2/{deviceid}/{objectid}/{property}", tags=["apiv2"])
@@ -597,7 +597,7 @@ async def write_property(
         objectid = ObjectIdentifier(objectid)
         property = PropertyIdentifier(property)
     except Exception as err:
-        logging.error(f"Error while trying to make a write request: {err}")
+        LOGGER.error(f"Error while trying to make a write request: {err}")
         return status.HTTP_400_BAD_REQUEST
 
     await events.write_queue.put([deviceid, objectid, property, value, None, priority])

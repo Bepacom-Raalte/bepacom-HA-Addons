@@ -1,4 +1,7 @@
 from bacpypes3.basetypes import ObjectType, PropertyIdentifier
+import logging
+
+LOGGER = logging.getLogger(__package__)
 
 device_properties_to_read: list = [
     PropertyIdentifier("objectIdentifier"),

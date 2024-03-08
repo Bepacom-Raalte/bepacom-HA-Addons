@@ -1,7 +1,6 @@
 """BACnet handler classes for BACnet add-on."""
 import asyncio
 import json
-import logging
 from math import isinf, isnan
 from typing import Any, Dict, TypeVar
 
@@ -24,7 +23,7 @@ from bacpypes3.object import CharacterStringValueObject, get_vendor_info
 from bacpypes3.pdu import Address
 from bacpypes3.primitivedata import ObjectIdentifier, ObjectType
 from const import (device_properties_to_read, object_properties_to_read_once,
-                   object_properties_to_read_periodically)
+                   object_properties_to_read_periodically, LOGGER)
 
 KeyType = TypeVar("KeyType")
 
@@ -57,7 +56,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         self.vendor_info = get_vendor_info(0)
         asyncio.get_event_loop().create_task(self.refresh_subscriptions())
         self.startup_complete.set()
-        logging.debug("Application initialised")
+        LOGGER.debug("Application initialised")
 
     def deep_update(
         self, mapping: Dict[KeyType, Any], *updating_mappings: Dict[KeyType, Any]
@@ -73,7 +72,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 else:
                     mapping[k] = v
         self.update_event.set()
-        # logging.debug(f"Updating {updating_mapping}")
+        # LOGGER.debug(f"Updating {updating_mapping}")
         return mapping
 
     def dev_to_addr(self, dev: ObjectIdentifier) -> Address | None:
@@ -124,7 +123,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         """Refreshing subscriptions automatically."""  # Maybe make a blacklist to exclude objects we dont want to subscribe to.
         while True:
             await asyncio.sleep(self.default_subscription_lifetime)
-            logging.info("Refreshing subscriptions...")
+            LOGGER.info("Refreshing subscriptions...")
             for task in self.subscription_tasks:
                 await self.create_subscription_task(
                     device_identifier=task[4],
@@ -135,18 +134,18 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
     async def do_WhoIsRequest(self, apdu) -> None:
         """Handle incoming Who Is request."""
-        logging.info(f"Received Who Is Request from {apdu.pduSource}")
+        LOGGER.info(f"Received Who Is Request from {apdu.pduSource}")
         await super().do_WhoIsRequest(apdu)
 
     async def do_IAmRequest(self, apdu) -> None:
         """Handle incoming I Am request."""
 
-        logging.info(f"I Am from {apdu.iAmDeviceIdentifier}")
+        LOGGER.info(f"I Am from {apdu.iAmDeviceIdentifier}")
 
         device_id = apdu.iAmDeviceIdentifier[1]
 
         if device_id in self.device_info_cache.instance_cache:
-            logging.debug(f"Device {apdu.iAmDeviceIdentifier} already in cache!")
+            LOGGER.debug(f"Device {apdu.iAmDeviceIdentifier} already in cache!")
             in_cache = True
         else:
             await self.device_info_cache.set_device_info(apdu)
@@ -161,13 +160,13 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             return
 
         if not self.bacnet_device_dict.get(f"device:{device_id}"):
-            logging.error(f"Failed to get: {device_id}")
+            LOGGER.error(f"Failed to get: {device_id}")
             return
 
         if not self.bacnet_device_dict[f"device:{device_id}"].get(
             f"device:{device_id}"
         ):
-            logging.error(f"Failed to get: {device_id}, {device_id}")
+            LOGGER.error(f"Failed to get: {device_id}, {device_id}")
             return
 
         services_supported = self.bacnet_device_dict[f"device:{device_id}"][
@@ -194,13 +193,13 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             return
         elif isinstance(property_value, float):
             if isnan(property_value):
-                logging.warning(
+                LOGGER.warning(
                     f"Ignoring property: {device_identifier}, {object_identifier}, {property_identifier}... NaN value: {property_value}"
                 )
                 property_value = 0
                 return
             if isinf(property_value):
-                logging.warning(
+                LOGGER.warning(
                     f"Ignoring property: {device_identifier}, {object_identifier}, {property_identifier}... Inf value: {property_value}"
                 )
                 property_value = 0
@@ -266,14 +265,14 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             device_identifier = ObjectIdentifier(apdu.iAmDeviceIdentifier)
             parameter_list = [device_identifier, device_properties_to_read]
 
-            logging.debug(f"Exploring Device info of {device_identifier}")
+            LOGGER.debug(f"Exploring Device info of {device_identifier}")
 
             response = await self.read_property_multiple(
                 address=apdu.pduSource, parameter_list=parameter_list
             )
 
         except AbortPDU as err:
-            logging.warning(
+            LOGGER.warning(
                 f"Abort PDU error while reading device properties: {device_identifier}: {err}"
             )
 
@@ -287,13 +286,13 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 return False
 
         except ErrorPDU as err:
-            logging.error(f"Error PDU reading device props: {device_identifier}: {err}")
+            LOGGER.error(f"Error PDU reading device props: {device_identifier}: {err}")
             if "unrecognized-service" in str(err):
                 await self.read_device_props(apdu)
                 return False
 
         except ErrorRejectAbortNack as err:
-            logging.error(
+            LOGGER.error(
                 f"Nack error reading device props: {device_identifier}: {err}"
             )
             if "unrecognized-service" in str(err):
@@ -302,7 +301,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             return False
 
         except AttributeError as err:
-            logging.error(
+            LOGGER.error(
                 f"Attribute error reading device props: {device_identifier}: {err}"
             )
             return False
@@ -336,28 +335,28 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 )
 
             except AbortPDU as err:
-                logging.error(
+                LOGGER.error(
                     f"Abort PDU error while reading device properties one by one: {device_identifier}: {property_id} {err}"
                 )
             except ErrorPDU as err:
-                logging.error(
+                LOGGER.error(
                     f"Error PDU error reading device props one by one: {device_identifier}: {property_id} {err}"
                 )
                 continue
             except ErrorRejectAbortNack as err:
-                logging.error(
+                LOGGER.error(
                     f"Nack error reading device props one by one: {device_identifier}: {property_id} {err}"
                 )
             except AttributeError as err:
-                logging.error(
+                LOGGER.error(
                     f"Attribute error reading device props one by one: {device_identifier}: {property_id} {err}"
                 )
             except ValueError as err:
-                logging.error(
+                LOGGER.error(
                     f"ValueError reading device props one by one: {device_identifier}: {property_id} {err}"
                 )
             except Exception as err:
-                logging.error(
+                LOGGER.error(
                     f"Exception reading device props one by one: {device_identifier}: {property_id} {err}"
                 )
             else:
@@ -386,7 +385,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             )
 
         except Exception as err:
-            logging.warning(
+            LOGGER.warning(
                 f"Error getting object list size for {device_identifier} at {address}"
             )
             return False
@@ -410,7 +409,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 property_value=object_list,
             )
         except Exception as err:
-            logging.warning(
+            LOGGER.warning(
                 f"Error getting object list size for {device_identifier} at {address}"
             )
             return False
@@ -418,7 +417,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
     async def read_multiple_object_list(self, device_identifier):
         """Read all objects from a device."""
-        logging.info(f"Reading objectList from {device_identifier}...")
+        LOGGER.info(f"Reading objectList from {device_identifier}...")
         device_identifier = ObjectIdentifier(device_identifier)
         for obj_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"][
             f"device:{device_identifier[1]}"
@@ -436,7 +435,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             parameter_list = [obj_id, object_properties_to_read_once]
 
             try:  # Send readPropertyMultiple and get response
-                logging.debug(
+                LOGGER.debug(
                     f"Reading object {obj_id} of {device_identifier} during read_object_list"
                 )
 
@@ -445,7 +444,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     parameter_list=parameter_list,
                 )
             except AbortPDU as err:
-                logging.warning(
+                LOGGER.warning(
                     f"Abort PDU Error while reading object list: {device_identifier}: {obj_id} {err}"
                 )
 
@@ -455,7 +454,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     await self.read_object_list(device_identifier)
 
             except ErrorPDU as err:
-                logging.error(
+                LOGGER.error(
                     f"Nack error while reading object list: {device_identifier}: {obj_id} {err}"
                 )
 
@@ -463,7 +462,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     await self.read_object_list(device_identifier)
 
             except ErrorRejectAbortNack as err:
-                logging.error(
+                LOGGER.error(
                     f"Nack error while reading object list: {device_identifier}: {obj_id} {err}"
                 )
 
@@ -471,12 +470,12 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     await self.read_object_list(device_identifier)
 
             except AssertionError as err:
-                logging.error(
+                LOGGER.error(
                     f"Assertion error for: {device_identifier}: {obj_id} {err}"
                 )
 
             except AttributeError as err:
-                logging.error(
+                LOGGER.error(
                     f"Attribute error while reading object list: {device_identifier}: {obj_id} {err}"
                 )
             else:
@@ -517,16 +516,16 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                             prop=property_id,
                         )
                     except AbortPDU as err:
-                        logging.error(
+                        LOGGER.error(
                             f"Abort PDU while reading device object list one by one: {device_identifier} {obj_id} {property_id}: {err}"
                         )
                     except ErrorPDU as err:
-                        logging.error(
+                        LOGGER.error(
                             f"Error PDU reading object list one by one: {device_identifier} {obj_id} {property_id}: {err}"
                         )
                         continue
                     except ErrorRejectAbortNack as err:
-                        logging.error(
+                        LOGGER.error(
                             f"Nack error reading object list one by one: {device_identifier} {obj_id} {property_id}: {err}"
                         )
                         continue
@@ -540,13 +539,13 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                             )
 
         except AttributeError as err:
-            logging.error(
+            LOGGER.error(
                 f"Attribute error reading object list one by one: {device_identifier}: {err}"
             )
 
     async def read_multiple_objects_periodically(self, device_identifier):
         """Read objects after a set time."""
-        logging.info(f"Periodic object reading...")
+        LOGGER.info(f"Periodic object reading...")
 
         for obj_id in self.bacnet_device_dict[device_identifier]:
             if not isinstance(obj_id, ObjectIdentifier):
@@ -563,7 +562,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             parameter_list = [obj_id, object_properties_to_read_periodically]
 
             try:  # Send readPropertyMultiple and get response
-                logging.debug(
+                LOGGER.debug(
                     f"Reading object {obj_id} of {device_identifier} during read_objects_periodically"
                 )
 
@@ -572,7 +571,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     parameter_list=parameter_list,
                 )
             except AbortPDU as err:
-                logging.warning(f"Abort PDU Error: {obj_id}: {err}")
+                LOGGER.warning(f"Abort PDU Error: {obj_id}: {err}")
 
                 if not "segmentation-not-supported" in str(err):
                     return False
@@ -580,21 +579,21 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     await self.read_objects_periodically(device_identifier)
 
             except ErrorPDU as err:
-                logging.error(
+                LOGGER.error(
                     f"Error PDU reading objects periodically: {obj_id}: {err}"
                 )
                 if "unrecognized-service" in str(err):
-                    await self.read_object_list(device_identifier)
+                    await self.read_objects_periodically(device_identifier)
 
             except ErrorRejectAbortNack as err:
-                logging.error(
+                LOGGER.error(
                     f"Nack error reading objects periodically: {obj_id}: {err}"
                 )
                 if "unrecognized-service" in str(err):
-                    await self.read_object_list(device_identifier)
+                    await self.read_objects_periodically(device_identifier)
 
             except AttributeError as err:
-                logging.error(f"Attribute error: {obj_id}: {err}")
+                LOGGER.error(f"Attribute error: {obj_id}: {err}")
 
             else:
                 for (
@@ -613,7 +612,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
     async def read_objects_periodically(self, device_identifier):
         """Read objects if regular way failed."""
-        logging.info(f"Reading objects non segmented for {device_identifier}...")
+        LOGGER.info(f"Reading objects non segmented for {device_identifier}...")
         for obj_id in self.bacnet_device_dict[device_identifier]:
             if not isinstance(obj_id, ObjectIdentifier):
                 obj_id = ObjectIdentifier(obj_id)
@@ -634,23 +633,23 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         prop=property_id,
                     )
                 except AbortPDU as err:
-                    logging.error(
+                    LOGGER.error(
                         f"Abort PDU Errorreading objects one by one periodically: {obj_id}: {err}"
                     )
 
                 except ErrorPDU as err:
-                    logging.error(
+                    LOGGER.error(
                         f"Error PDU reading objects one by one periodically: {device_identifier} {obj_id} {property_id}: {err}"
                     )
                     continue
 
                 except ErrorRejectAbortNack as err:
-                    logging.error(
+                    LOGGER.error(
                         f"Nack error reading objects one by one periodically: {device_identifier} {obj_id} {property_id}: {err}"
                     )
                     continue
                 except AttributeError as err:
-                    logging.error(f"Attribute error: {obj_id}: {err}")
+                    LOGGER.error(f"Attribute error: {obj_id}: {err}")
                 else:
                     if response is not ErrorType:
                         self.dict_updater(
@@ -700,17 +699,17 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         try:
             response = await self.request(subscribe_req)
-            logging.info(
+            LOGGER.info(
                 f"Subscribing to: {device_identifier}, {object_identifier}... response: {response}"
             )
 
         except (ErrorRejectAbortNack, RejectException, AbortException) as error:
-            logging.error(
+            LOGGER.error(
                 f"Error while subscribing to {device_identifier}, {object_identifier}: {error}"
             )
             return
         except (AbortPDU, ErrorPDU, RejectPDU) as error:
-            logging.error(
+            LOGGER.error(
                 f"Error while subscribing to {device_identifier}, {object_identifier}: {error}"
             )
             return
@@ -783,19 +782,19 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 property_type = object_class.get_property_type(value.propertyIdentifier)
 
                 if property_type == None:
-                    logging.warning(
+                    LOGGER.warning(
                         f"NoneType property: {apdu.monitoredObjectIdentifier[0]} {value.propertyIdentifier} {value.value}"
                     )
                     continue
                 elif value.propertyIdentifier not in object_properties_to_read_once:
-                    logging.warning(
+                    LOGGER.warning(
                         f"Ignoring property: {apdu.monitoredObjectIdentifier[0]} {value.propertyIdentifier} {value.value}"
                     )
                     continue
                 else:
                     property_value = value.value.cast_out(property_type)
 
-                logging.debug(
+                LOGGER.debug(
                     f"COV: {apdu.initiatingDeviceIdentifier}, {apdu.monitoredObjectIdentifier}, {value.propertyIdentifier}, {property_value}"
                 )
 
@@ -807,7 +806,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 )
 
         except Exception as err:
-            logging.error(
+            LOGGER.error(
                 f"{apdu.monitoredObjectIdentifier[0]}: {apdu.listOfValues} + {err}"
             )
 
@@ -822,7 +821,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             await super().do_ReadPropertyRequest(apdu)
         except (Exception, AttributeError) as err:
             await super().do_ReadPropertyRequest(apdu)
-            logging.warning(
+            LOGGER.warning(
                 f"{self.addr_to_dev(apdu.pduSource)} tried to read {apdu.objectIdentifier} {apdu.propertyIdentifier}: {err}"
             )
 
@@ -869,7 +868,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     # return the result
                     await self.response(resp)
 
-                    logging.info(
+                    LOGGER.info(
                         f"Rejected write for {apdu.objectIdentifier} {apdu.propertyIdentifier}!"
                     )
 
@@ -880,7 +879,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     # return the result
                     await self.response(resp)
 
-                    logging.info(
+                    LOGGER.info(
                         f"Ack'd write for {apdu.objectIdentifier} {apdu.propertyIdentifier}!"
                     )
 
@@ -902,7 +901,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 # return the result
                 await self.response(resp)
 
-                logging.info(
+                LOGGER.info(
                     f"Ack'd' write for {apdu.objectIdentifier} {apdu.propertyIdentifier}!"
                 )
 
@@ -912,12 +911,12 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 # return the result
                 await self.response(resp)
 
-                logging.warning(
+                LOGGER.warning(
                     f"Rejected write for {apdu.objectIdentifier} {apdu.propertyIdentifier}!"
                 )
 
         except Exception as err:
-            logging.exception(
+            LOGGER.exception(
                 f"Something went wrong while getting object written! {apdu.pduSource}"
             )
 
@@ -1003,14 +1002,14 @@ class ObjectManager:
                 try:
                     state = float(state)
                 except ValueError:
-                    logging.debug(f"state {state} is not a number")
+                    LOGGER.debug(f"state {state} is not a number")
 
                 if isinstance(state, (int, float, complex)):
                     self.analog_in_entity_ids.append(entity)
                 elif (state == "unavailable" or state == "unknown") and data[
                     "attributes"
                 ].get("unit_of_measurement"):
-                    logging.warning(
+                    LOGGER.warning(
                         f"Assuming {entity} is analogInput as it's currently unavailable and has units!'"
                     )
                     self.analog_in_entity_ids.append(entity)
@@ -1040,7 +1039,7 @@ class ObjectManager:
             # 	self.multi_state_in_entity_ids.append(entity) state
 
             else:
-                logging.warning(
+                LOGGER.warning(
                     f"Entity {entity} can't be turned into an object as it's not supported!"
                 )
 
@@ -1078,7 +1077,7 @@ class ObjectManager:
         if response.status_code == 200:
             return json.loads(response.text)
         else:
-            logging.error(f"Failed to get {entity_id}. {response.status_code}")
+            LOGGER.error(f"Failed to get {entity_id}. {response.status_code}")
             return False
 
     def fetch_services(self):
@@ -1094,7 +1093,7 @@ class ObjectManager:
         if response.status_code == 200:
             return json.loads(response.text)
         else:
-            logging.error(f"Failed to get services. {response.status_code}")
+            LOGGER.error(f"Failed to get services. {response.status_code}")
             return False
 
     def post_services(self, entity_id, value):
@@ -1120,7 +1119,7 @@ class ObjectManager:
         ):
             service = "turn_on" if value else "turn_off"
         else:
-            logging.error(f"Can not write to {entity_id} as it's deemed not writable'")
+            LOGGER.error(f"Can not write to {entity_id} as it's deemed not writable'")
             return False
 
         url = f"http://supervisor/core/api/services/{domain}/{service}"
@@ -1134,7 +1133,7 @@ class ObjectManager:
         if response.status_code == 200:
             return True
         else:
-            logging.error(
+            LOGGER.error(
                 f"Failed to post {entity_id}: HTTP Code {response.status_code}"
             )
             return False
@@ -1272,7 +1271,7 @@ class ObjectManager:
     def update_object(self, object_type, index, entity):
         """Update objects with API data."""
 
-        logging.debug(f"UPDATING {object_type} {index} {entity}")
+        LOGGER.debug(f"UPDATING {object_type} {index} {entity}")
 
         obj = self.app.get_object_id(
             ObjectIdentifier(str(object_type + ":" + str(index)))
@@ -1309,7 +1308,7 @@ class ObjectManager:
                 await websocket.send(json.dumps(auth))
                 data = json.loads(await websocket.recv())
                 if data.get("type") != "auth_ok":
-                    logging.error("Authentication with API failed!")
+                    LOGGER.error("Authentication with API failed!")
                     continue
 
                 subscribe_to_state = {
@@ -1324,12 +1323,12 @@ class ObjectManager:
                 await websocket.send(json.dumps(subscribe_to_state))
                 data = json.loads(await websocket.recv())
                 if data.get("success"):
-                    logging.debug(f"Subscribed to selected entities!")
+                    LOGGER.debug(f"Subscribed to selected entities!")
                     message_id = message_id + 1
 
                 while True:
                     data = json.loads(await websocket.recv())
-                    logging.debug(f"Received: {str(data)}")
+                    LOGGER.debug(f"Received: {str(data)}")
 
                     new_state = data["event"]["variables"]["trigger"]["to_state"]
 
@@ -1362,12 +1361,12 @@ class ObjectManager:
                     )
 
             except websockets.ConnectionClosed as err:
-                logging.warning(
+                LOGGER.warning(
                     f"Websocket connection to Home Assistant API closed! Attempting to reconnect..."
                 )
                 continue
             except Exception as err:
-                logging.error(
+                LOGGER.error(
                     f"Websocket connection to Home Assistant API failed! {err}"
                 )
 
@@ -1412,4 +1411,4 @@ class ObjectManager:
                     await self.app.write_to_api_queue.put(False)
 
         except asyncio.CancelledError as err:
-            logging.warning(f"data_update_task cancelled: {err}")
+            LOGGER.warning(f"data_update_task cancelled: {err}")
