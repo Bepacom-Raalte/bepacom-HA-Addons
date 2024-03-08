@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from const import LOGGER
 from dataclasses import dataclass
 from random import choice, randint
+import shutil
 from typing import Annotated, Any, Callable, Union
 
 from bacpypes3.basetypes import (EngineeringUnits, ObjectIdentifier,
@@ -16,7 +17,7 @@ from bacpypes3.basetypes import (EngineeringUnits, ObjectIdentifier,
 from bacpypes3.ipv4.app import Application
 from fastapi import (FastAPI, Path, Query, Request, Response, UploadFile,
                      WebSocket, WebSocketDisconnect, status)
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -33,6 +34,8 @@ sub_list: list = []
 who_is_func: Callable
 i_am_func: Callable
 ingress: str
+
+log_path: str
 
 
 def deep_update(mapping: dict, *updating_mappings: dict) -> dict:
@@ -338,6 +341,16 @@ async def delete_ede_file(device_ids: Annotated[list[str] | None, Query()] = Non
     return True
 
 
+@app.get("/apiv1/diagnostics/logs", tags=["apiv1"])
+async def download_logs():
+    """Download add-on logs."""
+    global log_path
+    if log_path:
+        dupe_path = shutil.copyfile(log_path,log_path.replace("share","usr/bin")+"2")
+        return FileResponse(path=dupe_path, media_type="application/octet-stream", filename="bacnet_addon_logs.txt")
+    else:
+        return status.HTTP_404_NOT_FOUND
+
 # Any commands or not variable paths should go above here... FastAPI will use it as a variable if you make a new path below this.
 
 
@@ -568,6 +581,7 @@ async def websocket_writer(websocket: WebSocket):
                     for file in EDE_files:
                         dict_to_send = deep_update(dict_to_send, file)
                 for websocket in activeSockets:
+                    LOGGER.debug(f"Websocket json: {dict_to_send}")
                     await websocket.send_json(dict_to_send)
                 events.val_updated_event.clear()
             else:

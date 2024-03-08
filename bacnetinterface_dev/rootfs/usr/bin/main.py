@@ -4,6 +4,8 @@ import asyncio
 import configparser
 import json
 import os
+from re import L
+from tkinter import W
 from typing import TypeVar
 from logging import FileHandler, Formatter, Logger, getLogger, StreamHandler
 
@@ -297,10 +299,14 @@ async def main():
         path_str = path_str.rstrip("/usr/bin")
     
         path_str = path_str + "/share"
+        
+    log_path = f"{path_str}/bacnet_addon-{datetime.now().date()}-{datetime.now().strftime("%H_%M_%S")}.log"
+    
+    webAPI.log_path = log_path
 
     formatter = Formatter("%(levelname)s:    %(message)s")
 
-    file_handler = FileHandler(filename = f"{path_str}/bacnet_addon-{datetime.now().date()}-{datetime.now().strftime("%H-%M-%S")}.log", mode = "w+")
+    file_handler = FileHandler(filename = log_path, mode = "w+")
 
     file_handler.setFormatter(formatter)
 
@@ -310,11 +316,13 @@ async def main():
     
     stream_handler.setFormatter(formatter)
     
+    stream_handler.setLevel(loglevel)
+    
     LOGGER.addHandler(file_handler)
 
     LOGGER.addHandler(stream_handler)
     
-    LOGGER.setLevel(loglevel)
+    LOGGER.setLevel("DEBUG")
     
     this_device = DeviceObject(
         objectIdentifier=ObjectIdentifier(f"device,{object_identifier}"),
