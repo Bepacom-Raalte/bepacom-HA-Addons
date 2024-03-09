@@ -249,7 +249,7 @@ def get_configuration() -> tuple:
 
     update_interval = config.get("BACpypes", "updateInterval", fallback=60)
     
-    log_export = options.get("log_export", True)
+    export_log = options.get("export_log", False)
 
     return (
         default_write_prio,
@@ -266,7 +266,7 @@ def get_configuration() -> tuple:
         update_interval,
         options,
         token,
-        log_export
+        export_log
     )
 
 
@@ -292,12 +292,12 @@ async def main():
         update_interval,
         options,
         token,
-        log_export,
+        export_log,
     ) = get_configuration()
 
     formatter = Formatter("%(levelname)s:    %(message)s")
     
-    if log_export:
+    if export_log:
         
         path_str = os.path.dirname(os.path.realpath(__file__))
 
