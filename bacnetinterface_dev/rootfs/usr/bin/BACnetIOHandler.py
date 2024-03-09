@@ -156,18 +156,19 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         # if failed stop handling response
         if not await self.read_multiple_device_props(apdu=apdu):
+            LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
             if self.bacnet_device_dict.get(f"device:{device_id}"):
                 self.bacnet_device_dict.pop(f"device:{device_id}")
             return
 
         if not self.bacnet_device_dict.get(f"device:{device_id}"):
-            LOGGER.error(f"Failed to get: {device_id}")
+            LOGGER.warning(f"Failed to get: {device_id}")
             return
 
         if not self.bacnet_device_dict[f"device:{device_id}"].get(
             f"device:{device_id}"
         ):
-            LOGGER.error(f"Failed to get: {device_id}, {device_id}")
+            LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
             return
 
         services_supported = self.bacnet_device_dict[f"device:{device_id}"][
@@ -321,8 +322,11 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             return True
 
     async def read_device_props(self, apdu):
+        
         address = apdu.pduSource
         device_identifier = apdu.iAmDeviceIdentifier
+        
+        LOGGER.debug(f"Exploring Device info of {device_identifier} one by one.")
 
         for property_id in device_properties_to_read:
             if property_id == PropertyIdentifier("objectList"):
@@ -339,16 +343,16 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 )
             except ErrorPDU as err:
                 LOGGER.error(
-                    f"Error PDU error reading device props one by one: {device_identifier}: {property_id} {err}"
+                    f"Error PDU error reading device properties one by one: {device_identifier}: {property_id} {err}"
                 )
                 continue
             except ErrorRejectAbortNack as err:
                 LOGGER.error(
-                    f"Nack error reading device props one by one: {device_identifier}: {property_id} {err}"
+                    f"Nack error reading device properties one by one: {device_identifier}: {property_id} {err}"
                 )
             except AttributeError as err:
                 LOGGER.error(
-                    f"Attribute error reading device props one by one: {device_identifier}: {property_id} {err}"
+                    f"Attribute error reading device properties one by one: {device_identifier}: {property_id} {err}"
                 )
             except ValueError as err:
                 LOGGER.error(
@@ -375,6 +379,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         """Read object list property in the smallest possible way."""
         address = self.dev_to_addr(dev=device_identifier)
 
+        LOGGER.debug(f"Reading objectList property of {device_identifier} one by one.")
+
         try:
             object_amount = await self.read_property(
                 address=address,
@@ -382,10 +388,12 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 prop=PropertyIdentifier("objectList"),
                 array_index=0,
             )
-
+            
+            if object_amount == 0:
+                raise Exception(f"Object amount returned as 0!")
         except Exception as err:
             LOGGER.warning(
-                f"Error getting object list size for {device_identifier} at {address}"
+                f"Error getting object list size for {device_identifier} at {address}: {err}"
             )
             return False
 
@@ -409,14 +417,15 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             )
         except Exception as err:
             LOGGER.warning(
-                f"Error getting object list size for {device_identifier} at {address}"
+                f"Error getting object list size for {device_identifier} at {address}: {err}"
             )
             return False
-        return True
+        else:
+            return True
 
     async def read_multiple_object_list(self, device_identifier):
         """Read all objects from a device."""
-        LOGGER.info(f"Reading objectList from {device_identifier}...")
+        LOGGER.info(f"Reading objects from objectList of {device_identifier}...")
         device_identifier = ObjectIdentifier(device_identifier)
         for obj_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"][
             f"device:{device_identifier[1]}"
@@ -435,7 +444,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
             try:  # Send readPropertyMultiple and get response
                 LOGGER.debug(
-                    f"Reading object {obj_id} of {device_identifier} during read_object_list"
+                    f"Reading object {obj_id} of {device_identifier} during read_multiple_object_list"
                 )
 
                 response = await self.read_property_multiple(

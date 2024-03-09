@@ -249,7 +249,7 @@ def get_configuration() -> tuple:
 
     update_interval = config.get("BACpypes", "updateInterval", fallback=60)
     
-    export_log = options.get("export_log", False)
+    export_log = options.get("export_log", True)
 
     return (
         default_write_prio,
@@ -295,7 +295,7 @@ async def main():
         export_log,
     ) = get_configuration()
 
-    formatter = Formatter("%(levelname)s:    %(message)s")
+    formatter = Formatter("%(levelname)s->%(filename)s->%(funcName)s:    %(message)s")
     
     if export_log:
         
@@ -325,7 +325,6 @@ async def main():
     stream_handler.setFormatter(formatter)
 
     stream_handler.setLevel(loglevel)
-
 
     LOGGER.addHandler(stream_handler)
 
