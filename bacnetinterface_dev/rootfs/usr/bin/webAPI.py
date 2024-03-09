@@ -35,7 +35,7 @@ who_is_func: Callable
 i_am_func: Callable
 ingress: str
 
-log_path: str
+log_path: str | None = None
 
 
 def deep_update(mapping: dict, *updating_mappings: dict) -> dict:
