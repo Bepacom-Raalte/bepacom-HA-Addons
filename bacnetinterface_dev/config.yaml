@@ -44,6 +44,7 @@ options:
     multiStateValue: true
   entity_list: []
   loglevel: WARNING
+  export_log: false
   segmentation: segmentedBoth
 schema:
   objectName: str
@@ -51,6 +52,7 @@ schema:
   objectIdentifier: int
   defaultPriority: "int(1,16)"
   loglevel: list(DEBUG|INFO|WARNING|ERROR|CRITICAL|)
+  export_log: bool
   updateInterval: int
   subscriptions:
     analogInput: bool

@@ -248,6 +248,8 @@ def get_configuration() -> tuple:
     foreign_ttl = config.get("BACpypes", "foreignTTL", fallback=255)
 
     update_interval = config.get("BACpypes", "updateInterval", fallback=60)
+    
+    log_export = options.get("log_export", True)
 
     return (
         default_write_prio,
@@ -264,6 +266,7 @@ def get_configuration() -> tuple:
         update_interval,
         options,
         token,
+        log_export
     )
 
 
@@ -289,28 +292,33 @@ async def main():
         update_interval,
         options,
         token,
+        log_export,
     ) = get_configuration()
 
-    path_str = os.path.dirname(os.path.realpath(__file__))
-
-    if os.name == "posix":
-        path_str = path_str.replace("/usr/bin", "/share")
-
-    date_var = datetime.now().date()
-
-    time_var = datetime.now().strftime("%H_%M_%S")
-
-    log_path = f"{path_str}/bacnet_addon-{date_var}-{time_var}.log"
-
-    webAPI.log_path = log_path
-
     formatter = Formatter("%(levelname)s:    %(message)s")
+    
+    if log_export:
+        
+        path_str = os.path.dirname(os.path.realpath(__file__))
 
-    file_handler = FileHandler(filename=log_path, mode="w+")
+        if os.name == "posix":
+            path_str = path_str.replace("/usr/bin", "/share")
 
-    file_handler.setFormatter(formatter)
+        date_var = datetime.now().date()
 
-    file_handler.setLevel("DEBUG")
+        time_var = datetime.now().strftime("%H_%M_%S")
+
+        log_path = f"{path_str}/bacnet_addon-{date_var}-{time_var}.log"
+
+        webAPI.log_path = log_path
+        
+        file_handler = FileHandler(filename=log_path, mode="w+")
+
+        file_handler.setFormatter(formatter)
+
+        file_handler.setLevel("DEBUG")
+        
+        LOGGER.addHandler(file_handler)
 
     stream_handler = StreamHandler()
 
@@ -318,7 +326,6 @@ async def main():
 
     stream_handler.setLevel(loglevel)
 
-    LOGGER.addHandler(file_handler)
 
     LOGGER.addHandler(stream_handler)
 

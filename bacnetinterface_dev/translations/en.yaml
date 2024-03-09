@@ -14,6 +14,9 @@ configuration:
   loglevel:
     name: Level of Logging
     description: The severity of log messages being displayed.
+  export_log:
+    name: Export Logs
+    description: Export logs to /share as well as download them from your browser.
   maxApduLenghtAccepted: 
     name: Maximum  APDU Length Accepted
     description: Maximum amount of Application Layer Protocol Data Units allowed.
