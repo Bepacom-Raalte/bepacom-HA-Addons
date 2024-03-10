@@ -267,7 +267,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             device_identifier = ObjectIdentifier(apdu.iAmDeviceIdentifier)
             parameter_list = [device_identifier, device_properties_to_read]
 
-            LOGGER.debug(f"Exploring Device info of {device_identifier}")
+            LOGGER.debug(f"Reading device properties of {device_identifier}")
 
             response = await self.read_property_multiple(
                 address=apdu.pduSource, parameter_list=parameter_list
@@ -289,16 +289,27 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         except ErrorPDU as err:
             LOGGER.error(f"Error PDU reading device props: {device_identifier}: {err}")
-            if "unrecognized-service" in str(err):
-                await self.read_device_props(apdu)
+            
+            if "segmentation-not-supported" in str(err):
+                return await self.read_device_props(apdu)
+            elif "unrecognized-service" in str(err):
+                return await self.read_device_props(apdu)
+            elif "no-response" in str(err):
+                return await self.read_device_props(apdu)
+            else:
                 return False
 
         except ErrorRejectAbortNack as err:
             LOGGER.error(f"Nack error reading device props: {device_identifier}: {err}")
-            if "unrecognized-service" in str(err):
-                await self.read_device_props(apdu)
-
-            return False
+            
+            if "segmentation-not-supported" in str(err):
+                return await self.read_device_props(apdu)
+            elif "unrecognized-service" in str(err):
+                return await self.read_device_props(apdu)
+            elif "no-response" in str(err):
+                return await self.read_device_props(apdu)
+            else:
+                return False
 
         except AttributeError as err:
             LOGGER.error(
@@ -326,7 +337,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         address = apdu.pduSource
         device_identifier = apdu.iAmDeviceIdentifier
         
-        LOGGER.debug(f"Exploring Device info of {device_identifier} one by one.")
+        LOGGER.debug(f"Reading device properties of {device_identifier} one by one.")
 
         for property_id in device_properties_to_read:
             if property_id == PropertyIdentifier("objectList"):
@@ -371,11 +382,12 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         property_value=response,
                     )
 
-        if not (await self.read_object_list_property(device_identifier)):
+        if await self.read_object_list_property(device_identifier):
+            return True
+        else:
             return False
-        return True
 
-    async def read_object_list_property(self, device_identifier):
+    async def read_object_list_property(self, device_identifier) -> bool:
         """Read object list property in the smallest possible way."""
         address = self.dev_to_addr(dev=device_identifier)
 
