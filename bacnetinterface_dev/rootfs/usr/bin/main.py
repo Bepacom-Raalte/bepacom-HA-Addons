@@ -5,7 +5,8 @@ import configparser
 import json
 import os
 from datetime import datetime
-from logging import FileHandler, Formatter, Logger, StreamHandler, getLogger
+from logging import Formatter, Logger, StreamHandler, getLogger
+from logging.handlers import RotatingFileHandler
 from typing import TypeVar
 
 import uvicorn
@@ -301,18 +302,13 @@ async def main():
         
         path_str = os.path.dirname(os.path.realpath(__file__))
 
-        if os.name == "posix":
-            path_str = path_str.replace("/usr/bin", "/share")
-
         date_var = datetime.now().date()
 
-        time_var = datetime.now().strftime("%H_%M_%S")
-
-        log_path = f"{path_str}/bacnet_addon-{date_var}-{time_var}.log"
+        log_path = f"{path_str}/bacnet_addon-{date_var}.log"
 
         webAPI.log_path = log_path
         
-        file_handler = FileHandler(filename=log_path, mode="w+")
+        file_handler = RotatingFileHandler(filename=log_path, mode="a", maxBytes=10*1024, backupCount=2)
 
         file_handler.setFormatter(formatter)
 

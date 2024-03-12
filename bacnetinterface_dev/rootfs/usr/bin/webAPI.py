@@ -522,9 +522,9 @@ async def websocket_endpoint(websocket: WebSocket):
                 message = data["text"]
                 try:
                     message = json.loads(message)
-                except:
+                except Exception as err:
                     LOGGER.warning(
-                        f"message: {message} is not processed as it's not valid JSON"
+                        f"message: {message} is not processed as it's not valid JSON {err}"
                     )
                     LOGGER.warning(
                         'Do it as the following example: {"device:100":{"analogInput:1":{"presentValue":1}}}'
@@ -564,22 +564,23 @@ async def websocket_endpoint(websocket: WebSocket):
         except (RuntimeError, asyncio.CancelledError) as error:
             write_task.cancel()
             activeSockets.remove(websocket)
-            LOGGER.error("Disconnected with RuntimeError or CancelledError...\n")
+            LOGGER.error("Disconnected with RuntimeError or CancelledError...")
             return
         except WebSocketDisconnect:
             write_task.cancel()
             activeSockets.remove(websocket)
-            LOGGER.error("Disconnected...\n")
+            LOGGER.info("Disconnected websocket")
             return
         except Exception as e:
             write_task.cancel()
             activeSockets.remove(websocket)
-            LOGGER.error("Disconnected with Exception" + str(e) + "...\n")
+            LOGGER.error("Disconnected with Exception" + str(e) + "...")
 
 
 async def websocket_writer(websocket: WebSocket):
     """Writer task for when a websocket is opened"""
     try:
+        global bacnet_device_dict
         await websocket.send_json(bacnet_device_dict)
         while True:
             if events.val_updated_event.is_set():
@@ -587,8 +588,11 @@ async def websocket_writer(websocket: WebSocket):
                 if EDE_files:
                     for file in EDE_files:
                         dict_to_send = deep_update(dict_to_send, file)
+                if not dict_to_send:
+                    LOGGER.warning(f"Websocket dict to send is empty!")
+                    events.val_updated_event.clear()
+                    continue
                 for websocket in activeSockets:
-                    LOGGER.debug(f"Websocket json: {dict_to_send}")
                     await websocket.send_json(dict_to_send)
                 events.val_updated_event.clear()
             else:
