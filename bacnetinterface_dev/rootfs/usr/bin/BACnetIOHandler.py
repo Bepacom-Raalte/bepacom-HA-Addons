@@ -718,7 +718,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         try:
             response = await self.request(subscribe_req)
             LOGGER.info(
-                f"Subscribing to: {device_identifier}, {object_identifier}... response: {response}"
+                f"Subscribing to: {device_identifier}, {object_identifier}... response: {response.apduType}"
             )
 
         except (ErrorRejectAbortNack, RejectException, AbortException) as error:
