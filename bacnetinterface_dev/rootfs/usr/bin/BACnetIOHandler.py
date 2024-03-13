@@ -193,6 +193,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
     ):
         if isinstance(property_value, ErrorType):
             return
+        elif property_value is None:
+            return
         elif isinstance(property_value, float):
             if isnan(property_value):
                 LOGGER.warning(
