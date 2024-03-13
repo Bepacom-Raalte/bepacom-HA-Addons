@@ -275,35 +275,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 address=apdu.pduSource, parameter_list=parameter_list
             )
 
-        except AbortPDU as err:
-            LOGGER.warning(
-                f"Abort PDU error while reading device properties: {device_identifier}: {err}"
-            )
-
-            if "segmentation-not-supported" in str(err):
-                return await self.read_device_props(apdu)
-            elif "unrecognized-service" in str(err):
-                return await self.read_device_props(apdu)
-            elif "no-response" in str(err):
-                return await self.read_device_props(apdu)
-            else:
-                return False
-
-        except ErrorPDU as err:
-            LOGGER.error(f"Error PDU reading device props: {device_identifier}: {err}")
-            
-            if "segmentation-not-supported" in str(err):
-                return await self.read_device_props(apdu)
-            elif "unrecognized-service" in str(err):
-                return await self.read_device_props(apdu)
-            elif "no-response" in str(err):
-                return await self.read_device_props(apdu)
-            else:
-                return False
-
         except ErrorRejectAbortNack as err:
-            LOGGER.error(f"Nack error reading device props: {device_identifier}: {err}")
-            
+            LOGGER.error(f"Error reading device props: {device_identifier}: {err}")
+
             if "segmentation-not-supported" in str(err):
                 return await self.read_device_props(apdu)
             elif "unrecognized-service" in str(err):
@@ -325,7 +299,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 property_array_index,
                 property_value,
             ) in response:
-                if property_value and property_value is not ErrorType:
+                if property_value is not ErrorType:
                     self.dict_updater(
                         device_identifier=device_identifier,
                         object_identifier=object_identifier,
@@ -335,10 +309,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             return True
 
     async def read_device_props(self, apdu):
-        
         address = apdu.pduSource
         device_identifier = apdu.iAmDeviceIdentifier
-        
+
         LOGGER.debug(f"Reading device properties of {device_identifier} one by one.")
 
         for property_id in device_properties_to_read:
@@ -349,32 +322,26 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 response = await self.read_property(
                     address=address, objid=device_identifier, prop=property_id
                 )
-
-            except AbortPDU as err:
-                LOGGER.error(
-                    f"Abort PDU error while reading device properties one by one: {device_identifier}: {property_id} {err}"
-                )
-            except ErrorPDU as err:
-                LOGGER.error(
-                    f"Error PDU error reading device properties one by one: {device_identifier}: {property_id} {err}"
-                )
-                continue
             except ErrorRejectAbortNack as err:
                 LOGGER.error(
-                    f"Nack error reading device properties one by one: {device_identifier}: {property_id} {err}"
+                    f"Error reading device properties one by one: {device_identifier}: {property_id} {err}"
                 )
+                continue
             except AttributeError as err:
                 LOGGER.error(
                     f"Attribute error reading device properties one by one: {device_identifier}: {property_id} {err}"
                 )
+                continue
             except ValueError as err:
                 LOGGER.error(
                     f"ValueError reading device props one by one: {device_identifier}: {property_id} {err}"
                 )
+                continue
             except Exception as err:
                 LOGGER.error(
                     f"Exception reading device props one by one: {device_identifier}: {property_id} {err}"
                 )
+                continue
             else:
                 if response is not ErrorType:
                     self.dict_updater(
@@ -402,7 +369,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 prop=PropertyIdentifier("objectList"),
                 array_index=0,
             )
-            
+
             if object_amount == 0:
                 raise Exception(f"Object amount returned as 0!")
         except Exception as err:
@@ -465,30 +432,15 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     address=self.dev_to_addr(device_identifier),
                     parameter_list=parameter_list,
                 )
-            except AbortPDU as err:
-                LOGGER.warning(
-                    f"Abort PDU Error while reading object list: {device_identifier}: {obj_id} {err}"
-                )
-
-                if not "segmentation-not-supported" in str(err):
-                    return False
-                else:
-                    await self.read_object_list(device_identifier)
-
-            except ErrorPDU as err:
-                LOGGER.error(
-                    f"Nack error while reading object list: {device_identifier}: {obj_id} {err}"
-                )
-
-                if "unrecognized-service" in str(err):
-                    await self.read_object_list(device_identifier)
 
             except ErrorRejectAbortNack as err:
                 LOGGER.error(
-                    f"Nack error while reading object list: {device_identifier}: {obj_id} {err}"
+                    f"Error while reading object list: {device_identifier}: {obj_id} {err}"
                 )
 
                 if "unrecognized-service" in str(err):
+                    await self.read_object_list(device_identifier)
+                elif "segmentation-not-supported" in str(err):
                     await self.read_object_list(device_identifier)
 
             except AssertionError as err:
@@ -537,18 +489,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                             objid=obj_id,
                             prop=property_id,
                         )
-                    except AbortPDU as err:
-                        LOGGER.error(
-                            f"Abort PDU while reading device object list one by one: {device_identifier} {obj_id} {property_id}: {err}"
-                        )
-                    except ErrorPDU as err:
-                        LOGGER.error(
-                            f"Error PDU reading object list one by one: {device_identifier} {obj_id} {property_id}: {err}"
-                        )
-                        continue
                     except ErrorRejectAbortNack as err:
                         LOGGER.error(
-                            f"Nack error reading object list one by one: {device_identifier} {obj_id} {property_id}: {err}"
+                            f"Error reading object list one by one: {device_identifier} {obj_id} {property_id}: {err}"
                         )
                         continue
                     else:
@@ -592,24 +535,12 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     address=self.dev_to_addr(ObjectIdentifier(device_identifier)),
                     parameter_list=parameter_list,
                 )
-            except AbortPDU as err:
-                LOGGER.warning(f"Abort PDU Error: {obj_id}: {err}")
-
-                if not "segmentation-not-supported" in str(err):
-                    return False
-                else:
-                    await self.read_objects_periodically(device_identifier)
-
-            except ErrorPDU as err:
-                LOGGER.error(f"Error PDU reading objects periodically: {obj_id}: {err}")
-                if "unrecognized-service" in str(err):
-                    await self.read_objects_periodically(device_identifier)
 
             except ErrorRejectAbortNack as err:
-                LOGGER.error(
-                    f"Nack error reading objects periodically: {obj_id}: {err}"
-                )
+                LOGGER.error(f"Error reading objects periodically: {obj_id}: {err}")
                 if "unrecognized-service" in str(err):
+                    await self.read_objects_periodically(device_identifier)
+                elif "segmentation-not-supported" in str(err):
                     await self.read_objects_periodically(device_identifier)
 
             except AttributeError as err:
@@ -652,20 +583,10 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         objid=obj_id,
                         prop=property_id,
                     )
-                except AbortPDU as err:
-                    LOGGER.error(
-                        f"Abort PDU Errorreading objects one by one periodically: {obj_id}: {err}"
-                    )
-
-                except ErrorPDU as err:
-                    LOGGER.error(
-                        f"Error PDU reading objects one by one periodically: {device_identifier} {obj_id} {property_id}: {err}"
-                    )
-                    continue
 
                 except ErrorRejectAbortNack as err:
                     LOGGER.error(
-                        f"Nack error reading objects one by one periodically: {device_identifier} {obj_id} {property_id}: {err}"
+                        f"Error reading objects one by one periodically: {device_identifier} {obj_id} {property_id}: {err}"
                     )
                     continue
                 except AttributeError as err:
@@ -801,7 +722,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 )
                 property_type = object_class.get_property_type(value.propertyIdentifier)
 
-                if property_type == None:
+                if property_type is None:
                     LOGGER.warning(
                         f"NoneType property: {apdu.monitoredObjectIdentifier[0]} {value.propertyIdentifier} {value.value}"
                     )

@@ -249,7 +249,7 @@ def get_configuration() -> tuple:
     foreign_ttl = config.get("BACpypes", "foreignTTL", fallback=255)
 
     update_interval = config.get("BACpypes", "updateInterval", fallback=60)
-    
+
     export_log = options.get("export_log", True)
 
     return (
@@ -267,7 +267,7 @@ def get_configuration() -> tuple:
         update_interval,
         options,
         token,
-        export_log
+        export_log,
     )
 
 
@@ -297,9 +297,8 @@ async def main():
     ) = get_configuration()
 
     formatter = Formatter("%(levelname)s->%(filename)s->%(funcName)s:    %(message)s")
-    
+
     if export_log:
-        
         path_str = os.path.dirname(os.path.realpath(__file__))
 
         date_var = datetime.now().date()
@@ -307,13 +306,15 @@ async def main():
         log_path = f"{path_str}/bacnet_addon-{date_var}.log"
 
         webAPI.log_path = log_path
-        
-        file_handler = RotatingFileHandler(filename=log_path, mode="a", maxBytes=10*1024*1024, backupCount=2)
+
+        file_handler = RotatingFileHandler(
+            filename=log_path, mode="a", maxBytes=10 * 1024 * 1024, backupCount=2
+        )
 
         file_handler.setFormatter(formatter)
 
         file_handler.setLevel("DEBUG")
-        
+
         LOGGER.addHandler(file_handler)
 
     stream_handler = StreamHandler()
