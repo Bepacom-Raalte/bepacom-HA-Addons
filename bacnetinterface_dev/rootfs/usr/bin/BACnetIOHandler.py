@@ -43,7 +43,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
     next_id = 1
     default_subscription_lifetime = 28800
     subscription_list = []
-    i_am_queue : asyncio.Queue = asyncio.Queue()
+    i_am_queue: asyncio.Queue = asyncio.Queue()
 
     def __init__(
         self, device, local_ip, foreign_ip="", ttl=255, update_event=asyncio.Event()
@@ -158,11 +158,11 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         await super().do_IAmRequest(apdu)
 
         await self.i_am_queue.put(apdu)
-        
+
     async def IAm_handler(self):
         """Do the things when receiving I Am requests"""
 
-        while True:       
+        while True:
             apdu = await self.i_am_queue.get()
 
             device_id = apdu.iAmDeviceIdentifier[1]
@@ -191,7 +191,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             if services_supported["read-property-multiple"] == 1:
                 await self.read_multiple_objects(
                     device_identifier=apdu.iAmDeviceIdentifier
-                    )
+                )
             else:
                 await self.read_objects(device_identifier=apdu.iAmDeviceIdentifier)
 
@@ -533,7 +533,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             parameter_list = [obj_id, object_properties_to_read_periodically]
 
             try:  # Send readPropertyMultiple and get response
-                
+
                 response = await self.read_property_multiple(
                     address=self.dev_to_addr(ObjectIdentifier(device_identifier)),
                     parameter_list=parameter_list,

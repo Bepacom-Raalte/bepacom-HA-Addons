@@ -43,7 +43,9 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
                         device_id
                     ].get("protocolServicesSupported", {})
                     if services_supported["read-property-multiple"] == 1:
-                        await app.read_multiple_objects_periodically(device_identifier=device_id)
+                        await app.read_multiple_objects_periodically(
+                            device_identifier=device_id
+                        )
                     else:
                         await app.read_objects_periodically(device_identifier=device_id)
                 event.clear()
@@ -54,7 +56,9 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
                         device_id
                     ].get("protocolServicesSupported", {})
                     if services_supported["read-property-multiple"] == 1:
-                        await app.read_multiple_objects_periodically(device_identifier=device_id)
+                        await app.read_multiple_objects_periodically(
+                            device_identifier=device_id
+                        )
                     else:
                         await app.read_objects_periodically(device_identifier=device_id)
 
