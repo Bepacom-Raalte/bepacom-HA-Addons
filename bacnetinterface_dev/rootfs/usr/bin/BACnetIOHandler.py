@@ -156,8 +156,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             in_cache = False
 
         await super().do_IAmRequest(apdu)
-
-        await self.i_am_queue.put(apdu)
+        
+        if not in_cache:
+            await self.i_am_queue.put(apdu)
 
     async def IAm_handler(self):
         """Do the things when receiving I Am requests"""
@@ -540,7 +541,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 )
 
             except ErrorRejectAbortNack as err:
-                LOGGER.error(f"Error reading objects periodically: {obj_id}: {err}")
+                LOGGER.error(f"Error reading objects periodically:{device_identifier}, {obj_id}: {err}")
                 if "unrecognized-service" in str(err):
                     await self.read_objects_periodically(device_identifier)
                 elif "segmentation-not-supported" in str(err):
@@ -751,7 +752,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         except Exception as err:
             LOGGER.error(
-                f"{apdu.monitoredObjectIdentifier[0]}: {apdu.listOfValues} + {err}"
+                f"CoV notification error: {apdu.monitoredObjectIdentifier[0]}: {apdu.listOfValues} + {err}"
             )
 
         # success
