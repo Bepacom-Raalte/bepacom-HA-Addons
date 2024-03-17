@@ -2,6 +2,7 @@
 import asyncio
 import json
 from math import isinf, isnan
+from re import A
 from typing import Any, Dict, TypeVar
 
 import backoff
@@ -42,6 +43,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
     next_id = 1
     default_subscription_lifetime = 28800
     subscription_list = []
+    i_am_queue : asyncio.Queue = asyncio.Queue()
 
     def __init__(
         self, device, local_ip, foreign_ip="", ttl=255, update_event=asyncio.Event()
@@ -56,6 +58,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         self.update_event = update_event
         self.vendor_info = get_vendor_info(0)
         asyncio.get_event_loop().create_task(self.refresh_subscriptions())
+        asyncio.get_event_loop().create_task(self.IAm_handler())
         self.startup_complete.set()
         LOGGER.debug("Application initialised")
 
@@ -154,35 +157,45 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         await super().do_IAmRequest(apdu)
 
-        # if failed stop handling response
-        if not await self.read_multiple_device_props(apdu=apdu):
-            LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
-            if self.bacnet_device_dict.get(f"device:{device_id}"):
-                self.bacnet_device_dict.pop(f"device:{device_id}")
-            return
+        await self.i_am_queue.put(apdu)
+        
+    async def IAm_handler(self):
+        """Do the things when receiving I Am requests"""
 
-        if not self.bacnet_device_dict.get(f"device:{device_id}"):
-            LOGGER.warning(f"Failed to get: {device_id}")
-            return
+        while True:       
+            apdu = await self.i_am_queue.get()
 
-        if not self.bacnet_device_dict[f"device:{device_id}"].get(
-            f"device:{device_id}"
-        ):
-            LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
-            return
+            device_id = apdu.iAmDeviceIdentifier[1]
 
-        services_supported = self.bacnet_device_dict[f"device:{device_id}"][
-            f"device:{device_id}"
-        ].get("protocolServicesSupported")
+            # if failed stop handling response
+            if not await self.read_multiple_device_props(apdu=apdu):
+                LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
+                if self.bacnet_device_dict.get(f"device:{device_id}"):
+                    self.bacnet_device_dict.pop(f"device:{device_id}")
+                return
 
-        if services_supported["read-property-multiple"] == 1:
-            await self.read_multiple_object_list(
-                device_identifier=apdu.iAmDeviceIdentifier
-            )
-        else:
-            await self.read_object_list(device_identifier=apdu.iAmDeviceIdentifier)
+            if not self.bacnet_device_dict.get(f"device:{device_id}"):
+                LOGGER.warning(f"Failed to get: {device_id}")
+                return
 
-        await self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
+            if not self.bacnet_device_dict[f"device:{device_id}"].get(
+                f"device:{device_id}"
+            ):
+                LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
+                return
+
+            services_supported = self.bacnet_device_dict[f"device:{device_id}"][
+                f"device:{device_id}"
+            ].get("protocolServicesSupported", {})
+
+            if services_supported["read-property-multiple"] == 1:
+                await self.read_multiple_objects(
+                    device_identifier=apdu.iAmDeviceIdentifier
+                    )
+            else:
+                await self.read_objects(device_identifier=apdu.iAmDeviceIdentifier)
+
+            await self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
 
     def dict_updater(
         self,
@@ -192,8 +205,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         property_value,
     ):
         if isinstance(property_value, ErrorType):
-            return
-        elif property_value is None:
             return
         elif isinstance(property_value, float):
             if isnan(property_value):
@@ -222,7 +233,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                             val[1],
                         ]
                     )
-            pass
 
         if isinstance(property_value, ObjectIdentifier):
             self.deep_update(
@@ -371,8 +381,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             )
 
             if object_amount == 0:
-                raise Exception(f"Object amount returned as 0!")
-        except Exception as err:
+                return False
+        except ErrorRejectAbortNack as err:
             LOGGER.warning(
                 f"Error getting object list size for {device_identifier} at {address}: {err}"
             )
@@ -396,7 +406,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 property_identifier=PropertyIdentifier("objectList"),
                 property_value=object_list,
             )
-        except Exception as err:
+        except ErrorRejectAbortNack as err:
             LOGGER.warning(
                 f"Error getting object list size for {device_identifier} at {address}: {err}"
             )
@@ -404,7 +414,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         else:
             return True
 
-    async def read_multiple_object_list(self, device_identifier):
+    async def read_multiple_objects(self, device_identifier):
         """Read all objects from a device."""
         LOGGER.info(f"Reading objects from objectList of {device_identifier}...")
         device_identifier = ObjectIdentifier(device_identifier)
@@ -424,9 +434,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             parameter_list = [obj_id, object_properties_to_read_once]
 
             try:  # Send readPropertyMultiple and get response
-                LOGGER.debug(
-                    f"Reading object {obj_id} of {device_identifier} during read_multiple_object_list"
-                )
 
                 response = await self.read_property_multiple(
                     address=self.dev_to_addr(device_identifier),
@@ -439,9 +446,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 )
 
                 if "unrecognized-service" in str(err):
-                    await self.read_object_list(device_identifier)
+                    await self.read_objects(device_identifier)
                 elif "segmentation-not-supported" in str(err):
-                    await self.read_object_list(device_identifier)
+                    await self.read_objects(device_identifier)
 
             except AssertionError as err:
                 LOGGER.error(
@@ -467,11 +474,11 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                             property_value=property_value,
                         )
 
-    async def read_object_list(self, device_identifier):
+    async def read_objects(self, device_identifier):
         try:
             for obj_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"][
                 f"device:{device_identifier[1]}"
-            ]["objectList"]:
+            ].get("objectList", []):
                 if not isinstance(obj_id, ObjectIdentifier):
                     obj_id = ObjectIdentifier(obj_id)
 
@@ -510,7 +517,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
     async def read_multiple_objects_periodically(self, device_identifier):
         """Read objects after a set time."""
-        LOGGER.info(f"Periodic object reading...")
 
         for obj_id in self.bacnet_device_dict[device_identifier]:
             if not isinstance(obj_id, ObjectIdentifier):
@@ -527,10 +533,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             parameter_list = [obj_id, object_properties_to_read_periodically]
 
             try:  # Send readPropertyMultiple and get response
-                LOGGER.debug(
-                    f"Reading object {obj_id} of {device_identifier} during read_objects_periodically"
-                )
-
+                
                 response = await self.read_property_multiple(
                     address=self.dev_to_addr(ObjectIdentifier(device_identifier)),
                     parameter_list=parameter_list,
@@ -563,7 +566,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
     async def read_objects_periodically(self, device_identifier):
         """Read objects if regular way failed."""
-        LOGGER.info(f"Reading objects non segmented for {device_identifier}...")
+        LOGGER.info(f"Reading objects for {device_identifier}...")
         for obj_id in self.bacnet_device_dict[device_identifier]:
             if not isinstance(obj_id, ObjectIdentifier):
                 obj_id = ObjectIdentifier(obj_id)
@@ -654,26 +657,26 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 f"Error while subscribing to {device_identifier}, {object_identifier}: {error}"
             )
             return
-
-        if (
-            not [
-                subscriber_process_identifier,
-                object_identifier,
-                confirmed_notifications,
-                lifetime,
-                ObjectIdentifier(device_identifier),
-            ]
-            in self.subscription_tasks
-        ):
-            self.subscription_tasks.append(
-                [
+        else:
+            if (
+                not [
                     subscriber_process_identifier,
                     object_identifier,
                     confirmed_notifications,
                     lifetime,
                     ObjectIdentifier(device_identifier),
                 ]
-            )
+                in self.subscription_tasks
+            ):
+                self.subscription_tasks.append(
+                    [
+                        subscriber_process_identifier,
+                        object_identifier,
+                        confirmed_notifications,
+                        lifetime,
+                        ObjectIdentifier(device_identifier),
+                    ]
+                )
 
     async def unsubscribe_COV(
         self, subscriber_process_identifier, device_identifier, object_identifier
@@ -722,7 +725,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 )
                 property_type = object_class.get_property_type(value.propertyIdentifier)
 
-                if property_type is None:
+                if property_type is None or value.value is None:
                     LOGGER.warning(
                         f"NoneType property: {apdu.monitoredObjectIdentifier[0]} {value.propertyIdentifier} {value.value}"
                     )

@@ -41,22 +41,22 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
                 for device_id in app.bacnet_device_dict:
                     services_supported = app.bacnet_device_dict[device_id][
                         device_id
-                    ].get("protocolServicesSupported")
+                    ].get("protocolServicesSupported", {})
                     if services_supported["read-property-multiple"] == 1:
-                        await app.read_multiple_object_list(device_identifier=device_id)
+                        await app.read_multiple_objects_periodically(device_identifier=device_id)
                     else:
-                        await app.read_object_list(device_identifier=device_id)
+                        await app.read_objects_periodically(device_identifier=device_id)
                 event.clear()
 
             except asyncio.TimeoutError:
                 for device_id in app.bacnet_device_dict:
                     services_supported = app.bacnet_device_dict[device_id][
                         device_id
-                    ].get("protocolServicesSupported")
+                    ].get("protocolServicesSupported", {})
                     if services_supported["read-property-multiple"] == 1:
-                        await app.read_multiple_object_list(device_identifier=device_id)
+                        await app.read_multiple_objects_periodically(device_identifier=device_id)
                     else:
-                        await app.read_object_list(device_identifier=device_id)
+                        await app.read_objects_periodically(device_identifier=device_id)
 
     except asyncio.CancelledError as err:
         LOGGER.warning(f"Updater task cancelled: {err}")
@@ -250,8 +250,6 @@ def get_configuration() -> tuple:
 
     update_interval = config.get("BACpypes", "updateInterval", fallback=60)
 
-    export_log = options.get("export_log", True)
-
     return (
         default_write_prio,
         loglevel,
@@ -267,7 +265,6 @@ def get_configuration() -> tuple:
         update_interval,
         options,
         token,
-        export_log,
     )
 
 
@@ -293,29 +290,27 @@ async def main():
         update_interval,
         options,
         token,
-        export_log,
     ) = get_configuration()
 
     formatter = Formatter("%(levelname)s->%(filename)s->%(funcName)s:    %(message)s")
 
-    if export_log:
-        path_str = os.path.dirname(os.path.realpath(__file__))
+    path_str = os.path.dirname(os.path.realpath(__file__))
 
-        date_var = datetime.now().date()
+    date_var = datetime.now().date()
 
-        log_path = f"{path_str}/bacnet_addon-{date_var}.log"
+    log_path = f"{path_str}/bacnet_addon-{date_var}.log"
 
-        webAPI.log_path = log_path
+    webAPI.log_path = log_path
 
-        file_handler = RotatingFileHandler(
-            filename=log_path, mode="a", maxBytes=10 * 1024 * 1024, backupCount=2
-        )
+    file_handler = RotatingFileHandler(
+        filename=log_path, mode="w", maxBytes=10 * 1024 * 1024, backupCount=2
+    )
 
-        file_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
 
-        file_handler.setLevel("DEBUG")
+    file_handler.setLevel("DEBUG")
 
-        LOGGER.addHandler(file_handler)
+    LOGGER.addHandler(file_handler)
 
     stream_handler = StreamHandler()
 
