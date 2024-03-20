@@ -596,7 +596,7 @@ async def websocket_writer(websocket: WebSocket):
                     await websocket.send_json(dict_to_send)
                 events.val_updated_event.clear()
             else:
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(1)
 
     except asyncio.CancelledError as error:
         LOGGER.debug(f"Websocket writer cancelled: {error}")

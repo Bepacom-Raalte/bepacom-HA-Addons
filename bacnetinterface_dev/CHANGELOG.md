@@ -1,7 +1,7 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.4.0
-17/03/2024
+# 1.4.0b
+20/03/2024
 
 ## Fixed
 - Fixed read results being interpreted as a falsy value and thus being discarded.
