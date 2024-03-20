@@ -9,6 +9,8 @@
 - Infinite or NaN properties now get ignored instead of set to 0.
 - Handling I Am requests one by one now.
 - Logs are exportable through the web UI, with a max size of 10MB.
+- Prevent basically infinite loop of reading objects.
+- Prevent reading of properties not belonging to object when reading one by one.
 
 ## Dependencies
 

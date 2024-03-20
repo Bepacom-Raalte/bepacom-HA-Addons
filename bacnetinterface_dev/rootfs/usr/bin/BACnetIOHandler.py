@@ -156,7 +156,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             in_cache = False
 
         await super().do_IAmRequest(apdu)
-        
+
         if not in_cache:
             await self.i_am_queue.put(apdu)
 
@@ -296,7 +296,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             elif "unrecognized-service" in str(err):
                 return await self.read_device_props(apdu)
             elif "no-response" in str(err):
-                return await self.read_device_props(apdu)
+                return False
             else:
                 return False
 
@@ -339,6 +339,10 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 LOGGER.error(
                     f"Error reading device properties one by one: {device_identifier}: {property_id} {err}"
                 )
+
+                if "no-response" in str(err):
+                    return False
+
                 continue
             except AttributeError as err:
                 LOGGER.error(
@@ -437,7 +441,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             parameter_list = [obj_id, object_properties_to_read_once]
 
             try:  # Send readPropertyMultiple and get response
-
                 response = await self.read_property_multiple(
                     address=self.dev_to_addr(device_identifier),
                     parameter_list=parameter_list,
@@ -450,8 +453,10 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
                 if "unrecognized-service" in str(err):
                     await self.read_objects(device_identifier)
+                    return
                 elif "segmentation-not-supported" in str(err):
                     await self.read_objects(device_identifier)
+                    return
 
             except AssertionError as err:
                 LOGGER.error(
@@ -492,7 +497,20 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 ):
                     continue
 
+                object_class = self.vendor_info.get_object_class(obj_id[0])
+
+                if object_class is None:
+                    LOGGER.warning(
+                        f"Object type is unknown: {device_identifier}, {obj_id}"
+                    )
+                    continue
+
                 for property_id in object_properties_to_read_once:
+                    property_class = object_class.get_property_type(property_id)
+
+                    if property_class is None:
+                        continue
+
                     try:
                         response = await self.read_property(
                             address=self.dev_to_addr(device_identifier),
@@ -536,18 +554,21 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             parameter_list = [obj_id, object_properties_to_read_periodically]
 
             try:  # Send readPropertyMultiple and get response
-
                 response = await self.read_property_multiple(
                     address=self.dev_to_addr(ObjectIdentifier(device_identifier)),
                     parameter_list=parameter_list,
                 )
 
             except ErrorRejectAbortNack as err:
-                LOGGER.error(f"Error reading objects periodically:{device_identifier}, {obj_id}: {err}")
+                LOGGER.error(
+                    f"Error reading objects periodically:{device_identifier}, {obj_id}: {err}"
+                )
                 if "unrecognized-service" in str(err):
                     await self.read_objects_periodically(device_identifier)
+                    return
                 elif "segmentation-not-supported" in str(err):
                     await self.read_objects_periodically(device_identifier)
+                    return
 
             except AttributeError as err:
                 LOGGER.error(f"Attribute error: {obj_id}: {err}")
@@ -582,7 +603,18 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             ):
                 continue
 
+            object_class = self.vendor_info.get_object_class(obj_id[0])
+
+            if object_class is None:
+                LOGGER.warning(f"Object type is unknown: {device_identifier}, {obj_id}")
+                continue
+
             for property_id in object_properties_to_read_periodically:
+                property_class = object_class.get_property_type(property_id)
+
+                if property_class is None:
+                    continue
+
                 try:
                     response = await self.read_property(
                         address=self.dev_to_addr(device_identifier),

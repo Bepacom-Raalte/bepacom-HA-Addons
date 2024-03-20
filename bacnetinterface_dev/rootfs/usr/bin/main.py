@@ -108,6 +108,8 @@ async def writer_task(
 
             LOGGER.info(f"response: {response if response else 'Acknowledged'}")
 
+            await asyncio.sleep(0.1)
+
             read = await app.read_property(
                 address=app.dev_to_addr(device_id),
                 objid=object_id,
