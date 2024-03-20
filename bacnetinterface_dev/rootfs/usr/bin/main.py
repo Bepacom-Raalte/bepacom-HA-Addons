@@ -13,7 +13,8 @@ import uvicorn
 import webAPI
 from BACnetIOHandler import BACnetIOHandler, ObjectManager
 from bacpypes3.apdu import AbortPDU, ErrorPDU, RejectPDU
-from bacpypes3.basetypes import Null, ObjectType, Segmentation
+from bacpypes3.basetypes import (Null, ObjectType, Segmentation,
+                                 ServicesSupported)
 from bacpypes3.ipv4.app import Application
 from bacpypes3.local.device import DeviceObject
 from bacpypes3.pdu import IPv4Address
@@ -41,7 +42,7 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
                 for device_id in app.bacnet_device_dict:
                     services_supported = app.bacnet_device_dict[device_id][
                         device_id
-                    ].get("protocolServicesSupported", {})
+                    ].get("protocolServicesSupported", ServicesSupported())
                     if services_supported["read-property-multiple"] == 1:
                         await app.read_multiple_objects_periodically(
                             device_identifier=device_id
@@ -54,7 +55,7 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
                 for device_id in app.bacnet_device_dict:
                     services_supported = app.bacnet_device_dict[device_id][
                         device_id
-                    ].get("protocolServicesSupported", {})
+                    ].get("protocolServicesSupported", ServicesSupported())
                     if services_supported["read-property-multiple"] == 1:
                         await app.read_multiple_objects_periodically(
                             device_identifier=device_id

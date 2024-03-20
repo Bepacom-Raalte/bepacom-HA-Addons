@@ -14,7 +14,7 @@ from bacpypes3.apdu import (AbortPDU, ConfirmedCOVNotificationRequest,
                             SubscribeCOVRequest, WritePropertyRequest)
 from bacpypes3.basetypes import (BinaryPV, DeviceStatus, EngineeringUnits,
                                  ErrorType, EventState, PropertyIdentifier,
-                                 Reliability)
+                                 Reliability, ServicesSupported)
 from bacpypes3.constructeddata import AnyAtomic
 from bacpypes3.errors import *
 from bacpypes3.ipv4.app import ForeignApplication, NormalApplication
@@ -173,21 +173,21 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
                 if self.bacnet_device_dict.get(f"device:{device_id}"):
                     self.bacnet_device_dict.pop(f"device:{device_id}")
-                return
+                continue
 
             if not self.bacnet_device_dict.get(f"device:{device_id}"):
                 LOGGER.warning(f"Failed to get: {device_id}")
-                return
+                continue
 
             if not self.bacnet_device_dict[f"device:{device_id}"].get(
                 f"device:{device_id}"
             ):
                 LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
-                return
+                continue
 
             services_supported = self.bacnet_device_dict[f"device:{device_id}"][
                 f"device:{device_id}"
-            ].get("protocolServicesSupported", {})
+            ].get("protocolServicesSupported", ServicesSupported())
 
             if services_supported["read-property-multiple"] == 1:
                 await self.read_multiple_objects(
