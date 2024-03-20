@@ -11,6 +11,7 @@
 - Logs are exportable through the web UI, with a max size of 10MB.
 - Prevent basically infinite loop of reading objects.
 - Prevent reading of properties not belonging to object when reading one by one.
+- Filtering out ReadAccessResult value type.
 
 ## Dependencies
 

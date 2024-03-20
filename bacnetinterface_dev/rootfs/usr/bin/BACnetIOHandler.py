@@ -14,7 +14,8 @@ from bacpypes3.apdu import (AbortPDU, ConfirmedCOVNotificationRequest,
                             SubscribeCOVRequest, WritePropertyRequest)
 from bacpypes3.basetypes import (BinaryPV, DeviceStatus, EngineeringUnits,
                                  ErrorType, EventState, PropertyIdentifier,
-                                 Reliability, ServicesSupported)
+                                 ReadAccessResult, Reliability,
+                                 ServicesSupported)
 from bacpypes3.constructeddata import AnyAtomic
 from bacpypes3.errors import *
 from bacpypes3.ipv4.app import ForeignApplication, NormalApplication
@@ -229,6 +230,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         if isinstance(property_value, list):
             prop_list: list = []
             for val in property_value:
+
                 if isinstance(val, ObjectIdentifier):
                     prop_list.append(
                         [
@@ -236,6 +238,11 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                             val[1],
                         ]
                     )
+
+        if isinstance(property_value, list) and all(
+            isinstance(item, ReadAccessResult) for item in property_value
+        ):
+            return  # ignore for now...
 
         if isinstance(property_value, ObjectIdentifier):
             self.deep_update(
@@ -253,7 +260,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             )
         elif isinstance(
             property_value,
-            EventState | DeviceStatus | EngineeringUnits | Reliability | BinaryPV,
+            (EventState, DeviceStatus, EngineeringUnits, Reliability, BinaryPV),
         ):
             self.deep_update(
                 self.bacnet_device_dict,
