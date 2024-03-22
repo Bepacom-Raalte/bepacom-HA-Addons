@@ -588,25 +588,25 @@ async def websocket_writer(websocket: WebSocket):
     """Writer task for when a websocket is opened"""
     try:
         global bacnet_device_dict
-        if not is_valid_json(dict_to_send):
+        if not is_valid_json(bacnet_device_dict):
             LOGGER.warning(f"Websocket dict isn't converted to JSON'!")
         else:
             await websocket.send_json(bacnet_device_dict)
         while True:
             if events.val_updated_event.is_set():
-                dict_to_send = bacnet_device_dict
-                if EDE_files:
-                    for file in EDE_files:
-                        dict_to_send = deep_update(dict_to_send, file)
-                if not dict_to_send:
+                # dict_to_send = bacnet_device_dict
+                #if EDE_files:
+                #    for file in EDE_files:
+                #        dict_to_send = deep_update(dict_to_send, file)
+                if not bacnet_device_dict:
                     LOGGER.warning(f"Websocket dict to send is empty!")
                     events.val_updated_event.clear()
                     continue
-                if not is_valid_json(dict_to_send):
+                if not is_valid_json(bacnet_device_dict):
                     LOGGER.warning(f"Websocket dict isn't converted to JSON'!")
                     continue
                 for websocket in activeSockets:
-                    await websocket.send_json(dict_to_send)
+                    await websocket.send_json(bacnet_device_dict)
                 events.val_updated_event.clear()
             else:
                 await asyncio.sleep(1)
@@ -614,8 +614,11 @@ async def websocket_writer(websocket: WebSocket):
     except asyncio.CancelledError as error:
         LOGGER.debug(f"Websocket writer cancelled: {error}")
 
-    except WebSocketDisconnect:
+    except WebSocketDisconnect as err:
         LOGGER.info("Websocket disconnected")
+        
+    except Exception as err:
+        LOGGER.error(f"Error during writing: {err}")
 
 
 @app.post("/apiv2/{deviceid}/{objectid}/{property}", tags=["apiv2"])
