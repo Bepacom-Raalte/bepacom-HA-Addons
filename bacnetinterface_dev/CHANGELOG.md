@@ -1,7 +1,7 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.4.0b
-20/03/2024
+# 1.4.0b2
+22/03/2024
 
 ## Fixed
 - Fixed read results being interpreted as a falsy value and thus being discarded.
@@ -12,6 +12,8 @@
 - Prevent basically infinite loop of reading objects.
 - Prevent reading of properties not belonging to object when reading one by one.
 - Filtering out ReadAccessResult value type.
+- JSON check before sending through websocket.
+- Commented out useless objects we were subscribing to.
 
 ## Dependencies
 

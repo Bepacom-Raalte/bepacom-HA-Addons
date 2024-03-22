@@ -52,6 +52,13 @@ def deep_update(mapping: dict, *updating_mappings: dict) -> dict:
                 updated_mapping[k] = v
     return updated_mapping
 
+def is_valid_json(data: dict):
+    try:
+        json.dumps(data)
+        return True
+    except Exception as err:
+        LOGGER.warning(f"Error converting to JSON: {err}")
+        return False
 
 @dataclass
 class EventStruct:
@@ -581,7 +588,10 @@ async def websocket_writer(websocket: WebSocket):
     """Writer task for when a websocket is opened"""
     try:
         global bacnet_device_dict
-        await websocket.send_json(bacnet_device_dict)
+        if not is_valid_json(dict_to_send):
+            LOGGER.warning(f"Websocket dict isn't converted to JSON'!")
+        else:
+            await websocket.send_json(bacnet_device_dict)
         while True:
             if events.val_updated_event.is_set():
                 dict_to_send = bacnet_device_dict
@@ -591,6 +601,9 @@ async def websocket_writer(websocket: WebSocket):
                 if not dict_to_send:
                     LOGGER.warning(f"Websocket dict to send is empty!")
                     events.val_updated_event.clear()
+                    continue
+                if not is_valid_json(dict_to_send):
+                    LOGGER.warning(f"Websocket dict isn't converted to JSON'!")
                     continue
                 for websocket in activeSockets:
                     await websocket.send_json(dict_to_send)
