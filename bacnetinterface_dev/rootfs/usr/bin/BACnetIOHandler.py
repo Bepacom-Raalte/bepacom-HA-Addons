@@ -784,6 +784,16 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     f"COV: {apdu.initiatingDeviceIdentifier}, {apdu.monitoredObjectIdentifier}, {value.propertyIdentifier}, {property_value}"
                 )
 
+                # Before update, check if the device and object are actually in our dictionary!!!
+
+
+                # data for unsubscribing or checking if the subscription was there before a restart
+                # apdu.subscriberProcessIdentifier
+                # apdu.serviceChoice #confirmedCOVNotification == 1/ unconfirmedCOVNotification == 2
+                # apdu.monitoredObjectIdentifier
+                # apdu.initiatingDeviceIdentifier
+
+
                 self.dict_updater(
                     device_identifier=apdu.initiatingDeviceIdentifier,
                     object_identifier=apdu.monitoredObjectIdentifier,

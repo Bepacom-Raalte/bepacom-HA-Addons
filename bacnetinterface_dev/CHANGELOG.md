@@ -1,7 +1,7 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.4.0b2
-22/03/2024
+# 1.4.0b3
+23/03/2024
 
 ## Fixed
 - Fixed read results being interpreted as a falsy value and thus being discarded.
@@ -14,6 +14,7 @@
 - Filtering out ReadAccessResult value type.
 - JSON check before sending through websocket.
 - Commented out useless objects we were subscribing to.
+- Temporarily disabled nginx blocking outside access.
 
 ## Dependencies
 
