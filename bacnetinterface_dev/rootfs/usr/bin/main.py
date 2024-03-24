@@ -300,8 +300,8 @@ async def main():
     ) = get_configuration()
 
     formatter = Formatter(
-        "%(levelname)-8s:%(asctime)-18s: %(filename)-18s->%(funcName)-36s: %(message)s",
-        datefmt="%d/%m/%y-%H:%M:%S",
+        "[%(asctime)-8s]|%(levelname)-8s |%(filename)-18s->%(funcName)-36s: %(message)s",
+        datefmt="%H:%M:%S",
     )
 
     path_str = os.path.dirname(os.path.realpath(__file__))
