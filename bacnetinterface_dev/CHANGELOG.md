@@ -1,6 +1,6 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.4.0b3
+# 1.4.0b4
 23/03/2024
 
 ## Fixed
@@ -15,6 +15,7 @@
 - JSON check before sending through websocket.
 - Commented out useless objects we were subscribing to.
 - Temporarily disabled nginx blocking outside access.
+- Logging formatting including timestamps
 
 ## Dependencies
 

@@ -17,6 +17,7 @@ from bacpypes3.ipv4.app import Application
 from const import LOGGER
 from fastapi import (FastAPI, Path, Query, Request, Response, UploadFile,
                      WebSocket, WebSocketDisconnect, status)
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -52,6 +53,7 @@ def deep_update(mapping: dict, *updating_mappings: dict) -> dict:
                 updated_mapping[k] = v
     return updated_mapping
 
+
 def is_valid_json(data: dict):
     try:
         json.dumps(data)
@@ -59,6 +61,7 @@ def is_valid_json(data: dict):
     except Exception as err:
         LOGGER.warning(f"Error converting to JSON: {err}")
         return False
+
 
 @dataclass
 class EventStruct:
@@ -198,7 +201,10 @@ async def get_entire_dict():
     if EDE_files:
         for file in EDE_files:
             dict_to_send = deep_update(dict_to_send, file)
-    return dict_to_send
+
+    data_to_send = jsonable_encoder(dict_to_send)
+
+    return data_to_send
 
 
 @app.get("/apiv1/command/whois", status_code=status.HTTP_200_OK, tags=["apiv1"])
@@ -594,19 +600,20 @@ async def websocket_writer(websocket: WebSocket):
             await websocket.send_json(bacnet_device_dict)
         while True:
             if events.val_updated_event.is_set():
-                # dict_to_send = bacnet_device_dict
-                #if EDE_files:
-                #    for file in EDE_files:
-                #        dict_to_send = deep_update(dict_to_send, file)
-                if not bacnet_device_dict:
+                dict_to_send = bacnet_device_dict
+                if EDE_files:
+                    for file in EDE_files:
+                        dict_to_send = deep_update(dict_to_send, file)
+                if not dict_to_send:
                     LOGGER.warning(f"Websocket dict to send is empty!")
                     events.val_updated_event.clear()
                     continue
-                if not is_valid_json(bacnet_device_dict):
+                data_to_send = jsonable_encoder(dict_to_send)
+                if not is_valid_json(data_to_send):
                     LOGGER.warning(f"Websocket dict isn't converted to JSON'!")
                     continue
                 for websocket in activeSockets:
-                    await websocket.send_json(bacnet_device_dict)
+                    await websocket.send_json(data_to_send)
                 events.val_updated_event.clear()
             else:
                 await asyncio.sleep(1)
@@ -616,7 +623,7 @@ async def websocket_writer(websocket: WebSocket):
 
     except WebSocketDisconnect as err:
         LOGGER.info("Websocket disconnected")
-        
+
     except Exception as err:
         LOGGER.error(f"Error during writing: {err}")
 

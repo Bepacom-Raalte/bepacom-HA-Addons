@@ -11,7 +11,9 @@ import websockets
 from bacpypes3.apdu import (AbortPDU, ConfirmedCOVNotificationRequest,
                             ErrorPDU, ErrorRejectAbortNack,
                             ReadPropertyRequest, RejectPDU, SimpleAckPDU,
-                            SubscribeCOVRequest, WritePropertyRequest)
+                            SubscribeCOVRequest,
+                            UnconfirmedCOVNotificationRequest,
+                            WritePropertyRequest)
 from bacpypes3.basetypes import (BinaryPV, DeviceStatus, EngineeringUnits,
                                  ErrorType, EventState, PropertyIdentifier,
                                  ReadAccessResult, Reliability,
@@ -464,6 +466,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 elif "segmentation-not-supported" in str(err):
                     await self.read_objects(device_identifier)
                     return
+                elif "no-response" in str(err):
+                    return False
 
             except AssertionError as err:
                 LOGGER.error(
@@ -528,6 +532,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         LOGGER.error(
                             f"Error reading object list one by one: {device_identifier} {obj_id} {property_id}: {err}"
                         )
+                        if "no-response" in str(err):
+                            return False
                         continue
                     else:
                         if response is not ErrorType:
@@ -576,6 +582,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 elif "segmentation-not-supported" in str(err):
                     await self.read_objects_periodically(device_identifier)
                     return
+                elif "no-response" in str(err):
+                    return False
 
             except AttributeError as err:
                 LOGGER.error(f"Attribute error: {obj_id}: {err}")
@@ -633,6 +641,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     LOGGER.error(
                         f"Error reading objects one by one periodically: {device_identifier} {obj_id} {property_id}: {err}"
                     )
+                    if "no-response" in str(err):
+                        return False
                     continue
                 except AttributeError as err:
                     LOGGER.error(f"Attribute error: {obj_id}: {err}")
@@ -742,7 +752,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 and subscription[4] == device_identifier
             ):
                 self.unassign_id(obj=subscription[1], dev=subscription[4])
-                del self.subscription_tasks[self.subscription_tasks.index(subscription)]
+                self.subscription_tasks.remove(subscription)
                 return
 
     async def end_subscription_tasks(self):
@@ -786,13 +796,11 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
                 # Before update, check if the device and object are actually in our dictionary!!!
 
-
                 # data for unsubscribing or checking if the subscription was there before a restart
                 # apdu.subscriberProcessIdentifier
                 # apdu.serviceChoice #confirmedCOVNotification == 1/ unconfirmedCOVNotification == 2
                 # apdu.monitoredObjectIdentifier
                 # apdu.initiatingDeviceIdentifier
-
 
                 self.dict_updater(
                     device_identifier=apdu.initiatingDeviceIdentifier,
@@ -811,6 +819,48 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         # return the result
         await self.response(resp)
+
+    async def do_UnconfirmedCOVNotificationRequest(
+        self, apdu: UnconfirmedCOVNotificationRequest
+    ) -> None:
+        # await super().do_ConfirmedCOVNotificationRequest(apdu)
+
+        try:
+            for value in apdu.listOfValues:
+                vendor_info = get_vendor_info(0)
+                object_class = vendor_info.get_object_class(
+                    apdu.monitoredObjectIdentifier[0]
+                )
+                property_type = object_class.get_property_type(value.propertyIdentifier)
+
+                if property_type is None or value.value is None:
+                    LOGGER.warning(
+                        f"NoneType property: {apdu.monitoredObjectIdentifier[0]} {value.propertyIdentifier} {value.value}"
+                    )
+                    continue
+                elif value.propertyIdentifier not in object_properties_to_read_once:
+                    LOGGER.warning(
+                        f"Ignoring property: {apdu.monitoredObjectIdentifier[0]} {value.propertyIdentifier} {value.value}"
+                    )
+                    continue
+                else:
+                    property_value = value.value.cast_out(property_type)
+
+                LOGGER.debug(
+                    f"COV: {apdu.initiatingDeviceIdentifier}, {apdu.monitoredObjectIdentifier}, {value.propertyIdentifier}, {property_value}"
+                )
+
+                self.dict_updater(
+                    device_identifier=apdu.initiatingDeviceIdentifier,
+                    object_identifier=apdu.monitoredObjectIdentifier,
+                    property_identifier=value.propertyIdentifier,
+                    property_value=property_value,
+                )
+
+        except Exception as err:
+            LOGGER.error(
+                f"CoV notification error: {apdu.monitoredObjectIdentifier[0]}: {apdu.listOfValues} + {err}"
+            )
 
     async def do_ReadPropertyRequest(self, apdu: ReadPropertyRequest) -> None:
         try:
