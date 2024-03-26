@@ -1,6 +1,6 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.4.0b4
+# 1.4.0b5
 23/03/2024
 
 ## Fixed
@@ -8,7 +8,7 @@
 - Fixed handling of no replies to reading device properties.
 - Infinite or NaN properties now get ignored instead of set to 0.
 - Handling I Am requests one by one now.
-- Logs are exportable through the web UI, with a max size of 10MB.
+- Logs are exportable through the web UI, with a max size of 20MB.
 - Prevent basically infinite loop of reading objects.
 - Prevent reading of properties not belonging to object when reading one by one.
 - Filtering out ReadAccessResult value type.

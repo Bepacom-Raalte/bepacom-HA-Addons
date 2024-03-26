@@ -167,39 +167,42 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         """Do the things when receiving I Am requests"""
 
         while True:
-            apdu = await self.i_am_queue.get()
+            try:
+                apdu = await self.i_am_queue.get()
 
-            device_id = apdu.iAmDeviceIdentifier[1]
+                device_id = apdu.iAmDeviceIdentifier[1]
 
-            # if failed stop handling response
-            if not await self.read_multiple_device_props(apdu=apdu):
-                LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
-                if self.bacnet_device_dict.get(f"device:{device_id}"):
-                    self.bacnet_device_dict.pop(f"device:{device_id}")
-                continue
+                # if failed stop handling response
+                if not await self.read_multiple_device_props(apdu=apdu):
+                    LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
+                    if self.bacnet_device_dict.get(f"device:{device_id}"):
+                        self.bacnet_device_dict.pop(f"device:{device_id}")
+                    continue
 
-            if not self.bacnet_device_dict.get(f"device:{device_id}"):
-                LOGGER.warning(f"Failed to get: {device_id}")
-                continue
+                if not self.bacnet_device_dict.get(f"device:{device_id}"):
+                    LOGGER.warning(f"Failed to get: {device_id}")
+                    continue
 
-            if not self.bacnet_device_dict[f"device:{device_id}"].get(
-                f"device:{device_id}"
-            ):
-                LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
-                continue
+                if not self.bacnet_device_dict[f"device:{device_id}"].get(
+                    f"device:{device_id}"
+                ):
+                    LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
+                    continue
 
-            services_supported = self.bacnet_device_dict[f"device:{device_id}"][
-                f"device:{device_id}"
-            ].get("protocolServicesSupported", ServicesSupported())
+                services_supported = self.bacnet_device_dict[f"device:{device_id}"][
+                    f"device:{device_id}"
+                ].get("protocolServicesSupported", ServicesSupported())
 
-            if services_supported["read-property-multiple"] == 1:
-                await self.read_multiple_objects(
-                    device_identifier=apdu.iAmDeviceIdentifier
-                )
-            else:
-                await self.read_objects(device_identifier=apdu.iAmDeviceIdentifier)
+                if services_supported["read-property-multiple"] == 1:
+                    await self.read_multiple_objects(
+                        device_identifier=apdu.iAmDeviceIdentifier
+                    )
+                else:
+                    await self.read_objects(device_identifier=apdu.iAmDeviceIdentifier)
 
-            await self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
+                await self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
+            except Exception as err:
+                LOGGER.error(f"I Am Handler failed {apdu.iAmDeviceIdentifier}: {err}")
 
     def dict_updater(
         self,
@@ -211,6 +214,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         if isinstance(property_value, ErrorType):
             return
         elif property_value is None or property_identifier is None:
+            LOGGER.debug(f"NoneType property (identifier) value: {device_identifier}, {object_identifier}, {property_identifier} {property_value}")
             return
         elif isinstance(property_value, float):
             if isnan(property_value):
@@ -227,12 +231,12 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 return
             property_value = round(property_value, 4)
         elif isinstance(property_value, AnyAtomic):
+            LOGGER.debug(f"AnyAtomic property value: {device_identifier}, {object_identifier}, {property_identifier} {property_value}")
             return
 
         if isinstance(property_value, list):
             prop_list: list = []
             for val in property_value:
-
                 if isinstance(val, ObjectIdentifier):
                     prop_list.append(
                         [
@@ -244,6 +248,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         if isinstance(property_value, list) and all(
             isinstance(item, ReadAccessResult) for item in property_value
         ):
+            LOGGER.debug(f"ReadAccessResult property value: {device_identifier}, {object_identifier}, {property_identifier} {property_value}")
             return  # ignore for now...
 
         if isinstance(property_value, ObjectIdentifier):
