@@ -98,16 +98,6 @@ description = """
 This API can be used within Home Assistant. Outside connections are blocked unless they connect through the ingress link.
 The BACnet integration will use the websocket and API points to receive and write data for the corresponding entities.
 
-## Why?
-
-Because we noticed a severe lack of BACnet support in Home Assistant. We took it upon ourselves to create a way to get BACnet devices working in it.
-That is why we created this add-on. It is basically a virtual BACnet/IP device with an API running above it with very basic functionality.
-
-## Future
-
-In the future, it might be cool to add certain commandable objects so devices in the BACnet network could also write to Home Assistant.
-This could be in the form of entities being transformed into objects of the virtual device.
-
 ## Suggestions
 
 Please drop your suggestions in the [GitHub repository](https://github.com/Bepacom-Raalte/bepacom-HA-Addons), or on the Home Assistant community forums @gravyseal.

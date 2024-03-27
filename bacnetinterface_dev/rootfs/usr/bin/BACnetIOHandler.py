@@ -200,7 +200,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 else:
                     await self.read_objects(device_identifier=apdu.iAmDeviceIdentifier)
 
-                await self.subscribe_object_list(device_identifier=apdu.iAmDeviceIdentifier)
+                await self.subscribe_object_list(
+                    device_identifier=apdu.iAmDeviceIdentifier
+                )
             except Exception as err:
                 LOGGER.error(f"I Am Handler failed {apdu.iAmDeviceIdentifier}: {err}")
 
@@ -214,7 +216,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         if isinstance(property_value, ErrorType):
             return
         elif property_value is None or property_identifier is None:
-            LOGGER.debug(f"NoneType property (identifier) value: {device_identifier}, {object_identifier}, {property_identifier} {property_value}")
+            LOGGER.debug(
+                f"NoneType property (identifier) value: {device_identifier}, {object_identifier}, {property_identifier} {property_value}"
+            )
             return
         elif isinstance(property_value, float):
             if isnan(property_value):
@@ -231,7 +235,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 return
             property_value = round(property_value, 4)
         elif isinstance(property_value, AnyAtomic):
-            LOGGER.debug(f"AnyAtomic property value: {device_identifier}, {object_identifier}, {property_identifier} {property_value}")
+            LOGGER.debug(
+                f"AnyAtomic property value: {device_identifier}, {object_identifier}, {property_identifier} {property_value}"
+            )
             return
 
         if isinstance(property_value, list):
@@ -248,7 +254,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         if isinstance(property_value, list) and all(
             isinstance(item, ReadAccessResult) for item in property_value
         ):
-            LOGGER.debug(f"ReadAccessResult property value: {device_identifier}, {object_identifier}, {property_identifier} {property_value}")
+            LOGGER.debug(
+                f"ReadAccessResult property value: {device_identifier}, {object_identifier}, {property_identifier} {property_value}"
+            )
             return  # ignore for now...
 
         if isinstance(property_value, ObjectIdentifier):

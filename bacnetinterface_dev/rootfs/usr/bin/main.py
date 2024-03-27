@@ -313,7 +313,7 @@ async def main():
     webAPI.log_path = log_path
 
     file_handler = RotatingFileHandler(
-        filename=log_path, mode="w", maxBytes=20 * 1024 * 1024, backupCount=2
+        filename=log_path, mode="w", maxBytes=15 * 1024 * 1024, backupCount=2
     )
 
     file_handler.setFormatter(formatter)
