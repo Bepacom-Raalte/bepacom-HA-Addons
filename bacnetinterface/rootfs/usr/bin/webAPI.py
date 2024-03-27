@@ -3,8 +3,8 @@ import asyncio
 import codecs
 import csv
 import json
-import logging
 import os
+import shutil
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from random import choice, randint
@@ -14,9 +14,11 @@ from bacpypes3.basetypes import (EngineeringUnits, ObjectIdentifier,
                                  ObjectType, ObjectTypesSupported,
                                  PropertyIdentifier)
 from bacpypes3.ipv4.app import Application
+from const import LOGGER
 from fastapi import (FastAPI, Path, Query, Request, Response, UploadFile,
                      WebSocket, WebSocketDisconnect, status)
-from fastapi.responses import HTMLResponse
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -34,6 +36,8 @@ who_is_func: Callable
 i_am_func: Callable
 ingress: str
 
+log_path: str | None = None
+
 
 def deep_update(mapping: dict, *updating_mappings: dict) -> dict:
     updated_mapping = mapping.copy()
@@ -48,6 +52,15 @@ def deep_update(mapping: dict, *updating_mappings: dict) -> dict:
             else:
                 updated_mapping[k] = v
     return updated_mapping
+
+
+def is_valid_json(data: dict):
+    try:
+        json.dumps(data)
+        return True
+    except Exception as err:
+        LOGGER.warning(f"Error converting to JSON: {err}")
+        return False
 
 
 @dataclass
@@ -85,16 +98,6 @@ description = """
 This API can be used within Home Assistant. Outside connections are blocked unless they connect through the ingress link.
 The BACnet integration will use the websocket and API points to receive and write data for the corresponding entities.
 
-## Why?
-
-Because we noticed a severe lack of BACnet support in Home Assistant. We took it upon ourselves to create a way to get BACnet devices working in it.
-That is why we created this add-on. It is basically a virtual BACnet/IP device with an API running above it with very basic functionality.
-
-## Future
-
-In the future, it might be cool to add certain commandable objects so devices in the BACnet network could also write to Home Assistant.
-This could be in the form of entities being transformed into objects of the virtual device.
-
 ## Suggestions
 
 Please drop your suggestions in the [GitHub repository](https://github.com/Bepacom-Raalte/bepacom-HA-Addons), or on the Home Assistant community forums @gravyseal.
@@ -126,7 +129,7 @@ app = FastAPI(
     lifespan=lifespan,
     title="Bepacom BACnet/IP Interface API",
     description=description,
-    version="1.3.3",
+    version="1.4.0",
     contact={
         "name": "Bepacom B.V. Contact",
         "url": "https://www.bepacom.nl/contact/",
@@ -188,7 +191,10 @@ async def get_entire_dict():
     if EDE_files:
         for file in EDE_files:
             dict_to_send = deep_update(dict_to_send, file)
-    return dict_to_send
+
+    data_to_send = jsonable_encoder(dict_to_send)
+
+    return data_to_send
 
 
 @app.get("/apiv1/command/whois", status_code=status.HTTP_200_OK, tags=["apiv1"])
@@ -310,13 +316,13 @@ async def upload_ede_files(
             liststart = True
 
     if list(deviceDict)[0] in list(bacnet_device_dict):
-        logging.warning("Device ID already in use.")
+        LOGGER.warning("Device ID already in use.")
         response.status_code = status.HTTP_409_CONFLICT
         return "This device already exists as a device in the BACnet/IP network"
 
     for file in EDE_files:
         if file.keys() in deviceDict.keys():
-            logging.warning("EDE already loaded.")
+            LOGGER.warning("EDE already loaded.")
             response.status_code = status.HTTP_409_CONFLICT
             return "This device already exists as EDE file"
 
@@ -328,14 +334,31 @@ async def upload_ede_files(
 @app.delete("/apiv1/commissioning/ede", tags=["apiv1"])
 async def delete_ede_file(device_ids: Annotated[list[str] | None, Query()] = None):
     """Delete EDE files to stop letting them show up in API calls."""
-    logging.debug(f"EDE Files loaded: {len(EDE_files)}")
+    LOGGER.debug(f"EDE Files loaded: {len(EDE_files)}")
     EDE_files[:] = [
         dictionary
         for dictionary in EDE_files
         if all(device not in dictionary for device in device_ids)
     ]
-    logging.debug(f"EDE Files loaded: {len(EDE_files)}")
+    LOGGER.debug(f"EDE Files loaded: {len(EDE_files)}")
     return True
+
+
+@app.get("/apiv1/diagnostics/logs", tags=["apiv1"])
+async def download_logs():
+    """Download add-on logs."""
+    global log_path
+    if log_path:
+        dupe_path = shutil.copyfile(
+            log_path, log_path.replace("share", "usr/bin") + "2"
+        )
+        return FileResponse(
+            path=dupe_path,
+            media_type="application/octet-stream",
+            filename="bacnet_addon_logs.txt",
+        )
+    else:
+        return status.HTTP_404_NOT_FOUND
 
 
 # Any commands or not variable paths should go above here... FastAPI will use it as a variable if you make a new path below this.
@@ -426,11 +449,11 @@ async def write_property(
             )
             await events.write_queue.put(write_req)
 
-        logging.info("Successfully put in Write Queue")
+        LOGGER.info("Successfully put in Write Queue")
         return status.HTTP_200_OK
 
     except Exception as err:
-        logging.warning(f"Failed write request: {err}")
+        LOGGER.warning(f"Failed write request: {err}")
         return status.HTTP_400_BAD_REQUEST
 
 
@@ -459,7 +482,7 @@ async def subscribe_objectid(
         await events.sub_queue.put(sub_tuple)
 
     except Exception as e:
-        logging.error(f"{str(e)} on subscribe from API POST request")
+        LOGGER.error(f"{str(e)} on subscribe from API POST request")
         return status.HTTP_400_BAD_REQUEST
 
 
@@ -478,7 +501,7 @@ async def unsubscribe_objectid(deviceid: str, objectid: str):
         await events.unsub_queue.put(sub_tuple)
 
     except Exception as e:
-        logging.error(f"{str(e)} on subscribe from API DELETE request")
+        LOGGER.error(f"{str(e)} on subscribe from API DELETE request")
         return status.HTTP_400_BAD_REQUEST
 
 
@@ -502,11 +525,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 message = data["text"]
                 try:
                     message = json.loads(message)
-                except:
-                    logging.warning(
-                        f"message: {message} is not processed as it's not valid JSON"
+                except Exception as err:
+                    LOGGER.warning(
+                        f"message: {message} is not processed as it's not valid JSON {err}"
                     )
-                    logging.warning(
+                    LOGGER.warning(
                         'Do it as the following example: {"device:100":{"analogInput:1":{"presentValue":1}}}'
                     )
                     continue
@@ -539,45 +562,60 @@ async def websocket_endpoint(websocket: WebSocket):
                     )
 
                 else:
-                    logging.warning(f"message: {message} is not processed")
+                    LOGGER.warning(f"message: {message} is not processed")
 
         except (RuntimeError, asyncio.CancelledError) as error:
             write_task.cancel()
             activeSockets.remove(websocket)
-            logging.error("Disconnected with RuntimeError or CancelledError...\n")
+            LOGGER.error("Disconnected with RuntimeError or CancelledError...")
             return
         except WebSocketDisconnect:
             write_task.cancel()
             activeSockets.remove(websocket)
-            logging.error("Disconnected...\n")
+            LOGGER.info("Disconnected websocket")
             return
         except Exception as e:
             write_task.cancel()
             activeSockets.remove(websocket)
-            logging.error("Disconnected with Exception" + str(e) + "...\n")
+            LOGGER.error("Disconnected with Exception" + str(e) + "...")
 
 
 async def websocket_writer(websocket: WebSocket):
     """Writer task for when a websocket is opened"""
     try:
-        await websocket.send_json(bacnet_device_dict)
+        global bacnet_device_dict
+        if not is_valid_json(bacnet_device_dict):
+            LOGGER.warning(f"Websocket dict isn't converted to JSON'!")
+        else:
+            await websocket.send_json(bacnet_device_dict)
         while True:
             if events.val_updated_event.is_set():
                 dict_to_send = bacnet_device_dict
                 if EDE_files:
                     for file in EDE_files:
                         dict_to_send = deep_update(dict_to_send, file)
+                if not dict_to_send:
+                    LOGGER.warning(f"Websocket dict to send is empty!")
+                    events.val_updated_event.clear()
+                    continue
+                data_to_send = jsonable_encoder(dict_to_send)
+                if not is_valid_json(data_to_send):
+                    LOGGER.warning(f"Websocket dict isn't converted to JSON'!")
+                    continue
                 for websocket in activeSockets:
-                    await websocket.send_json(dict_to_send)
+                    await websocket.send_json(data_to_send)
                 events.val_updated_event.clear()
             else:
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(1)
 
     except asyncio.CancelledError as error:
-        logging.debug(f"Websocket writer cancelled: {error}")
+        LOGGER.debug(f"Websocket writer cancelled: {error}")
 
-    except WebSocketDisconnect:
-        logging.info("Websocket disconnected")
+    except WebSocketDisconnect as err:
+        LOGGER.info("Websocket disconnected")
+
+    except Exception as err:
+        LOGGER.error(f"Error during writing: {err}")
 
 
 @app.post("/apiv2/{deviceid}/{objectid}/{property}", tags=["apiv2"])
@@ -597,7 +635,7 @@ async def write_property(
         objectid = ObjectIdentifier(objectid)
         property = PropertyIdentifier(property)
     except Exception as err:
-        logging.error(f"Error while trying to make a write request: {err}")
+        LOGGER.error(f"Error while trying to make a write request: {err}")
         return status.HTTP_400_BAD_REQUEST
 
     await events.write_queue.put([deviceid, objectid, property, value, None, priority])

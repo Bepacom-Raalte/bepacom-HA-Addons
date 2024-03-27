@@ -3,19 +3,23 @@
 import asyncio
 import configparser
 import json
-import logging
 import os
+from datetime import datetime
+from logging import Formatter, Logger, StreamHandler, getLogger
+from logging.handlers import RotatingFileHandler
 from typing import TypeVar
 
 import uvicorn
 import webAPI
 from BACnetIOHandler import BACnetIOHandler, ObjectManager
 from bacpypes3.apdu import AbortPDU, ErrorPDU, RejectPDU
-from bacpypes3.basetypes import Null, ObjectType, Segmentation
+from bacpypes3.basetypes import (Null, ObjectType, Segmentation,
+                                 ServicesSupported)
 from bacpypes3.ipv4.app import Application
 from bacpypes3.local.device import DeviceObject
 from bacpypes3.pdu import IPv4Address
 from bacpypes3.primitivedata import ObjectIdentifier
+from const import LOGGER
 from webAPI import app as fastapi_app
 
 KeyType = TypeVar("KeyType")
@@ -24,9 +28,9 @@ KeyType = TypeVar("KeyType")
 def exception_handler(loop, context):
     """Handle uncaught exceptions"""
     try:
-        logging.exception(f'An uncaught error occurred: {context["exception"]}')
+        LOGGER.exception(f'An uncaught error occurred: {context["exception"]}')
     except:
-        logging.error("Tried to log error, but something went horribly wrong!!!")
+        LOGGER.error("Tried to log error, but something went horribly wrong!!!")
 
 
 async def updater_task(app: Application, interval: int, event: asyncio.Event) -> None:
@@ -38,25 +42,29 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
                 for device_id in app.bacnet_device_dict:
                     services_supported = app.bacnet_device_dict[device_id][
                         device_id
-                    ].get("protocolServicesSupported")
+                    ].get("protocolServicesSupported", ServicesSupported())
                     if services_supported["read-property-multiple"] == 1:
-                        await app.read_multiple_object_list(device_identifier=device_id)
+                        await app.read_multiple_objects_periodically(
+                            device_identifier=device_id
+                        )
                     else:
-                        await app.read_object_list(device_identifier=device_id)
+                        await app.read_objects_periodically(device_identifier=device_id)
                 event.clear()
 
             except asyncio.TimeoutError:
                 for device_id in app.bacnet_device_dict:
                     services_supported = app.bacnet_device_dict[device_id][
                         device_id
-                    ].get("protocolServicesSupported")
+                    ].get("protocolServicesSupported", ServicesSupported())
                     if services_supported["read-property-multiple"] == 1:
-                        await app.read_multiple_object_list(device_identifier=device_id)
+                        await app.read_multiple_objects_periodically(
+                            device_identifier=device_id
+                        )
                     else:
-                        await app.read_object_list(device_identifier=device_id)
+                        await app.read_objects_periodically(device_identifier=device_id)
 
     except asyncio.CancelledError as err:
-        logging.warning(f"Updater task cancelled: {err}")
+        LOGGER.warning(f"Updater task cancelled: {err}")
 
 
 async def writer_task(
@@ -79,7 +87,7 @@ async def writer_task(
             if property_val == None:
                 property_val = Null("null")
 
-            logging.debug(
+            LOGGER.debug(
                 f"Writing: {device_id}, {object_id}, {property_id}, {property_val}, {priority}"
             )
 
@@ -93,13 +101,15 @@ async def writer_task(
                     priority=priority,
                 )
             except (AbortPDU, ErrorPDU, RejectPDU) as err:
-                logging.error(f"response: {err}")
+                LOGGER.error(f"response: {err}")
                 continue
             except Exception as err:
-                logging.error(f"response: {err}")
+                LOGGER.error(f"response: {err}")
                 continue
 
-            logging.info(f"response: {response if response else 'Acknowledged'}")
+            LOGGER.info(f"response: {response if response else 'Acknowledged'}")
+
+            await asyncio.sleep(0.1)
 
             read = await app.read_property(
                 address=app.dev_to_addr(device_id),
@@ -107,7 +117,7 @@ async def writer_task(
                 prop=property_id,
                 array_index=array_index,
             )
-            logging.info(f"Write result: {read}")
+            LOGGER.info(f"Write result: {read}")
 
             app.dict_updater(
                 device_identifier=device_id,
@@ -117,9 +127,9 @@ async def writer_task(
             )
 
     except Exception as err:
-        logging.error(f" Writer task error: {err}")
+        LOGGER.error(f" Writer task error: {err}")
     except asyncio.CancelledError as err:
-        logging.warning(f"Writer task cancelled: {err}")
+        LOGGER.warning(f"Writer task cancelled: {err}")
 
 
 async def subscribe_handler_task(app: Application, sub_queue: asyncio.Queue) -> None:
@@ -134,7 +144,7 @@ async def subscribe_handler_task(app: Application, sub_queue: asyncio.Queue) -> 
 
             for task in app.subscription_tasks:
                 if task[1] == object_identifier and task[4] == device_identifier:
-                    logging.error(
+                    LOGGER.error(
                         f"Subscription for {device_identifier}, {object_identifier} already exists"
                     )
                     break
@@ -147,7 +157,7 @@ async def subscribe_handler_task(app: Application, sub_queue: asyncio.Queue) -> 
                 )
 
     except asyncio.CancelledError as err:
-        logging.warning(f"Subscribe task cancelled: {err}")
+        LOGGER.warning(f"Subscribe task cancelled: {err}")
 
 
 async def unsubscribe_handler_task(
@@ -169,12 +179,12 @@ async def unsubscribe_handler_task(
                     )
                     break
             else:
-                logging.error(
+                LOGGER.error(
                     f"Subscription task '{device_identifier}, {object_identifier}' does not exist"
                 )
 
     except asyncio.CancelledError as err:
-        logging.warning(f"Unsubscribe task cancelled: {err}")
+        LOGGER.warning(f"Unsubscribe task cancelled: {err}")
 
 
 def get_configuration() -> tuple:
@@ -188,13 +198,13 @@ def get_configuration() -> tuple:
     try:
         config.read(config_file)
     except Exception as err:
-        logging.warning(f"No BACpypes.ini detected! {err}")
+        LOGGER.warning(f"No BACpypes.ini detected! {err}")
 
     try:
         with open("/data/options.json") as f:
             options = json.load(f)
     except Exception as err:
-        logging.warning(f"No options.json detected! {err}")
+        LOGGER.warning(f"No options.json detected! {err}")
         options = {
             "subscriptions": {
                 "analogInput": True,
@@ -213,7 +223,7 @@ def get_configuration() -> tuple:
         with open("/usr/bin/auth_token.ini", "r") as auth_token:
             token = auth_token.read()
     except Exception as err:
-        logging.warning(f"No Token received! {err}")
+        LOGGER.warning(f"No Token received! {err}")
         token = None
 
     default_write_prio = config.get("BACpypes", "defaultPriority", fallback=15)
@@ -221,7 +231,7 @@ def get_configuration() -> tuple:
     loglevel = config.get("BACpypes", "loglevel", fallback="INFO")
 
     ipv4_address = config.get("BACpypes", "address", fallback=None)
-    
+
     if not ipv4_address:
         ipv4_address = input("BACnet IP Address as *x.x.x.x/24*: ")
 
@@ -237,7 +247,7 @@ def get_configuration() -> tuple:
         "BACpypes", "segmentation", fallback=Segmentation.noSegmentation
     )
 
-    max_apdu = config.get("BACpypes", "maxApduLengthAccepted", fallback=1476)
+    max_apdu = config.get("BACpypes", "maxApduLengthAccepted", fallback=480)
 
     max_segments = config.get("BACpypes", "maxSegmentsAccepted", fallback=64)
 
@@ -245,7 +255,7 @@ def get_configuration() -> tuple:
 
     foreign_ttl = config.get("BACpypes", "foreignTTL", fallback=255)
 
-    update_interval = config.get("BACpypes", "updateInterval", fallback=600)
+    update_interval = config.get("BACpypes", "updateInterval", fallback=60)
 
     return (
         default_write_prio,
@@ -289,7 +299,38 @@ async def main():
         token,
     ) = get_configuration()
 
-    logging.basicConfig(format="%(levelname)s:    %(message)s", level=loglevel)
+    formatter = Formatter(
+        "[%(asctime)-8s]|%(levelname)-8s |%(filename)-18s->%(funcName)-36s: %(message)s",
+        datefmt="%H:%M:%S",
+    )
+
+    path_str = os.path.dirname(os.path.realpath(__file__))
+
+    date_var = datetime.now().date()
+
+    log_path = f"{path_str}/bacnet_addon-{date_var}.log"
+
+    webAPI.log_path = log_path
+
+    file_handler = RotatingFileHandler(
+        filename=log_path, mode="w", maxBytes=15 * 1024 * 1024, backupCount=2
+    )
+
+    file_handler.setFormatter(formatter)
+
+    file_handler.setLevel("DEBUG")
+
+    LOGGER.addHandler(file_handler)
+
+    stream_handler = StreamHandler()
+
+    stream_handler.setFormatter(formatter)
+
+    stream_handler.setLevel(loglevel)
+
+    LOGGER.addHandler(stream_handler)
+
+    LOGGER.setLevel("DEBUG")
 
     this_device = DeviceObject(
         objectIdentifier=ObjectIdentifier(f"device,{object_identifier}"),
@@ -368,7 +409,7 @@ async def main():
         uvilog = loglevel.lower()
 
     config = uvicorn.Config(
-        app=fastapi_app, host="127.0.0.1", port=7813, log_level=uvilog
+        app=fastapi_app, host="127.0.0.1", port=7813, log_level=uvilog, log_config=None
     )
 
     server = uvicorn.Server(config)

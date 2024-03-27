@@ -1,5 +1,28 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.4.0
+27/03/2024
+
+## Added
+- Logs are exportable through the web UI, with a max size of 15MB.
+- Logging formatting improved with timestamps.
+
+## Fixed
+- Fixed read results being interpreted as a falsy value and thus being discarded.
+- Fixed handling of no replies to reading device properties.
+- Infinite or NaN properties now get ignored instead of set to 0.
+- Handling I Am requests one by one now.
+- Prevent basically infinite loop of reading objects.
+- Prevent reading of properties not belonging to object when reading one by one.
+- Filtering out ReadAccessResult value type.
+- JSON check before sending through websocket.
+
+## Dependencies
+
+- ⬆️ Bumped python-multipart to version 0.0.9.
+- ⬆️ Bumped Uvicorn to version 0.27.1.
+
+
 # 1.3.3
 22/02/2024
 

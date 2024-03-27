@@ -15,9 +15,9 @@ RUN \
     'pydantic<=1.10.13' \
     'fastapi<=0.108.0' \
     'jinja2<=3.1.3' \
-    'uvicorn<=0.27.0' \
+    'uvicorn<=0.27.1' \
     'websockets<=12.0' \
-    'python-multipart<=0.0.7' \
+    'python-multipart<=0.0.9' \
     'requests<=2.31.0 ' \
     'backoff<=2.2.1'
 
