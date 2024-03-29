@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: Bepacom BACnet/IP Interface Development Version
-version: "1.4.0"
+version: "1.4.1b1"
 slug: bacnetinterface_dev
 description: Bepacom BACnet/IP interface for the Bepacom EcoPanel. Allows BACnet/IP devices to be available to Home Assistant through an API.
 url: "https://github.com/Bepacom-Raalte/bepacom-HA-Addons/tree/main/bacnetinterface"
@@ -42,6 +42,9 @@ options:
     multiStateInput: true
     multiStateOutput: true
     multiStateValue: true
+  fast_poll_rate: 10
+  fast_poll: []
+  cov_whitelist: []
   entity_list: []
   loglevel: WARNING
   segmentation: segmentedBoth
@@ -49,9 +52,9 @@ schema:
   objectName: str
   address: str
   objectIdentifier: int
-  defaultPriority: "int(1,16)"
+  defaultPriority: int(1,16)
   loglevel: list(DEBUG|INFO|WARNING|ERROR|CRITICAL|)
-  updateInterval: int
+  updateInterval: int(30,3000)
   subscriptions:
     analogInput: bool
     analogOutput: bool
@@ -62,6 +65,15 @@ schema:
     multiStateInput: bool
     multiStateOutput: bool
     multiStateValue: bool
+  fast_poll_rate: int(3,30)
+  fast_poll:
+    - deviceName: str?
+      objects:
+        - str?
+  cov_whitelist:
+    - deviceName: str?
+      objects:
+        - str?
   entity_list:
     - str?
   foreignBBMD: str?
@@ -70,3 +82,4 @@ schema:
   maxApduLenghtAccepted: int?
   segmentation: list(segmentedBoth|segmentedTransmit|segmentedReceive|noSegmentation||)?
   maxSegmentsAccepted: int?
+

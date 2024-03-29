@@ -363,6 +363,15 @@ async def main():
 
     app.asap.maxSegmentsAccepted = int(max_segments)
 
+    for entry in options["fast_poll"]:
+        asyncio.create_task(
+            app.create_poll_task(
+                device_identifier=entry.get("deviceName"),
+                object_list=entry.get("objects"),
+                poll_rate=options["fast_poll_rate"],
+            )
+        )
+
     app.subscription_list = (
         [
             ObjectType(subscription)
@@ -372,6 +381,8 @@ async def main():
         if options
         else None
     )
+
+    LOGGER.debug(options["fast_poll"])
 
     update_task = asyncio.create_task(
         updater_task(

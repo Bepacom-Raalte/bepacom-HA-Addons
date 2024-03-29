@@ -1,6 +1,7 @@
 """BACnet handler classes for BACnet add-on."""
 import asyncio
 import json
+from ast import List
 from math import isinf, isnan
 from re import A
 from typing import Any, Dict, TypeVar
@@ -47,6 +48,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
     default_subscription_lifetime = 28800
     subscription_list = []
     i_am_queue: asyncio.Queue = asyncio.Queue()
+    poll_tasks: list[asyncio.Task] = []
 
     def __init__(
         self, device, local_ip, foreign_ip="", ttl=255, update_event=asyncio.Event()
@@ -64,6 +66,142 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         asyncio.get_event_loop().create_task(self.IAm_handler())
         self.startup_complete.set()
         LOGGER.debug("Application initialised")
+
+    async def poll_task(
+        self,
+        device_identifier: ObjectIdentifier,
+        object_list: list[ObjectIdentifier],
+        poll_rate: int = 30,
+    ) -> None:
+
+        LOGGER.debug(f"TASK: {device_identifier} {object_list} {device_identifier}")
+
+        try:
+            services_supported = self.bacnet_device_dict[
+                f"device:{device_identifier[1]}"
+            ][f"device:{device_identifier[1]}"].get(
+                "protocolServicesSupported", ServicesSupported()
+            )
+
+            while True:
+
+                for object_identifier in object_list:
+
+                    if services_supported["read-property-multiple"] == 1:
+                        try:
+                            response = await self.read_property_multiple(
+                                address=self.dev_to_addr(device_identifier),
+                                parameter_list=[
+                                    object_identifier,
+                                    object_properties_to_read_periodically,
+                                ],
+                            )
+                        except ErrorRejectAbortNack as err:
+                            LOGGER.error(
+                                f"{device_identifier} {object_identifier}: {err}"
+                            )
+                        else:
+                            for (
+                                object_identifier,
+                                property_identifier,
+                                property_array_index,
+                                property_value,
+                            ) in response:
+                                if property_value is not ErrorType:
+                                    self.dict_updater(
+                                        device_identifier=device_identifier,
+                                        object_identifier=object_identifier,
+                                        property_identifier=property_identifier,
+                                        property_value=property_value,
+                                    )
+                    else:
+                        for property_id in object_properties_to_read_periodically:
+                            try:
+                                response = await self.read_property(
+                                    address=self.dev_to_addr(device_identifier),
+                                    objid=object_identifier,
+                                    prop=property_id,
+                                )
+                            except ErrorRejectAbortNack as err:
+                                LOGGER.error(
+                                    f"{device_identifier} {object_identifier}: {err}"
+                                )
+                            else:
+                                if response is not ErrorType:
+                                    self.dict_updater(
+                                        device_identifier=device_identifier,
+                                        object_identifier=device_identifier,
+                                        property_identifier=property_id,
+                                        property_value=response,
+                                    )
+
+                await asyncio.sleep(poll_rate)
+
+        except asyncio.CancelledError as err:
+            LOGGER.info(f"Poll task for {device_identifier} cancelled")
+
+        except Exception as err:
+            LOGGER.error(err)
+
+    async def create_poll_task(
+        self,
+        device_identifier: ObjectIdentifier,
+        object_list: list[ObjectIdentifier],
+        poll_rate: int = 30,
+    ) -> None:
+        """Create a task that'll poll every so many seconds."""
+
+        device_identifier = ObjectIdentifier(device_identifier)
+
+        if not self.bacnet_device_dict.get(f"device:{device_identifier[1]}"):
+            await asyncio.sleep(15)
+
+        if not self.bacnet_device_dict.get(f"device:{device_identifier[1]}"):
+            self.who_is(device_identifier[1], device_identifier[1])
+            await asyncio.sleep(45)
+
+        if not self.bacnet_device_dict.get(f"device:{device_identifier[1]}"):
+            LOGGER.warning(
+                f"{device_identifier} did not respond the requests. No polling possible."
+            )
+            return
+
+        objects_to_poll: list = []
+
+        for object_identifier in object_list:
+
+            object_identifier = ObjectIdentifier(object_identifier)
+
+            if not self.bacnet_device_dict[f"device:{device_identifier[1]}"].get(
+                f"{object_identifier[0]}:{object_identifier[1]}"
+            ):
+                try:
+                    response = await self.read_property(
+                        address=self.dev_to_addr(device_identifier),
+                        objid=object_identifier,
+                        prop=PropertyIdentifier("presentValue"),
+                    )
+                except ErrorRejectAbortNack as err:
+                    LOGGER.warning(
+                        f"{device_identifier} {object_identifier} failed to read: {err}"
+                    )
+                    LOGGER.info(
+                        f"{device_identifier} {object_identifier} won't get polled."
+                    )
+                    continue
+
+            objects_to_poll.append(object_identifier)
+
+        if not objects_to_poll:
+            LOGGER.warning(f"No objects to poll for {device_identifier}.")
+            return
+
+        task = asyncio.create_task(
+            self.poll_task(device_identifier, objects_to_poll, poll_rate),
+            name=f"{device_identifier[0]}:{device_identifier[1]}",
+        )
+
+        self.poll_tasks.append(task)
 
     def deep_update(
         self, mapping: Dict[KeyType, Any], *updating_mappings: Dict[KeyType, Any]

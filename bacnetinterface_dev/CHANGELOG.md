@@ -1,21 +1,31 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.4.0b5
-23/03/2024
+# 1.4.1b1
+29/03/2024
+
+## Added
+- Reading resolution property now. Integration will use it once it's updated as well. [#46](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/46)
+- Added config options fast_poll_rate, fast_poll and cov_whitelist (not implemented yet). [#43](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/discussions/43)
+- fast_poll is a list of device names alongside objects that have to be polled quickly.
+- Updated description for explanation of configuration options.
+
+
+# 1.4.0
+27/03/2024
+
+## Added
+- Logs are exportable through the web UI, with a max size of 15MB.
+- Logging formatting improved with timestamps.
 
 ## Fixed
 - Fixed read results being interpreted as a falsy value and thus being discarded.
 - Fixed handling of no replies to reading device properties.
 - Infinite or NaN properties now get ignored instead of set to 0.
 - Handling I Am requests one by one now.
-- Logs are exportable through the web UI, with a max size of 20MB.
 - Prevent basically infinite loop of reading objects.
 - Prevent reading of properties not belonging to object when reading one by one.
 - Filtering out ReadAccessResult value type.
 - JSON check before sending through websocket.
-- Commented out useless objects we were subscribing to.
-- Temporarily disabled nginx blocking outside access.
-- Logging formatting including timestamps
 
 ## Dependencies
 

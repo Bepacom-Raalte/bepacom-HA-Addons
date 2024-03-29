@@ -4,6 +4,8 @@ The Bepacom BACnet/IP interface add-on is intended to be a bridge between the BA
 
 The goal of this add-on is to add BACnet functionality to Home Assistant so these devices can be displayed on the dashboard.
 
+The add-on is not directly responsible for generating entities in Home Assistant, for that, check out the [Bepacom BACnet/IP Interface integration](https://github.com/Bepacom-Raalte/Bepacom-BACnet-IP-Integration/tree/main).
+
 This add-on works on Home Assistant OS as well as Home Assistant Supervised.
 
 Created and maintained by [Bepacom B.V. Raalte](https://www.bepacom.nl/)
@@ -29,7 +31,7 @@ After installing the add-on, there are 2 ways you can turn data into Home Assist
 
 ### Integration
 
-The first and recommended way is to use the accompanying integration made by us. This is the [Bepacom BACnet/IP Interface integration](https://github.com/Bepacom-Raalte/bepacom-custom_components/tree/main/custom_components/bacnet_interface).
+The first and recommended way is to use the accompanying integration made by us. This is the [Bepacom BACnet/IP Interface integration](https://github.com/Bepacom-Raalte/Bepacom-BACnet-IP-Integration/tree/main).
 Installation instructions are included in the README.md file. The installation is straightforward, like any other custom integration.
 
 ### RESTful Sensor
@@ -117,6 +119,19 @@ subscriptions:
   multiStateInput: false
   multiStateOutput: false
   multiStateValue: false
+fast_poll_rate: 5
+fast_poll:
+  - deviceName: device:1835087
+    objects:
+      - analogInput:0
+      - analogValue:1
+      - analogValue:4124
+  - deviceName: device:1835082
+    objects:
+      - binaryInput:52
+      - analogOutput:1
+      - multiStateInput:4
+cov_whitelist: []
 entity_list:
   - input_number.coolnumber
   - sensor.incomfort_cv_pressure
@@ -126,39 +141,29 @@ segmentation: segmentedBoth
 vendorID: 15
 ```
 
-### Option: `Device Name`
+### Option: `objectName` Device Name
 The Object Name that this device will get. This will be seen by other devices on the BACnet network.
 
-### Option: `Interface IP`
+### Option: `address` Interface IP
 The address of the BACnet/IP interface.
 You can write the IP yourself or use "auto" to let the add-on automatically try to get the right IP address.
 If you want to write your IP manually, don't forget to put the CIDR behind the IP. For example: 192.168.2.11/24.
-If you use subnet mask of 255.255.255.0, just put /24 behind your IP address.
+If you use subnet mask of 255.255.255.0, just put /24 behind your IP address. 
+If you have a subnet of 255.255.0.0 then your CIDR notation would be /16
 
-### Option: `Device ID`
+### Option: `objectIdentifier` Device ID
 The Object Identifier that this device will get. This will be seen by other devices on the BACnet network. **Make sure it's unique in your network!**
 
-### Option: `BACnet write priority`
+### Option: `defaultPriority` BACnet write priority
 The priority your write requests get. 
 Low number means high priority. 
 High number means low priority. 
 Recommended to keep at 15 or 16 unless you know what a higher priority can do to your BACnet devices.
 
-### Option: `Level of logging`
-The verbosity of the logs in the add-on. 
-There are 5 levels of logging:
-- DEBUG: You'll get too much info. Only useful for development.
-- INFO: You'll receive a lot of info that could be useful for troubleshooting.
-- WARNING: You'll only receive logs if something went wrong.
-- ERROR: You'll only see errors pop up.
-- CRITICAL: You want to ignore everything that's happening.
-
-Usually WARNING is sufficient.
-
-### Option: `Update Interval`
+### Option: `updateInterval` Update Interval
 The time after which the interface will try to read all object properties of each detected device again.
 
-### Option: `CoV Subscriptions`
+### Option: `subscriptions` CoV Subscriptions
 The types of objects you want to automatically subscribe to with a CoV subscription. 
 Per object you can set true or false. 
 Objects not included here don't get subscribed to.
@@ -175,11 +180,55 @@ multiStateOutput: false
 multiStateValue: false
 ```
 
-### Option: `Home Assistant API Pollrate`
-Pollrate in seconds to the Home Assistant API. This is to get data for the following 2 options. Recommended to not set it too fast.
-This determines how fast the device's objects update their presentValue property.
+### Option: `fast_poll_rate` Fast poll rate
+The rate at which the Fast poll objects have to be read. At most 30 seconds and a minimum of 3 seconds.
+If you decide to read many objects, please decrease the poll rate as to not congest your network too much.
 
-### Option: `Entities to BACnet objects`
+### Option: `fast_poll` Fast poll objects
+A list including a dictionary for a device name, as well as a list next to it including the objects that have to be read from that device.
+The value for deviceName will be the device identifier of your device, for example `device:100`. 
+Below this device is the objects list, where each value is an object identifier you want to be read quickly.
+The following properties will be read each time:
+- presentValue
+- statusFlags
+- outOfService
+- eventState
+- reliability
+- covIncrement
+
+```yaml
+fast_poll:
+  - deviceName: device:1835087
+    objects:
+      - analogInput:0
+      - analogValue:1
+      - analogValue:4124
+  - deviceName: device:1835082
+    objects:
+      - binaryInput:52
+      - analogOutput:1
+      - multiStateInput:4
+```
+
+### Option: `cov_whitelist` Change of Value whitelist
+
+NOT YET IMPLEMENTED
+
+```yaml
+cov_whitelist:
+  - deviceName: device:1835087
+    objects:
+      - analogInput:0
+      - analogValue:1
+      - analogValue:4124
+  - deviceName: device:1835082
+    objects:
+      - binaryInput:52
+      - analogOutput:1
+      - multiStateInput:4
+```
+
+### Option: `entity_list` Entities to BACnet objects
 The entity ID's of what entities you want to make available as a BACnet objects. 
 Keeping it empty will result in no additional objects next to your virtual device on the BACnet network.
 
@@ -208,18 +257,43 @@ All the -Value objects can be written to!
 
 Plans to include "climate", "water_heater", "media_player" and "vacuum" as supported entity types in the future.
 
-### Option: `BACnet/IP Broadcast Management Device Address`
+### Option: `foreignBBMD` BACnet/IP Broadcast Management Device Address
 If you have your BACnet/IP network on another subnet, write the IP of your BBMD device here. This way, the add-on can communicate with the BBMD.
 Otherwise keep this option empty.
 
-### Option: `Foreign TTL`
+### Option: `foreignTTL` Foreign TTL
 Time To Live of foreign packets.
 
-### Option: `Vendor Identifier`
+### Option: `loglevel` Level of logging
+The verbosity of the logs in the add-on. 
+There are 5 levels of logging:
+- DEBUG: You'll get too much info. Only useful for development.
+- INFO: You'll receive a lot of info that could be useful for troubleshooting.
+- WARNING: You'll only receive logs if something went wrong.
+- ERROR: You'll only see errors pop up.
+- CRITICAL: You want to ignore everything that's happening.
+
+Usually WARNING is sufficient.
+
+### Option: `vendorID` Vendor Identifier
 Identifier of the vendor of the interface. As we don't have an official identifier, put anything you want in here.
 
-### Option: `Segmentation Supported`
+### Option: `segmentation` Segmentation Supported
 Segmentation type of the add-on. Recommended to leave on SegmentedBoth for the best compatibility.
+Segmentation is whether the device supports splitting up large BACnet messages. 
+A BACnet message will be split based on the maximum APDU length accepted. 
+This is usually the case when using Read Property Multiple requests.
+- segmentedBoth allows both the incoming and outgoing messaged to be split up. 
+- segmentedTransmit allows only sending split messages.
+- segmentedReceive allows only incoming messages to be segmented.
+- noSegmentation allows no segmentation.
+
+### Option: `maxSegmentsAccepted` Maximum Segments Accepted
+The amount of segments that the device can accept at most for a single service request. Default is 64 segments.
+
+### Option: `maxApduLength` Maximum APDU Length Accepted
+Maximum size a BACnet message/segment is allowed to be. 
+A common BACnet/IP value and the default for the add-on is 1476, and a common BACnet/MSTP value is 480.
 
 ### Network port: `80/TCP`
 Port which the integration should connect to. If you leave this empty, the integration should connect to port 8099.

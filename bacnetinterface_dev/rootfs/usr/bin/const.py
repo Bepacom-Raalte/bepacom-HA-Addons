@@ -51,6 +51,7 @@ object_properties_to_read_once: list = [
     PropertyIdentifier("inactiveText"),
     PropertyIdentifier("polarity"),
     PropertyIdentifier("relinquishDefault"),
+    PropertyIdentifier("resolution"),
 ]
 
 object_properties_to_read_periodically: list = [
@@ -60,7 +61,6 @@ object_properties_to_read_periodically: list = [
     PropertyIdentifier("eventState"),
     PropertyIdentifier("reliability"),
     PropertyIdentifier("covIncrement"),
-    PropertyIdentifier("notificationClass"),
 ]
 
 subscribable_objects: list = [

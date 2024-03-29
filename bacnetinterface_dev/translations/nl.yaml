@@ -14,9 +14,6 @@ configuration:
   loglevel:
     name: Loggingsniveau
     description: Het niveau waarop de gebeurtenissen gelogd worden.
-  export_log:
-    name: Exporteer Logs
-    description: Exporeert logs naar /share en maak het downloaden naar je browser mogelijk.
   maxApduLenghtAccepted: 
     name: Maximum  APDU Lengte Geaccepteerd
     description: Maximum hoeveelheid Application Layer Protocol Data Units toegestaan.
@@ -44,6 +41,15 @@ configuration:
   entity_list:
     name: Entities naar BACnet objecten
     description: Home Assistant entity IDs die als BACnet objecten moeten gaan dienen. Lees de documentatie om te weten welke entity typen ondersteund worden en hoe de object identifiers bepaald worden.
+  fast_poll_rate:
+    name: Snelheid van het pollen
+    description: De snelheid waar objecten uit de snel pollen lijst mee uitgelezen moeten worden.
+  fast_poll:
+    name: Snel pollen objectenlijst
+    description: Een lijst van apparaten met objecten die snel uitgelezen moeten worden op basis van de snelheid van het pollen optie.
+  cov_whitelist:
+    name: Change of Value whitelist
+    description: Een lijst van apparaten met objecten waarop geabonneerd moet worden met een CoV abonnement. Het gebruik van de whitelist zorgt ervoor dat er nergens anders op geabonneerd wordt.
 network:
   47808/udp: BACnet poort.
   80/tcp: Poort waarmee de integration moet verbinden. Wanneer je deze poort leeg laat, moet de integration met poort 8099 verbinden.
