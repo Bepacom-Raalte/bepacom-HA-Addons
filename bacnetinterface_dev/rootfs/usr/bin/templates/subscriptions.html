@@ -33,12 +33,11 @@
             </label>
             {% for key in subs %}
             <label class="selectable-label">
-                {% set string_list = key | map('string') | list %}
-                <input type="checkbox" id="checkbox-{{ " ".join(string_list) }}">
+                <input type="checkbox" id="checkbox-{{ key.get_name() }}">
                 <span class="ede_selection">
-                    <a>{{ key[4] }}</a>
-                    <a>{{ key[1] }}</a>
-                    <a>{{ key[2] }}</a>
+                    <a>{{ key.get_name().split(",")[0] }}</a>
+                    <a>{{ key.get_name().split(",")[1] }}</a>
+                    <a>{{ key.get_name().split(",")[2] }}</a>
                 </span>
             </label>
             {% endfor %}
@@ -168,8 +167,8 @@
             console.log(keys)
 
             for (let i = 0; i < keys.length; i++) {
-                let split_keys = keys[i].split(" ")
-                let device_identifier = split_keys[4]
+                let split_keys = keys[i].split(",")
+                let device_identifier = split_keys[0]
                 let object_identifier = split_keys[1]
                 let url = './apiv1/subscribe/' + device_identifier + "/" + object_identifier
                 console.log(url)

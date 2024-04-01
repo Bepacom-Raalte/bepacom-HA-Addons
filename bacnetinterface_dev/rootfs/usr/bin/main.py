@@ -19,7 +19,7 @@ from bacpypes3.ipv4.app import Application
 from bacpypes3.local.device import DeviceObject
 from bacpypes3.pdu import IPv4Address
 from bacpypes3.primitivedata import ObjectIdentifier
-from const import LOGGER
+from const import LOGGER, subscribable_objects
 from webAPI import app as fastapi_app
 
 KeyType = TypeVar("KeyType")
@@ -142,8 +142,10 @@ async def subscribe_handler_task(app: Application, sub_queue: asyncio.Queue) -> 
             notifications = queue_result[2]
             lifetime = queue_result[3]
 
+            task_name = f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]}"
+
             for task in app.subscription_tasks:
-                if task[1] == object_identifier and task[4] == device_identifier:
+                if task_name in task.get_name():
                     LOGGER.error(
                         f"Subscription for {device_identifier}, {object_identifier} already exists"
                     )
@@ -170,18 +172,14 @@ async def unsubscribe_handler_task(
             device_identifier = queue_result[0]
             object_identifier = queue_result[1]
 
+            task_name = f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]}"
+
             for task in app.subscription_tasks:
-                if task[1] == object_identifier and task[4] == device_identifier:
-                    await app.unsubscribe_COV(
-                        subscriber_process_identifier=task[0],
-                        device_identifier=task[4],
-                        object_identifier=task[1],
-                    )
+                if task_name in task.get_name():
+                    task.cancel()
                     break
             else:
-                LOGGER.error(
-                    f"Subscription task '{device_identifier}, {object_identifier}' does not exist"
-                )
+                LOGGER.error("Subscription task does not exist")
 
     except asyncio.CancelledError as err:
         LOGGER.warning(f"Unsubscribe task cancelled: {err}")
@@ -280,7 +278,7 @@ async def main():
 
     loop = asyncio.get_event_loop()
 
-    loop.set_exception_handler(exception_handler)
+    # loop.set_exception_handler(exception_handler)
 
     (
         default_write_prio,
@@ -351,6 +349,7 @@ async def main():
         foreign_ip=foreign_ip,
         ttl=int(foreign_ttl),
         update_event=webAPI.events.val_updated_event,
+        addon_device_config=options["devices_setup"],
     )
 
     object_manager = ObjectManager(
@@ -363,31 +362,17 @@ async def main():
 
     app.asap.maxSegmentsAccepted = int(max_segments)
 
-    for entry in options["fast_poll"]:
-        asyncio.create_task(
-            app.create_poll_task(
-                device_identifier=entry.get("deviceName"),
-                object_list=entry.get("objects"),
-                poll_rate=options["fast_poll_rate"],
-            )
-        )
+    # for entry in options["fast_poll"]:
+    #    asyncio.create_task(app.create_poll_task(device_identifier=entry.get("deviceName"), object_list=entry.get("objects"), poll_rate=options["fast_poll_rate"]))
 
-    app.subscription_list = (
-        [
-            ObjectType(subscription)
-            for subscription, value in options["subscriptions"].items()
-            if value == True
-        ]
-        if options
-        else None
-    )
+    # Geef config mee aan app om te verwerken tijdens init options["devices_setup"] of verwerk in een functie hier.
 
-    LOGGER.debug(options["fast_poll"])
+    app.subscription_list = subscribable_objects
 
     update_task = asyncio.create_task(
         updater_task(
             app=app,
-            interval=int(update_interval),
+            interval=int(500),
             event=webAPI.events.read_event,
         )
     )

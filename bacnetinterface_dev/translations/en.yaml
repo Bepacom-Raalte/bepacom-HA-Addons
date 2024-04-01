@@ -32,24 +32,12 @@ configuration:
   maxSegmentsAccepted:
     name: Maximum Segments Accepted
     description: The maximum amount of segments accepted in a message.
-  updateInterval:
-    name: Update Interval
-    description: Time between periodic updates in seconds.
-  subscriptions:
-    name: CoV subscriptions
-    description: For which object types have to be subscribed to.
   entity_list:
     name: Entities to BACnet objects
     description: Home Assistant entity IDs that will be turned into BACnet objects. Please read the documentation to see which entity types are supported and how BACnet object identifiers are determined.
-  fast_poll_rate:
-    name: Fast poll rate
-    description: The rate at which the fast poll objects have to be read.
-  fast_poll:
-    name: Fast poll objects
-    description: A list of devices including objects to be read at the fast poll rate.
-  cov_whitelist:
-    name: Change of Value whitelist
-    description: A list of devices including objects to be subscribed to. Using this will result in no other objects being subscribed automatically. (Not working.)
+  devices_setup:
+    name: Device Setup
+    description: Set up any devices you want to be treated differently. See docs for usage.
 network:
   47808/udp: BACnet port.
   80/tcp: Port which the integration should connect to. If you leave this empty, the integration should connect to port 8099.

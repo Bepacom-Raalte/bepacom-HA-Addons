@@ -105,40 +105,40 @@ Example add-on configuration:
 
 ```yaml
 objectName: EcoPanel
-address: 192.168.2.11/24
+address: auto
 objectIdentifier: 420
 defaultPriority: 15
-updateInterval: 60
-subscriptions:
-  analogInput: true
-  analogOutput: true
-  analogValue: true
-  binaryInput: true
-  binaryOutput: true
-  binaryValue: true
-  multiStateInput: false
-  multiStateOutput: false
-  multiStateValue: false
-fast_poll_rate: 5
-fast_poll:
-  - deviceName: device:1835087
-    objects:
+devices_setup:
+  - deviceID: all
+    CoV_lifetime: 60
+    CoV_list:
+      - all
+    quick_poll_rate: 5
+    quick_poll_list: []
+    slow_poll_rate: 600
+    slow_poll_list:
+      - all
+  - deviceID: device:1835087
+    CoV_lifetime: 600
+    CoV_list: []
+    quick_poll_rate: 5
+    quick_poll_list:
       - analogInput:0
-      - analogValue:1
-      - analogValue:4124
-  - deviceName: device:1835082
-    objects:
-      - binaryInput:52
-      - analogOutput:1
-      - multiStateInput:4
-cov_whitelist: []
+      - analogInput:1
+      - analogInput:2
+    slow_poll_rate: 300
+    slow_poll_list:
+      - all
 entity_list:
-  - input_number.coolnumber
   - sensor.incomfort_cv_pressure
   - input_boolean.cooltoggle
+  - input_number.coolnumber
+  - sensor.energyzero_today_energy_next_hour_price
 loglevel: WARNING
 segmentation: segmentedBoth
 vendorID: 15
+maxApduLenghtAccepted: 1476
+maxSegmentsAccepted: 64
 ```
 
 ### Option: `objectName` Device Name
@@ -160,73 +160,50 @@ Low number means high priority.
 High number means low priority. 
 Recommended to keep at 15 or 16 unless you know what a higher priority can do to your BACnet devices.
 
-### Option: `updateInterval` Update Interval
-The time after which the interface will try to read all object properties of each detected device again.
+### Option: `devices_setup` Device Setup
 
-### Option: `subscriptions` CoV Subscriptions
-The types of objects you want to automatically subscribe to with a CoV subscription. 
-Per object you can set true or false. 
-Objects not included here don't get subscribed to.
+The `devices_setup` configuration is a list of configurations for specific devices. 
+Each list entry will contain a deviceID along with settings for Change of Value as well as polling.
 
 ```yaml
-analogInput: true
-analogOutput: true
-analogValue: true
-binaryInput: true
-binaryOutput: true
-binaryValue: true
-multiStateInput: false
-multiStateOutput: false
-multiStateValue: false
+devices_setup:
+  - deviceID: device:1835087
+    CoV_lifetime: 60
+    CoV_list:
+      - all
+    quick_poll_rate: 5
+    quick_poll_list: []
+    slow_poll_rate: 600
+    slow_poll_list:
+      - all
 ```
 
-### Option: `fast_poll_rate` Fast poll rate
-The rate at which the Fast poll objects have to be read. At most 30 seconds and a minimum of 3 seconds.
-If you decide to read many objects, please decrease the poll rate as to not congest your network too much.
+- `deviceID` This key contains the device identifier (in "device:xxxx" format where xxxx is the number) for the device you want the following options to count for. A special "all" key will make the settings below a general configuration.
+- `CoV_lifetime` This key contains the lifetime for each CoV subscription made. This value is in seconds and can be between 60 and 28800. The add-on will automatically resubscribe once the lifetime has passed.
+- `CoV_list` This key contains a list containing each object identifier (in "object:xxxx" format where xxxx is the number and object written in the format as seen below) the add-on has to subscribe to. A special "all" key will make the add-on subscribe to all supported objects of the device. The list can be empty if no CoV subscriptions are desired.
+```yaml
+analogInput
+analogOutput
+analogValue
+binaryInput
+binaryOutput
+binaryValue
+multiStateInput
+multiStateOutput
+multiStateValue
+```
+- `quick_poll_rate` This key contains the rate at which quick poll objects have to be read. This is in seconds, between 3 and 30.
+- `quick_poll_list` This key contains a list containing each object identifier the add-on has to poll at the poll rate defined above. The list can be empty if no quick polling is desired.
+- `slow_poll_rate` This key contains the rate at which quick poll objects have to be read. This is in seconds, between 30 and 3000.
+- `slow_poll_list` This key contains a list containing each object identifier the add-on has to poll at the poll rate defined above. The list can be empty if no slow polling is desired. A special "all" key will make the add-on poll all objects of the device.
 
-### Option: `fast_poll` Fast poll objects
-A list including a dictionary for a device name, as well as a list next to it including the objects that have to be read from that device.
-The value for deviceName will be the device identifier of your device, for example `device:100`. 
-Below this device is the objects list, where each value is an object identifier you want to be read quickly.
-The following properties will be read each time:
+The following properties will be read each poll:
 - presentValue
 - statusFlags
 - outOfService
 - eventState
 - reliability
 - covIncrement
-
-```yaml
-fast_poll:
-  - deviceName: device:1835087
-    objects:
-      - analogInput:0
-      - analogValue:1
-      - analogValue:4124
-  - deviceName: device:1835082
-    objects:
-      - binaryInput:52
-      - analogOutput:1
-      - multiStateInput:4
-```
-
-### Option: `cov_whitelist` Change of Value whitelist
-
-NOT YET IMPLEMENTED
-
-```yaml
-cov_whitelist:
-  - deviceName: device:1835087
-    objects:
-      - analogInput:0
-      - analogValue:1
-      - analogValue:4124
-  - deviceName: device:1835082
-    objects:
-      - binaryInput:52
-      - analogOutput:1
-      - multiStateInput:4
-```
 
 ### Option: `entity_list` Entities to BACnet objects
 The entity ID's of what entities you want to make available as a BACnet objects. 

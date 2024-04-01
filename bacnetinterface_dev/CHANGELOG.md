@@ -1,13 +1,22 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.4.1b1
-29/03/2024
+# 1.4.1b2
+01/04/2024
+
+Rather experimental, need feedback if there are any issues.
 
 ## Added
 - Reading resolution property now. Integration will use it once it's updated as well. [#46](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/46)
-- Added config options fast_poll_rate, fast_poll and cov_whitelist (not implemented yet). [#43](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/discussions/43)
-- fast_poll is a list of device names alongside objects that have to be polled quickly.
-- Updated description for explanation of configuration options.
+- Added devices_setup configuration option to allow the user to configure behaviour. See Documentation for usage. [#43](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/discussions/43)
+- Updated DOCS.md
+- Added millivolt, volt and hectopascals as units for entity to BACnet translation. [#47](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/47)
+
+## Fixed
+- If an entity has units that can't be translated, it'll result in the noUnit property value. [#47](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/47)
+- Inherited BACpypes3 function to fix non-existant property being read along with array index causing a crash. [#47](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/47)
+
+## Changed
+- Reverted back to old way of subscribing. Please report any issues encountered.
 
 
 # 1.4.0

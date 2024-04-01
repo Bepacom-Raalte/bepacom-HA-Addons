@@ -2,7 +2,7 @@
 import asyncio
 import json
 from ast import List
-from math import isinf, isnan
+from math import e, isinf, isnan
 from re import A
 from typing import Any, Dict, TypeVar
 
@@ -11,15 +11,16 @@ import requests
 import websockets
 from bacpypes3.apdu import (AbortPDU, ConfirmedCOVNotificationRequest,
                             ErrorPDU, ErrorRejectAbortNack,
-                            ReadPropertyRequest, RejectPDU, SimpleAckPDU,
-                            SubscribeCOVRequest,
+                            ReadPropertyMultipleRequest, ReadPropertyRequest,
+                            RejectPDU, SimpleAckPDU, SubscribeCOVRequest,
                             UnconfirmedCOVNotificationRequest,
                             WritePropertyRequest)
 from bacpypes3.basetypes import (BinaryPV, DeviceStatus, EngineeringUnits,
-                                 ErrorType, EventState, PropertyIdentifier,
-                                 ReadAccessResult, Reliability,
-                                 ServicesSupported)
+                                 ErrorClass, ErrorCode, ErrorType, EventState,
+                                 PropertyIdentifier, ReadAccessResult,
+                                 Reliability, ServicesSupported)
 from bacpypes3.constructeddata import AnyAtomic
+from bacpypes3.debugging import bacpypes_debugging
 from bacpypes3.errors import *
 from bacpypes3.ipv4.app import ForeignApplication, NormalApplication
 from bacpypes3.local.analog import AnalogInputObject, AnalogValueObject
@@ -29,7 +30,8 @@ from bacpypes3.pdu import Address
 from bacpypes3.primitivedata import ObjectIdentifier, ObjectType
 from const import (LOGGER, device_properties_to_read,
                    object_properties_to_read_once,
-                   object_properties_to_read_periodically)
+                   object_properties_to_read_periodically,
+                   subscribable_objects)
 
 KeyType = TypeVar("KeyType")
 
@@ -49,9 +51,16 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
     subscription_list = []
     i_am_queue: asyncio.Queue = asyncio.Queue()
     poll_tasks: list[asyncio.Task] = []
+    addon_device_config: list = []
 
     def __init__(
-        self, device, local_ip, foreign_ip="", ttl=255, update_event=asyncio.Event()
+        self,
+        device,
+        local_ip,
+        foreign_ip="",
+        ttl=255,
+        update_event=asyncio.Event(),
+        addon_device_config=[],
     ) -> None:
         if foreign_ip:
             ForeignApplication.__init__(self, device, local_ip)
@@ -62,10 +71,187 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         super().who_is()
         self.update_event = update_event
         self.vendor_info = get_vendor_info(0)
-        asyncio.get_event_loop().create_task(self.refresh_subscriptions())
         asyncio.get_event_loop().create_task(self.IAm_handler())
+        self.addon_device_config = addon_device_config
         self.startup_complete.set()
         LOGGER.debug("Application initialised")
+
+    async def generate_specific_tasks(
+        self, device_identifier: ObjectIdentifier
+    ) -> None:
+        """Handle generating tasks for specific identifiers after reading object."""
+
+        specific_config = [
+            config
+            for config in self.addon_device_config
+            if config.get("deviceID")
+            == f"{device_identifier[0]}:{device_identifier[1]}"
+        ]
+
+        if not specific_config:
+            # assume generic handling
+            await self.generate_generic_tasks(device_identifier=device_identifier)
+            return
+
+        if len(specific_config) > 1:
+            # duplicate
+            return
+
+        index = self.addon_device_config.index(specific_config[0])
+
+        config = self.addon_device_config[index]
+
+        if config.get("quick_poll_list"):
+            asyncio.create_task(
+                self.create_poll_task(
+                    device_identifier=device_identifier,
+                    object_list=config.get("quick_poll_list"),
+                    poll_rate=config.get("quick_poll_rate"),
+                )
+            )
+
+        if "all" in config.get("slow_poll_list"):
+            object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
+                f"device:{device_identifier[1]}"
+            ].get("objectList")
+
+            if device_identifier in object_list:
+                object_list.remove(device_identifier)
+
+        elif config.get("slow_poll_list"):
+            object_list = config.get("slow_poll_list")
+        else:
+            object_list = []
+
+        if object_list:
+            asyncio.create_task(
+                self.create_poll_task(
+                    device_identifier=device_identifier,
+                    object_list=object_list,
+                    poll_rate=config.get("slow_poll_rate"),
+                )
+            )
+
+        if "all" in config.get("CoV_list"):
+            object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
+                f"device:{device_identifier[1]}"
+            ].get("objectList")
+
+            if device_identifier in object_list:
+                object_list.remove(device_identifier)
+
+            object_list = [
+                object_identifier
+                for object_identifier in object_list
+                if object_identifier[0] in subscribable_objects
+            ]
+
+            for object_identifier in object_list:
+                asyncio.create_task(
+                    self.create_subscription_task(
+                        device_identifier=device_identifier,
+                        object_identifier=object_identifier,
+                        confirmed_notifications=True,
+                        lifetime=config.get("CoV_lifetime"),
+                    )
+                )
+
+        elif config.get("CoV_list"):
+            for object_identifier in config.get("CoV_list"):
+                asyncio.create_task(
+                    self.create_subscription_task(
+                        device_identifier=device_identifier,
+                        object_identifier=object_identifier,
+                        confirmed_notifications=True,
+                        lifetime=config.get("CoV_lifetime"),
+                    )
+                )
+
+        return
+
+    async def generate_generic_tasks(self, device_identifier: ObjectIdentifier) -> None:
+
+        specific_config = [
+            config
+            for config in self.addon_device_config
+            if config.get("deviceID") == "all"
+        ]
+
+        if not specific_config:
+            # use generic settings:
+            await self.subscribe_object_list(device_identifier=device_identifier)
+            return
+
+        index = self.addon_device_config.index(specific_config[0])
+
+        config = self.addon_device_config[index]
+
+        if config.get("quick_poll_list"):
+            asyncio.create_task(
+                self.create_poll_task(
+                    device_identifier=device_identifier,
+                    object_list=config.get("quick_poll_list"),
+                    poll_rate=config.get("quick_poll_rate"),
+                )
+            )
+
+        if "all" in config.get("slow_poll_list"):
+            object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
+                f"device:{device_identifier[1]}"
+            ].get("objectList")
+
+            if device_identifier in object_list:
+                object_list.remove(device_identifier)
+
+        elif config.get("slow_poll_list"):
+            object_list = config.get("slow_poll_list")
+        else:
+            object_list = []
+
+        if object_list:
+            asyncio.create_task(
+                self.create_poll_task(
+                    device_identifier=device_identifier,
+                    object_list=object_list,
+                    poll_rate=config.get("slow_poll_rate"),
+                )
+            )
+
+        if "all" in config.get("CoV_list"):
+            object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
+                f"device:{device_identifier[1]}"
+            ].get("objectList")
+            if device_identifier in object_list:
+                object_list.remove(device_identifier)
+
+            object_list = [
+                object_identifier
+                for object_identifier in object_list
+                if object_identifier[0] in subscribable_objects
+            ]
+
+            for object_identifier in object_list:
+                asyncio.create_task(
+                    self.create_subscription_task(
+                        device_identifier=device_identifier,
+                        object_identifier=object_identifier,
+                        confirmed_notifications=True,
+                        lifetime=config.get("CoV_lifetime"),
+                    )
+                )
+
+        elif config.get("CoV_list"):
+            for object_identifier in config.get("CoV_list"):
+                asyncio.create_task(
+                    self.create_subscription_task(
+                        device_identifier=device_identifier,
+                        object_identifier=object_identifier,
+                        confirmed_notifications=True,
+                        lifetime=config.get("CoV_lifetime"),
+                    )
+                )
+
+        return
 
     async def poll_task(
         self,
@@ -87,6 +273,16 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
                 for object_identifier in object_list:
 
+                    object_class = self.vendor_info.get_object_class(
+                        object_identifier[0]
+                    )
+
+                    if object_class is None:
+                        LOGGER.warning(
+                            f"Object type is unknown: {device_identifier}, {object_identifier}"
+                        )
+                        continue
+
                     if services_supported["read-property-multiple"] == 1:
                         try:
                             response = await self.read_property_multiple(
@@ -98,8 +294,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                             )
                         except ErrorRejectAbortNack as err:
                             LOGGER.error(
-                                f"{device_identifier} {object_identifier}: {err}"
+                                f"Read multiple error: {device_identifier} {object_identifier}: {err}"
                             )
+                            continue
                         else:
                             for (
                                 object_identifier,
@@ -116,6 +313,12 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                                     )
                     else:
                         for property_id in object_properties_to_read_periodically:
+
+                            property_class = object_class.get_property_type(property_id)
+
+                            if property_class is None:
+                                continue
+
                             try:
                                 response = await self.read_property(
                                     address=self.dev_to_addr(device_identifier),
@@ -124,8 +327,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                                 )
                             except ErrorRejectAbortNack as err:
                                 LOGGER.error(
-                                    f"{device_identifier} {object_identifier}: {err}"
+                                    f"Read error: {device_identifier} {object_identifier} {property_id}: {err}"
                                 )
+                                continue
                             else:
                                 if response is not ErrorType:
                                     self.dict_updater(
@@ -150,58 +354,67 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         poll_rate: int = 30,
     ) -> None:
         """Create a task that'll poll every so many seconds."""
-
-        device_identifier = ObjectIdentifier(device_identifier)
-
-        if not self.bacnet_device_dict.get(f"device:{device_identifier[1]}"):
-            await asyncio.sleep(15)
-
-        if not self.bacnet_device_dict.get(f"device:{device_identifier[1]}"):
-            self.who_is(device_identifier[1], device_identifier[1])
-            await asyncio.sleep(45)
-
-        if not self.bacnet_device_dict.get(f"device:{device_identifier[1]}"):
-            LOGGER.warning(
-                f"{device_identifier} did not respond the requests. No polling possible."
+        try:
+            LOGGER.debug(
+                f"Creating poll task: {device_identifier} {object_list} {poll_rate}"
             )
-            return
 
-        objects_to_poll: list = []
+            device_identifier = ObjectIdentifier(device_identifier)
 
-        for object_identifier in object_list:
+            if not self.bacnet_device_dict.get(f"device:{device_identifier[1]}"):
+                await asyncio.sleep(15)
 
-            object_identifier = ObjectIdentifier(object_identifier)
+            if not self.bacnet_device_dict.get(f"device:{device_identifier[1]}"):
+                self.who_is(device_identifier[1], device_identifier[1])
+                await asyncio.sleep(45)
 
-            if not self.bacnet_device_dict[f"device:{device_identifier[1]}"].get(
-                f"{object_identifier[0]}:{object_identifier[1]}"
-            ):
-                try:
-                    response = await self.read_property(
-                        address=self.dev_to_addr(device_identifier),
-                        objid=object_identifier,
-                        prop=PropertyIdentifier("presentValue"),
-                    )
-                except ErrorRejectAbortNack as err:
-                    LOGGER.warning(
-                        f"{device_identifier} {object_identifier} failed to read: {err}"
-                    )
-                    LOGGER.info(
-                        f"{device_identifier} {object_identifier} won't get polled."
-                    )
-                    continue
+            if not self.bacnet_device_dict.get(f"device:{device_identifier[1]}"):
+                LOGGER.warning(
+                    f"{device_identifier} did not respond the requests. No polling possible."
+                )
+                return
 
-            objects_to_poll.append(object_identifier)
+            objects_to_poll: list = []
 
-        if not objects_to_poll:
-            LOGGER.warning(f"No objects to poll for {device_identifier}.")
-            return
+            for object_identifier in object_list:
 
-        task = asyncio.create_task(
-            self.poll_task(device_identifier, objects_to_poll, poll_rate),
-            name=f"{device_identifier[0]}:{device_identifier[1]}",
-        )
+                object_identifier = ObjectIdentifier(object_identifier)
 
-        self.poll_tasks.append(task)
+                if not self.bacnet_device_dict[f"device:{device_identifier[1]}"].get(
+                    f"{object_identifier[0]}:{object_identifier[1]}"
+                ):
+                    try:
+                        response = await self.read_property(
+                            address=self.dev_to_addr(device_identifier),
+                            objid=object_identifier,
+                            prop=PropertyIdentifier("presentValue"),
+                        )
+                    except ErrorRejectAbortNack as err:
+                        LOGGER.warning(
+                            f"{device_identifier} {object_identifier} failed to read: {err}"
+                        )
+                        LOGGER.info(
+                            f"{device_identifier} {object_identifier} won't get polled."
+                        )
+                        continue
+
+                objects_to_poll.append(object_identifier)
+
+            if not objects_to_poll:
+                LOGGER.warning(f"No objects to poll for {device_identifier}.")
+                return
+
+            task = asyncio.create_task(
+                self.poll_task(device_identifier, objects_to_poll, poll_rate),
+                name=f"{device_identifier[0]}:{device_identifier[1]}",
+            )
+
+            self.poll_tasks.append(task)
+
+        except Exception as err:
+            LOGGER.error(
+                f"Failed to create polling task {device_identifier}, {object_identifier}"
+            )
 
     def deep_update(
         self, mapping: Dict[KeyType, Any], *updating_mappings: Dict[KeyType, Any]
@@ -264,19 +477,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         del self.object_to_id[(obj, dev)]
         self.available_ids.add(obj_id)
 
-    async def refresh_subscriptions(self):
-        """Refreshing subscriptions automatically."""  # Maybe make a blacklist to exclude objects we dont want to subscribe to.
-        while True:
-            await asyncio.sleep(self.default_subscription_lifetime)
-            LOGGER.info("Refreshing subscriptions...")
-            for task in self.subscription_tasks:
-                await self.create_subscription_task(
-                    device_identifier=task[4],
-                    object_identifier=task[1],
-                    confirmed_notifications=task[2],
-                    lifetime=task[3],
-                )
-
     async def do_WhoIsRequest(self, apdu) -> None:
         """Handle incoming Who Is request."""
         LOGGER.info(f"Received Who Is Request from {apdu.pduSource}")
@@ -338,9 +538,15 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 else:
                     await self.read_objects(device_identifier=apdu.iAmDeviceIdentifier)
 
-                await self.subscribe_object_list(
-                    device_identifier=apdu.iAmDeviceIdentifier
-                )
+                if self.addon_device_config:
+                    await self.generate_specific_tasks(
+                        device_identifier=apdu.iAmDeviceIdentifier
+                    )
+                else:
+                    self.subscribe_object_list(
+                        device_identifier=apdu.iAmDeviceIdentifier
+                    )
+
             except Exception as err:
                 LOGGER.error(f"I Am Handler failed {apdu.iAmDeviceIdentifier}: {err}")
 
@@ -824,194 +1030,123 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         confirmed_notifications: bool,
         lifetime: int | None = None,
     ):
-        """Actually creating and sending a subscription."""
-
-        if isinstance(object_identifier, str):
-            object_identifier = ObjectIdentifier(object_identifier)
-
-        if isinstance(device_identifier, str):
-            device_identifier = ObjectIdentifier(device_identifier)
-
-        subscriber_process_identifier = self.assign_id(
-            dev=device_identifier, obj=object_identifier
-        )
-
-        subscribe_req = SubscribeCOVRequest(
-            subscriberProcessIdentifier=subscriber_process_identifier,
-            monitoredObjectIdentifier=object_identifier,
-            issueConfirmedNotifications=confirmed_notifications,
-            lifetime=lifetime,
-            destination=self.dev_to_addr(ObjectIdentifier(device_identifier)),
-        )
-
-        try:
-            response = await self.request(subscribe_req)
-            LOGGER.info(
-                f"Subscribing to: {device_identifier}, {object_identifier}... response: {response.apduType}"
-            )
-
-        except (ErrorRejectAbortNack, RejectException, AbortException) as error:
-            LOGGER.error(
-                f"Error while subscribing to {device_identifier}, {object_identifier}: {error}"
-            )
-            return
-        except (AbortPDU, ErrorPDU, RejectPDU) as error:
-            LOGGER.error(
-                f"Error while subscribing to {device_identifier}, {object_identifier}: {error}"
-            )
-            return
+        device_address = self.dev_to_addr(ObjectIdentifier(device_identifier))
+        if confirmed_notifications:
+            notifications = "confirmed"
         else:
-            if (
-                not [
-                    subscriber_process_identifier,
-                    object_identifier,
-                    confirmed_notifications,
-                    lifetime,
-                    ObjectIdentifier(device_identifier),
-                ]
-                in self.subscription_tasks
-            ):
-                self.subscription_tasks.append(
-                    [
-                        subscriber_process_identifier,
-                        object_identifier,
-                        confirmed_notifications,
-                        lifetime,
-                        ObjectIdentifier(device_identifier),
-                    ]
+            notifications = "unconfirmed"
+
+        LOGGER.debug(
+            f"Creating {notifications} subscription task {object_identifier} of {device_identifier}"
+        )
+
+        task = asyncio.create_task(
+            self.subscription_task(
+                device_address=device_address,
+                object_identifier=ObjectIdentifier(object_identifier),
+                confirmed_notification=confirmed_notifications,
+                lifetime=lifetime,
+            ),
+            name=f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]},{notifications}",
+        )
+        self.subscription_tasks.append(task)
+
+    async def subscription_task(
+        self,
+        device_address: Address,
+        object_identifier: ObjectIdentifier,
+        confirmed_notification: bool,
+        lifetime: int | None = None,
+    ) -> None:
+        """Task with context manager to handle CoV."""
+        try:
+
+            async with self.change_of_value(
+                address=device_address,
+                monitored_object_identifier=object_identifier,
+                subscriber_process_identifier=None,
+                issue_confirmed_notifications=confirmed_notification,
+                lifetime=lifetime,
+            ) as subscription:
+                # create a request to cancel the subscription
+                unsubscribe_cov_request = SubscribeCOVRequest(
+                    subscriberProcessIdentifier=subscription.subscriber_process_identifier,
+                    monitoredObjectIdentifier=subscription.monitored_object_identifier,
+                    destination=subscription.address,
                 )
 
-    async def unsubscribe_COV(
-        self, subscriber_process_identifier, device_identifier, object_identifier
-    ):
-        """Unsubscribe from an object."""
-        unsubscribe_cov_request = SubscribeCOVRequest(
-            subscriberProcessIdentifier=subscriber_process_identifier,
-            monitoredObjectIdentifier=object_identifier,
-        )
-        unsubscribe_cov_request.pduDestination = self.dev_to_addr(device_identifier)
-        # send the request, wait for the response
-        response = await self.request(unsubscribe_cov_request)
+                unsubscribe_cov_request.pduDestination = device_address
+                subscription.create_refresh_task()
+                device_identifier = self.addr_to_dev(addr=device_address)
+                task_name = f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]}"
+                LOGGER.debug(f"Created {task_name} subscription task successfully")
 
-        if not isinstance(response, SimpleAckPDU):
-            return False
+                while True:
+                    property_identifier, property_value = await subscription.get_value()
 
-        for subscription in self.subscription_tasks:
-            if (
-                subscription[0] == subscriber_process_identifier
-                and subscription[1] == object_identifier
-                and subscription[4] == device_identifier
-            ):
-                self.unassign_id(obj=subscription[1], dev=subscription[4])
-                self.subscription_tasks.remove(subscription)
-                return
+                    object_class = self.vendor_info.get_object_class(
+                        subscription.monitored_object_identifier[0]
+                    )
+                    property_type = object_class.get_property_type(property_identifier)
+
+                    if property_type is None or property_value is None:
+                        LOGGER.warning(
+                            f"NoneType property: {subscription.monitored_object_identifier} {property_identifier} {property_value}"
+                        )
+                        continue
+                    elif property_identifier not in object_properties_to_read_once:
+                        LOGGER.warning(
+                            f"Ignoring property: {subscription.monitored_object_identifier[0]} {property_identifier} {property_value}"
+                        )
+                        continue
+
+                    self.dict_updater(
+                        device_identifier=device_identifier,
+                        object_identifier=object_identifier,
+                        property_identifier=property_identifier,
+                        property_value=property_value,
+                    )
+
+        except (ErrorRejectAbortNack) as err:
+            LOGGER.error(
+                f"ErrorRejectAbortNack: {device_identifier}, {object_identifier}: {err}"
+            )
+
+            for task in self.subscription_tasks:
+                if task_name in task.get_name():
+                    index = self.subscription_tasks.index(task)
+                    self.subscription_tasks.pop(index)
+
+        except asyncio.CancelledError as err:
+            LOGGER.error(
+                f"Cancelling subscription task: {device_identifier}, {object_identifier}: {err}"
+            )
+
+            # send the request, wait for the response
+            response = await self.request(unsubscribe_cov_request)
+
+            for task in self.subscription_tasks:
+                if task_name in task.get_name():
+                    index = self.subscription_tasks.index(task)
+                    self.subscription_tasks.pop(index)
+
+        except Exception as err:
+            LOGGER.error(f"Error: {device_identifier}, {object_identifier}: {err}")
+
+            # send the request, wait for the response
+            response = await self.request(unsubscribe_cov_request)
+
+            for task in self.subscription_tasks:
+                if task_name in task.get_name():
+                    index = self.subscription_tasks.index(task)
+                    self.subscription_tasks.pop(index)
 
     async def end_subscription_tasks(self):
+        for task in self.subscription_tasks:
+            task.cancel()
         while self.subscription_tasks:
-            for subscription in self.subscription_tasks:
-                await self.unsubscribe_COV(
-                    subscriber_process_identifier=subscription[0],
-                    device_identifier=subscription[4],
-                    object_identifier=subscription[1],
-                )
-
-    async def do_ConfirmedCOVNotificationRequest(
-        self, apdu: ConfirmedCOVNotificationRequest
-    ) -> None:
-        # await super().do_ConfirmedCOVNotificationRequest(apdu)
-
-        try:
-            for value in apdu.listOfValues:
-                vendor_info = get_vendor_info(0)
-                object_class = vendor_info.get_object_class(
-                    apdu.monitoredObjectIdentifier[0]
-                )
-                property_type = object_class.get_property_type(value.propertyIdentifier)
-
-                if property_type is None or value.value is None:
-                    LOGGER.warning(
-                        f"NoneType property: {apdu.monitoredObjectIdentifier[0]} {value.propertyIdentifier} {value.value}"
-                    )
-                    continue
-                elif value.propertyIdentifier not in object_properties_to_read_once:
-                    LOGGER.warning(
-                        f"Ignoring property: {apdu.monitoredObjectIdentifier[0]} {value.propertyIdentifier} {value.value}"
-                    )
-                    continue
-                else:
-                    property_value = value.value.cast_out(property_type)
-
-                LOGGER.debug(
-                    f"COV: {apdu.initiatingDeviceIdentifier}, {apdu.monitoredObjectIdentifier}, {value.propertyIdentifier}, {property_value}"
-                )
-
-                # Before update, check if the device and object are actually in our dictionary!!!
-
-                # data for unsubscribing or checking if the subscription was there before a restart
-                # apdu.subscriberProcessIdentifier
-                # apdu.serviceChoice #confirmedCOVNotification == 1/ unconfirmedCOVNotification == 2
-                # apdu.monitoredObjectIdentifier
-                # apdu.initiatingDeviceIdentifier
-
-                self.dict_updater(
-                    device_identifier=apdu.initiatingDeviceIdentifier,
-                    object_identifier=apdu.monitoredObjectIdentifier,
-                    property_identifier=value.propertyIdentifier,
-                    property_value=property_value,
-                )
-
-        except Exception as err:
-            LOGGER.error(
-                f"CoV notification error: {apdu.monitoredObjectIdentifier[0]}: {apdu.listOfValues} + {err}"
-            )
-
-        # success
-        resp = SimpleAckPDU(context=apdu)
-
-        # return the result
-        await self.response(resp)
-
-    async def do_UnconfirmedCOVNotificationRequest(
-        self, apdu: UnconfirmedCOVNotificationRequest
-    ) -> None:
-        # await super().do_ConfirmedCOVNotificationRequest(apdu)
-
-        try:
-            for value in apdu.listOfValues:
-                vendor_info = get_vendor_info(0)
-                object_class = vendor_info.get_object_class(
-                    apdu.monitoredObjectIdentifier[0]
-                )
-                property_type = object_class.get_property_type(value.propertyIdentifier)
-
-                if property_type is None or value.value is None:
-                    LOGGER.warning(
-                        f"NoneType property: {apdu.monitoredObjectIdentifier[0]} {value.propertyIdentifier} {value.value}"
-                    )
-                    continue
-                elif value.propertyIdentifier not in object_properties_to_read_once:
-                    LOGGER.warning(
-                        f"Ignoring property: {apdu.monitoredObjectIdentifier[0]} {value.propertyIdentifier} {value.value}"
-                    )
-                    continue
-                else:
-                    property_value = value.value.cast_out(property_type)
-
-                LOGGER.debug(
-                    f"COV: {apdu.initiatingDeviceIdentifier}, {apdu.monitoredObjectIdentifier}, {value.propertyIdentifier}, {property_value}"
-                )
-
-                self.dict_updater(
-                    device_identifier=apdu.initiatingDeviceIdentifier,
-                    object_identifier=apdu.monitoredObjectIdentifier,
-                    property_identifier=value.propertyIdentifier,
-                    property_value=property_value,
-                )
-
-        except Exception as err:
-            LOGGER.error(
-                f"CoV notification error: {apdu.monitoredObjectIdentifier[0]}: {apdu.listOfValues} + {err}"
-            )
+            await asyncio.sleep(2)
+        LOGGER.info("Cancelled all subscriptions")
 
     async def do_ReadPropertyRequest(self, apdu: ReadPropertyRequest) -> None:
         try:
@@ -1021,6 +1156,76 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             LOGGER.warning(
                 f"{self.addr_to_dev(apdu.pduSource)} tried to read {apdu.objectIdentifier} {apdu.propertyIdentifier}: {err}"
             )
+
+    @bacpypes_debugging
+    async def read_property_to_result_element(
+        obj, propertyIdentifier, propertyArrayIndex=None
+    ):
+        """Read the specified property of the object, with the optional array index,
+        and cast the result into an Any object."""
+        if _debug:
+            read_property_to_result_element._debug(
+                "read_property_to_result_element %s %r %r",
+                obj,
+                propertyIdentifier,
+                propertyArrayIndex,
+            )
+
+        # save the result in the property value
+        read_result = ReadAccessResultElementChoice()
+
+        if not obj:
+            read_result.propertyAccessError = ErrorType(
+                errorClass="object", errorCode="unknownObject"
+            )
+        else:
+            try:
+                read_result.propertyValue = await read_property_to_any(
+                    obj, propertyIdentifier, propertyArrayIndex
+                )
+                if _debug:
+                    read_property_to_result_element._debug("    - success")
+            except ExecutionError as error:
+                if _debug:
+                    read_property_to_result_element._debug("    - error: %r", error)
+                read_result.propertyAccessError = ErrorType(
+                    errorClass=error.errorClass, errorCode=error.errorCode
+                )
+            except TypeError as error:
+                read_result.propertyAccessError = ErrorType(
+                    errorClass=ErrorClass.property, errorCode=ErrorCode.unknownProperty
+                )
+
+        # make an element for this value
+        read_access_result_element = ReadAccessResultElement(
+            propertyIdentifier=propertyIdentifier,
+            propertyArrayIndex=propertyArrayIndex,
+            readResult=read_result,
+        )
+        if _debug:
+            read_property_to_result_element._debug(
+                "    - read_access_result_element: %r", read_access_result_element
+            )
+
+        # fini
+        return read_access_result_element
+
+    async def do_ReadPropertyMultipleRequest(
+        self, apdu: ReadPropertyMultipleRequest
+    ) -> None:
+        try:
+            await super().do_ReadPropertyMultipleRequest(apdu)
+        except (Exception, AttributeError) as err:
+            for read_access_spec in apdu.listOfReadAccessSpecs:
+                property_list = [
+                    property_id.propertyIdentifier
+                    for property_id in read_access_spec.listOfPropertyReferences
+                ]
+
+                LOGGER.warning(
+                    f"{self.addr_to_dev(apdu.pduSource)} failed to read {read_access_spec.objectIdentifier} {property_list}: {err}"
+                )
+            await super().do_ReadPropertyMultipleRequest(apdu)
 
     async def do_WritePropertyRequest(self, apdu: WritePropertyRequest):
         try:
@@ -1395,7 +1600,7 @@ class ObjectManager:
             units = (
                 self.determine_units(entity["attributes"].get("unit_of_measurement"))
                 if entity["attributes"].get("unit_of_measurement") is not None
-                else None
+                else EngineeringUnits("noUnits")
             )
 
             pres_val = entity.get("state")
@@ -1433,7 +1638,7 @@ class ObjectManager:
         """EngineeringUnits for objects from Home Assistant units"""
 
         if not unit:
-            return None
+            return EngineeringUnits("noUnits")
 
         if "C" in unit and len(unit) == 2:
             bacnetUnits = EngineeringUnits("degreesCelsius")
@@ -1461,8 +1666,14 @@ class ObjectManager:
             bacnetUnits = EngineeringUnits("wattsPerSquareMeter")
         elif unit == "lx":
             bacnetUnits = EngineeringUnits("luxes")
+        elif unit == "V":
+            bacnetUnits = EngineeringUnits("volts")
+        elif unit == "mV":
+            bacnetUnits = EngineeringUnits("millivolts")
+        elif unit == "hPa":
+            bacnetUnits = EngineeringUnits("hectopascals")
         else:
-            bacnetUnits = None
+            bacnetUnits = EngineeringUnits("noUnits")
         return bacnetUnits
 
     def update_object(self, object_type, index, entity):

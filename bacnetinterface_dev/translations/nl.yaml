@@ -32,24 +32,12 @@ configuration:
   maxSegmentsAccepted:
     name: Maximum Segmenten Geaccepted
     description: De maximale hoeveelheid segmenten er in een BACnet bericht mogen zitten.
-  updateInterval:
-    name: Update Interval
-    description: Tijd tussen periodieke updates in seconden.
-  subscriptions:
-    name: CoV abonnementen
-    description: Welke object-typen er op geabonneerd moeten worden.
   entity_list:
     name: Entities naar BACnet objecten
     description: Home Assistant entity IDs die als BACnet objecten moeten gaan dienen. Lees de documentatie om te weten welke entity typen ondersteund worden en hoe de object identifiers bepaald worden.
-  fast_poll_rate:
-    name: Snelheid van het pollen
-    description: De snelheid waar objecten uit de snel pollen lijst mee uitgelezen moeten worden.
-  fast_poll:
-    name: Snel pollen objectenlijst
-    description: Een lijst van apparaten met objecten die snel uitgelezen moeten worden op basis van de snelheid van het pollen optie.
-  cov_whitelist:
-    name: Change of Value whitelist
-    description: Een lijst van apparaten met objecten waarop geabonneerd moet worden met een CoV abonnement. Het gebruik van de whitelist zorgt ervoor dat er nergens anders op geabonneerd wordt.
+  devices_setup:
+    name: Apparaat configuratie
+    description: Configureer apparaten die appart behandeld moeten worden. Zie documentatie over hoe deze optie gebruikt moet worden.
 network:
   47808/udp: BACnet poort.
   80/tcp: Poort waarmee de integration moet verbinden. Wanneer je deze poort leeg laat, moet de integration met poort 8099 verbinden.

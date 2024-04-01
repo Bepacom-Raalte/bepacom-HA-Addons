@@ -129,7 +129,7 @@ app = FastAPI(
     lifespan=lifespan,
     title="Bepacom BACnet/IP Interface API",
     description=description,
-    version="1.4.1",
+    version="1.4.0",
     contact={
         "name": "Bepacom B.V. Contact",
         "url": "https://www.bepacom.nl/contact/",
@@ -490,6 +490,7 @@ async def subscribe_objectid(
 async def unsubscribe_objectid(deviceid: str, objectid: str):
     """Subscribe to an object of a device."""
     try:
+        LOGGER.debug(f"{deviceid}, {objectid}")
         deviceid = ObjectIdentifier(deviceid)
         objectid = ObjectIdentifier(objectid)
 

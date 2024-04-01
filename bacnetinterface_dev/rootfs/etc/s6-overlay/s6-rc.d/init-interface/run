@@ -17,7 +17,6 @@ declare foreignBBMD
 declare foreignTTL
 declare maxSegmentsAccepted
 declare defaultPriority
-declare updateInterval
 
 # Functions
 
@@ -93,12 +92,37 @@ else
 fi
 
 defaultPriority="defaultPriority: $(bashio::config 'defaultPriority')"
-updateInterval="updateInterval: $(bashio::config 'updateInterval')"
 
 # Generate INI file
 
-printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentation" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" "$loglevel" "$defaultPriority" "$updateInterval" > /usr/bin/BACpypes.ini
+printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentation" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" "$loglevel" "$defaultPriority" > /usr/bin/BACpypes.ini
 cat /usr/bin/BACpypes.ini
 
 printf "$(bashio::addon.ingress_url)" > /usr/bin/ingress.ini
 printf "${__BASHIO_SUPERVISOR_TOKEN}" > /usr/bin/auth_token.ini
+
+# Check for non existing config options
+
+if bashio::config.exists 'subscriptions'; then
+    bashio::addon.option 'subscriptions'
+fi 
+
+if bashio::config.exists 'updateInterval'; then
+    bashio::addon.option 'updateInterval'
+fi 
+
+if bashio::config.exists 'fast_poll_rate'; then
+    bashio::addon.option 'fast_poll_rate'
+fi 
+
+if bashio::config.exists 'fast_poll'; then
+    bashio::addon.option 'fast_poll'
+fi 
+
+if bashio::config.exists 'cov_whitelist'; then
+    bashio::addon.option 'cov_whitelist'
+fi 
+
+if bashio::config.exists 'export_logs'; then
+    bashio::addon.option 'export_logs'
+fi 
