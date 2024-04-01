@@ -1036,6 +1036,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         else:
             notifications = "unconfirmed"
 
+        object_identifier = ObjectIdentifier(object_identifier)
+
         LOGGER.debug(
             f"Creating {notifications} subscription task {object_identifier} of {device_identifier}"
         )
@@ -1156,59 +1158,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             LOGGER.warning(
                 f"{self.addr_to_dev(apdu.pduSource)} tried to read {apdu.objectIdentifier} {apdu.propertyIdentifier}: {err}"
             )
-
-    @bacpypes_debugging
-    async def read_property_to_result_element(
-        obj, propertyIdentifier, propertyArrayIndex=None
-    ):
-        """Read the specified property of the object, with the optional array index,
-        and cast the result into an Any object."""
-        if _debug:
-            read_property_to_result_element._debug(
-                "read_property_to_result_element %s %r %r",
-                obj,
-                propertyIdentifier,
-                propertyArrayIndex,
-            )
-
-        # save the result in the property value
-        read_result = ReadAccessResultElementChoice()
-
-        if not obj:
-            read_result.propertyAccessError = ErrorType(
-                errorClass="object", errorCode="unknownObject"
-            )
-        else:
-            try:
-                read_result.propertyValue = await read_property_to_any(
-                    obj, propertyIdentifier, propertyArrayIndex
-                )
-                if _debug:
-                    read_property_to_result_element._debug("    - success")
-            except ExecutionError as error:
-                if _debug:
-                    read_property_to_result_element._debug("    - error: %r", error)
-                read_result.propertyAccessError = ErrorType(
-                    errorClass=error.errorClass, errorCode=error.errorCode
-                )
-            except TypeError as error:
-                read_result.propertyAccessError = ErrorType(
-                    errorClass=ErrorClass.property, errorCode=ErrorCode.unknownProperty
-                )
-
-        # make an element for this value
-        read_access_result_element = ReadAccessResultElement(
-            propertyIdentifier=propertyIdentifier,
-            propertyArrayIndex=propertyArrayIndex,
-            readResult=read_result,
-        )
-        if _debug:
-            read_property_to_result_element._debug(
-                "    - read_access_result_element: %r", read_access_result_element
-            )
-
-        # fini
-        return read_access_result_element
 
     async def do_ReadPropertyMultipleRequest(
         self, apdu: ReadPropertyMultipleRequest

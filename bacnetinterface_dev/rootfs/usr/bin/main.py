@@ -37,31 +37,19 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
     """Task to handle periodic updates to the BACnet dictionary"""
     try:
         while True:
-            try:
-                await asyncio.wait_for(event.wait(), timeout=interval)
-                for device_id in app.bacnet_device_dict:
-                    services_supported = app.bacnet_device_dict[device_id][
-                        device_id
-                    ].get("protocolServicesSupported", ServicesSupported())
-                    if services_supported["read-property-multiple"] == 1:
-                        await app.read_multiple_objects_periodically(
-                            device_identifier=device_id
-                        )
-                    else:
-                        await app.read_objects_periodically(device_identifier=device_id)
-                event.clear()
 
-            except asyncio.TimeoutError:
-                for device_id in app.bacnet_device_dict:
-                    services_supported = app.bacnet_device_dict[device_id][
-                        device_id
-                    ].get("protocolServicesSupported", ServicesSupported())
-                    if services_supported["read-property-multiple"] == 1:
-                        await app.read_multiple_objects_periodically(
-                            device_identifier=device_id
-                        )
-                    else:
-                        await app.read_objects_periodically(device_identifier=device_id)
+            await event.wait()
+            for device_id in app.bacnet_device_dict:
+                services_supported = app.bacnet_device_dict[device_id][device_id].get(
+                    "protocolServicesSupported", ServicesSupported()
+                )
+                if services_supported["read-property-multiple"] == 1:
+                    await app.read_multiple_objects_periodically(
+                        device_identifier=device_id
+                    )
+                else:
+                    await app.read_objects_periodically(device_identifier=device_id)
+            event.clear()
 
     except asyncio.CancelledError as err:
         LOGGER.warning(f"Updater task cancelled: {err}")
@@ -278,7 +266,7 @@ async def main():
 
     loop = asyncio.get_event_loop()
 
-    # loop.set_exception_handler(exception_handler)
+    loop.set_exception_handler(exception_handler)
 
     (
         default_write_prio,
@@ -361,11 +349,6 @@ async def main():
     app.asap.segmentationSupported = Segmentation(segmentation_supported)
 
     app.asap.maxSegmentsAccepted = int(max_segments)
-
-    # for entry in options["fast_poll"]:
-    #    asyncio.create_task(app.create_poll_task(device_identifier=entry.get("deviceName"), object_list=entry.get("objects"), poll_rate=options["fast_poll_rate"]))
-
-    # Geef config mee aan app om te verwerken tijdens init options["devices_setup"] of verwerk in een functie hier.
 
     app.subscription_list = subscribable_objects
 

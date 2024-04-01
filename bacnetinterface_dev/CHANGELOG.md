@@ -1,6 +1,6 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.4.1b2
+# 1.4.1b3
 01/04/2024
 
 Rather experimental, need feedback if there are any issues.
@@ -13,7 +13,6 @@ Rather experimental, need feedback if there are any issues.
 
 ## Fixed
 - If an entity has units that can't be translated, it'll result in the noUnit property value. [#47](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/47)
-- Inherited BACpypes3 function to fix non-existant property being read along with array index causing a crash. [#47](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/47)
 
 ## Changed
 - Reverted back to old way of subscribing. Please report any issues encountered.
