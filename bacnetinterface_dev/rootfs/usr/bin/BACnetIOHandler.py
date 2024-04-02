@@ -101,16 +101,16 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         config = self.addon_device_config[index]
 
-        if config.get("quick_poll_list"):
+        if config.get("quick_poll_list", []):
             asyncio.create_task(
                 self.create_poll_task(
                     device_identifier=device_identifier,
                     object_list=config.get("quick_poll_list"),
-                    poll_rate=config.get("quick_poll_rate"),
+                    poll_rate=config.get("quick_poll_rate", 30),
                 )
             )
 
-        if "all" in config.get("slow_poll_list"):
+        if "all" in config.get("slow_poll_list", []):
             object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
                 f"device:{device_identifier[1]}"
             ].get("objectList")
@@ -118,8 +118,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             if device_identifier in object_list:
                 object_list.remove(device_identifier)
 
-        elif config.get("slow_poll_list"):
-            object_list = config.get("slow_poll_list")
+        elif config.get("slow_poll_list", []):
+            object_list = config.get("slow_poll_list", [])
         else:
             object_list = []
 
@@ -128,11 +128,11 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 self.create_poll_task(
                     device_identifier=device_identifier,
                     object_list=object_list,
-                    poll_rate=config.get("slow_poll_rate"),
+                    poll_rate=config.get("slow_poll_rate", 600),
                 )
             )
 
-        if "all" in config.get("CoV_list"):
+        if "all" in config.get("CoV_list", []):
             object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
                 f"device:{device_identifier[1]}"
             ].get("objectList")
@@ -152,11 +152,11 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         device_identifier=device_identifier,
                         object_identifier=object_identifier,
                         confirmed_notifications=True,
-                        lifetime=config.get("CoV_lifetime"),
+                        lifetime=config.get("CoV_lifetime", 600),
                     )
                 )
 
-        elif config.get("CoV_list"):
+        elif config.get("CoV_list", []):
             for object_identifier in config.get("CoV_list"):
                 asyncio.create_task(
                     self.create_subscription_task(
@@ -186,16 +186,16 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         config = self.addon_device_config[index]
 
-        if config.get("quick_poll_list"):
+        if config.get("quick_poll_list", []):
             asyncio.create_task(
                 self.create_poll_task(
                     device_identifier=device_identifier,
                     object_list=config.get("quick_poll_list"),
-                    poll_rate=config.get("quick_poll_rate"),
+                    poll_rate=config.get("quick_poll_rate", 30),
                 )
             )
 
-        if "all" in config.get("slow_poll_list"):
+        if "all" in config.get("slow_poll_list", []):
             object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
                 f"device:{device_identifier[1]}"
             ].get("objectList")
@@ -203,7 +203,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             if device_identifier in object_list:
                 object_list.remove(device_identifier)
 
-        elif config.get("slow_poll_list"):
+        elif config.get("slow_poll_list", []):
             object_list = config.get("slow_poll_list")
         else:
             object_list = []
@@ -213,11 +213,11 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 self.create_poll_task(
                     device_identifier=device_identifier,
                     object_list=object_list,
-                    poll_rate=config.get("slow_poll_rate"),
+                    poll_rate=config.get("slow_poll_rate", 600),
                 )
             )
 
-        if "all" in config.get("CoV_list"):
+        if "all" in config.get("CoV_list", []):
             object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
                 f"device:{device_identifier[1]}"
             ].get("objectList")
@@ -236,18 +236,18 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         device_identifier=device_identifier,
                         object_identifier=object_identifier,
                         confirmed_notifications=True,
-                        lifetime=config.get("CoV_lifetime"),
+                        lifetime=config.get("CoV_lifetime", 600),
                     )
                 )
 
-        elif config.get("CoV_list"):
+        elif config.get("CoV_list", []):
             for object_identifier in config.get("CoV_list"):
                 asyncio.create_task(
                     self.create_subscription_task(
                         device_identifier=device_identifier,
                         object_identifier=object_identifier,
                         confirmed_notifications=True,
-                        lifetime=config.get("CoV_lifetime"),
+                        lifetime=config.get("CoV_lifetime", 600),
                     )
                 )
 
@@ -334,7 +334,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                                 if response is not ErrorType:
                                     self.dict_updater(
                                         device_identifier=device_identifier,
-                                        object_identifier=device_identifier,
+                                        object_identifier=object_identifier,
                                         property_identifier=property_id,
                                         property_value=response,
                                     )
