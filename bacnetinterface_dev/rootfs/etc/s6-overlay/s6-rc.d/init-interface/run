@@ -123,6 +123,6 @@ if bashio::config.exists 'cov_whitelist'; then
     bashio::addon.option 'cov_whitelist'
 fi 
 
-if bashio::config.exists 'export_logs'; then
-    bashio::addon.option 'export_logs'
+if bashio::config.exists 'export_log'; then
+    bashio::addon.option 'export_log'
 fi 

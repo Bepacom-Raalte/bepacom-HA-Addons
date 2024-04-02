@@ -51,6 +51,7 @@ schema:
   loglevel: list(DEBUG|INFO|WARNING|ERROR|CRITICAL|)
   devices_setup:
     - deviceID: str? 
+      CoV_lifetime: int(60,28800)?
       CoV_list:
         - str? 
       quick_poll_rate: int(3,30)?
