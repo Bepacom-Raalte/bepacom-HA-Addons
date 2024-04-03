@@ -1,7 +1,7 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.4.1b4
-02/04/2024
+# 1.4.1b5
+03/04/2024
 
 Rather experimental, need feedback if there are any issues.
 
@@ -13,6 +13,9 @@ Rather experimental, need feedback if there are any issues.
 
 ## Fixed
 - If an entity has units that can't be translated, it'll result in the noUnit property value. [#47](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/47)
+- Fixed infinite loop causing BACpypes3 to get stuck when sending too many subscribe requests.(since v1.4.1b4)
+- Fixed sending error reply too soon when receiving values before receiving confirmation of subscription. (since v1.4.1b4)
+- Fixed certain exceptions getting exceptions.
 
 ## Changed
 - Reverted back to old way of subscribing. Please report any issues encountered.

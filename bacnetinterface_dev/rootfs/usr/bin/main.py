@@ -37,7 +37,6 @@ async def updater_task(app: Application, interval: int, event: asyncio.Event) ->
     """Task to handle periodic updates to the BACnet dictionary"""
     try:
         while True:
-
             await event.wait()
             for device_id in app.bacnet_device_dict:
                 services_supported = app.bacnet_device_dict[device_id][device_id].get(
@@ -337,7 +336,7 @@ async def main():
         foreign_ip=foreign_ip,
         ttl=int(foreign_ttl),
         update_event=webAPI.events.val_updated_event,
-        addon_device_config=options["devices_setup"],
+        addon_device_config=options.get("devices_setup"),
     )
 
     object_manager = ObjectManager(

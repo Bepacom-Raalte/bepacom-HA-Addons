@@ -34,6 +34,7 @@ from const import (LOGGER, device_properties_to_read,
                    subscribable_objects)
 
 KeyType = TypeVar("KeyType")
+_debug = 0
 
 
 class BACnetIOHandler(NormalApplication, ForeignApplication):
@@ -102,12 +103,10 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         config = self.addon_device_config[index]
 
         if config.get("quick_poll_list", []):
-            asyncio.create_task(
-                self.create_poll_task(
-                    device_identifier=device_identifier,
-                    object_list=config.get("quick_poll_list"),
-                    poll_rate=config.get("quick_poll_rate", 30),
-                )
+            await self.create_poll_task(
+                device_identifier=device_identifier,
+                object_list=config.get("quick_poll_list"),
+                poll_rate=config.get("quick_poll_rate", 30),
             )
 
         if "all" in config.get("slow_poll_list", []):
@@ -124,12 +123,10 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             object_list = []
 
         if object_list:
-            asyncio.create_task(
-                self.create_poll_task(
-                    device_identifier=device_identifier,
-                    object_list=object_list,
-                    poll_rate=config.get("slow_poll_rate", 600),
-                )
+            await self.create_poll_task(
+                device_identifier=device_identifier,
+                object_list=object_list,
+                poll_rate=config.get("slow_poll_rate", 600),
             )
 
         if "all" in config.get("CoV_list", []):
@@ -147,30 +144,27 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             ]
 
             for object_identifier in object_list:
-                asyncio.create_task(
-                    self.create_subscription_task(
-                        device_identifier=device_identifier,
-                        object_identifier=object_identifier,
-                        confirmed_notifications=True,
-                        lifetime=config.get("CoV_lifetime", 600),
-                    )
+                await self.create_subscription_task(
+                    device_identifier=device_identifier,
+                    object_identifier=object_identifier,
+                    confirmed_notifications=True,
+                    lifetime=config.get("CoV_lifetime", 600),
                 )
+                await asyncio.sleep(0)
 
         elif config.get("CoV_list", []):
             for object_identifier in config.get("CoV_list"):
-                asyncio.create_task(
-                    self.create_subscription_task(
-                        device_identifier=device_identifier,
-                        object_identifier=object_identifier,
-                        confirmed_notifications=True,
-                        lifetime=config.get("CoV_lifetime"),
-                    )
+                await self.create_subscription_task(
+                    device_identifier=device_identifier,
+                    object_identifier=object_identifier,
+                    confirmed_notifications=True,
+                    lifetime=config.get("CoV_lifetime"),
                 )
+                await asyncio.sleep(0)
 
         return
 
     async def generate_generic_tasks(self, device_identifier: ObjectIdentifier) -> None:
-
         specific_config = [
             config
             for config in self.addon_device_config
@@ -187,12 +181,10 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         config = self.addon_device_config[index]
 
         if config.get("quick_poll_list", []):
-            asyncio.create_task(
-                self.create_poll_task(
-                    device_identifier=device_identifier,
-                    object_list=config.get("quick_poll_list"),
-                    poll_rate=config.get("quick_poll_rate", 30),
-                )
+            await self.create_poll_task(
+                device_identifier=device_identifier,
+                object_list=config.get("quick_poll_list"),
+                poll_rate=config.get("quick_poll_rate", 30),
             )
 
         if "all" in config.get("slow_poll_list", []):
@@ -209,12 +201,10 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             object_list = []
 
         if object_list:
-            asyncio.create_task(
-                self.create_poll_task(
-                    device_identifier=device_identifier,
-                    object_list=object_list,
-                    poll_rate=config.get("slow_poll_rate", 600),
-                )
+            await self.create_poll_task(
+                device_identifier=device_identifier,
+                object_list=object_list,
+                poll_rate=config.get("slow_poll_rate", 600),
             )
 
         if "all" in config.get("CoV_list", []):
@@ -231,25 +221,23 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             ]
 
             for object_identifier in object_list:
-                asyncio.create_task(
-                    self.create_subscription_task(
-                        device_identifier=device_identifier,
-                        object_identifier=object_identifier,
-                        confirmed_notifications=True,
-                        lifetime=config.get("CoV_lifetime", 600),
-                    )
+                await self.create_subscription_task(
+                    device_identifier=device_identifier,
+                    object_identifier=object_identifier,
+                    confirmed_notifications=True,
+                    lifetime=config.get("CoV_lifetime", 600),
                 )
+                await asyncio.sleep(0)
 
         elif config.get("CoV_list", []):
             for object_identifier in config.get("CoV_list"):
-                asyncio.create_task(
-                    self.create_subscription_task(
-                        device_identifier=device_identifier,
-                        object_identifier=object_identifier,
-                        confirmed_notifications=True,
-                        lifetime=config.get("CoV_lifetime", 600),
-                    )
+                await self.create_subscription_task(
+                    device_identifier=device_identifier,
+                    object_identifier=object_identifier,
+                    confirmed_notifications=True,
+                    lifetime=config.get("CoV_lifetime", 600),
                 )
+                await asyncio.sleep(0)
 
         return
 
@@ -259,7 +247,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         object_list: list[ObjectIdentifier],
         poll_rate: int = 30,
     ) -> None:
-
         LOGGER.debug(f"TASK: {device_identifier} {object_list} {device_identifier}")
 
         try:
@@ -270,9 +257,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             )
 
             while True:
-
                 for object_identifier in object_list:
-
                     object_class = self.vendor_info.get_object_class(
                         object_identifier[0]
                     )
@@ -313,7 +298,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                                     )
                     else:
                         for property_id in object_properties_to_read_periodically:
-
                             property_class = object_class.get_property_type(property_id)
 
                             if property_class is None:
@@ -377,7 +361,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             objects_to_poll: list = []
 
             for object_identifier in object_list:
-
                 object_identifier = ObjectIdentifier(object_identifier)
 
                 if not self.bacnet_device_dict[f"device:{device_identifier[1]}"].get(
@@ -543,7 +526,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         device_identifier=apdu.iAmDeviceIdentifier
                     )
                 else:
-                    self.subscribe_object_list(
+                    await self.subscribe_object_list(
                         device_identifier=apdu.iAmDeviceIdentifier
                     )
 
@@ -582,7 +565,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             LOGGER.debug(
                 f"AnyAtomic property value: {device_identifier}, {object_identifier}, {property_identifier} {property_value}"
             )
-            return
+            property_value = property_value.get_value()
 
         if isinstance(property_value, list):
             prop_list: list = []
@@ -1022,6 +1005,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     confirmed_notifications=True,
                     lifetime=self.default_subscription_lifetime,
                 )
+                await asyncio.sleep(0)
 
     async def create_subscription_task(
         self,
@@ -1051,6 +1035,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             ),
             name=f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]},{notifications}",
         )
+        await asyncio.sleep(0.1)
         self.subscription_tasks.append(task)
 
     async def subscription_task(
@@ -1061,8 +1046,12 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         lifetime: int | None = None,
     ) -> None:
         """Task with context manager to handle CoV."""
-        try:
 
+        device_identifier = self.addr_to_dev(addr=device_address)
+
+        task_name = f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]}"
+
+        try:
             async with self.change_of_value(
                 address=device_address,
                 monitored_object_identifier=object_identifier,
@@ -1078,9 +1067,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 )
 
                 unsubscribe_cov_request.pduDestination = device_address
-                subscription.create_refresh_task()
-                device_identifier = self.addr_to_dev(addr=device_address)
-                task_name = f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]}"
+
                 LOGGER.debug(f"Created {task_name} subscription task successfully")
 
                 while True:
@@ -1102,6 +1089,10 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         )
                         continue
 
+                    LOGGER.debug(
+                        f"Confirmed CoV: {device_identifier} {object_identifier} {property_identifier} {property_value}"
+                    )
+
                     self.dict_updater(
                         device_identifier=device_identifier,
                         object_identifier=object_identifier,
@@ -1109,9 +1100,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         property_value=property_value,
                     )
 
-        except (ErrorRejectAbortNack) as err:
+        except ErrorRejectAbortNack as err:
             LOGGER.error(
-                f"ErrorRejectAbortNack: {device_identifier}, {object_identifier}: {err}"
+                f"ErrorRejectAbortNack: {self.addr_to_dev(device_address)}, {object_identifier}: {err}"
             )
 
             for task in self.subscription_tasks:
@@ -1149,6 +1140,41 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         while self.subscription_tasks:
             await asyncio.sleep(2)
         LOGGER.info("Cancelled all subscriptions")
+
+    async def do_ConfirmedCOVNotificationRequest(
+        self, apdu: ConfirmedCOVNotificationRequest
+    ) -> None:
+        if _debug:
+            ChangeOfValueServices._debug("do_ConfirmedCOVNotificationRequest %r", apdu)
+
+        address = apdu.pduSource
+        subscriber_process_identifier = apdu.subscriberProcessIdentifier
+
+        # find the context
+        scm = self._cov_contexts.get((address, subscriber_process_identifier), None)
+
+        if not scm:
+            await asyncio.sleep(0.1)
+            scm = self._cov_contexts.get((address, subscriber_process_identifier), None)
+
+        if (not scm) or (
+            apdu.monitoredObjectIdentifier != scm.monitored_object_identifier
+        ):
+            if _debug:
+                ChangeOfValueServices._debug("    - scm not found")
+            raise ServicesError(errorCode="unknownSubscription")
+
+        # queue the property values
+        for property_value in apdu.listOfValues:
+            await scm.put(property_value)
+
+        # success
+        resp = SimpleAckPDU(context=apdu)
+        if _debug:
+            ChangeOfValueServices._debug("    - resp: %r", resp)
+
+        # return the result
+        await self.response(resp)
 
     async def do_ReadPropertyRequest(self, apdu: ReadPropertyRequest) -> None:
         try:
