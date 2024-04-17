@@ -1100,6 +1100,15 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         property_value=property_value,
                     )
 
+            # subscription failed?
+            LOGGER.error(
+                f"Subscription failed??: {self.addr_to_dev(device_address)}, {object_identifier}: {err}"
+            )
+            for task in self.subscription_tasks:
+                if task_name in task.get_name():
+                    index = self.subscription_tasks.index(task)
+                    self.subscription_tasks.pop(index)
+
         except ErrorRejectAbortNack as err:
             LOGGER.error(
                 f"ErrorRejectAbortNack: {self.addr_to_dev(device_address)}, {object_identifier}: {err}"
@@ -1647,6 +1656,24 @@ class ObjectManager:
             bacnetUnits = EngineeringUnits("millivolts")
         elif unit == "hPa":
             bacnetUnits = EngineeringUnits("hectopascals")
+        elif unit == "\u00b5\u0067\u002f\u006d\u00b3":
+            bacnetUnits = EngineeringUnits("microgramsPerCubicMeter")
+        elif unit == "\u006d\u00b3":
+            bacnetUnits = EngineeringUnits("cubicMeters")
+        elif unit == "s":
+            bacnetUnits = EngineeringUnits("seconds")
+        elif unit == "min":
+            bacnetUnits = EngineeringUnits("minutes")
+        elif unit == "h":
+            bacnetUnits = EngineeringUnits("hours")
+        elif unit == "d":
+            bacnetUnits = EngineeringUnits("days")        
+        elif unit == "w":
+            bacnetUnits = EngineeringUnits("weeks")
+        elif unit == "m":
+            bacnetUnits = EngineeringUnits("months")
+        elif unit == "y":
+            bacnetUnits = EngineeringUnits("years")
         else:
             bacnetUnits = EngineeringUnits("noUnits")
         return bacnetUnits
