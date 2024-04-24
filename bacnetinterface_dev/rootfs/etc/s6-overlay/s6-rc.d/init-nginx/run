@@ -22,6 +22,7 @@ done
 bashio::log.info "Allowed addresses for NGINX: ${ip_array[@]}"
 
 bashio::var.json \
+    accessible "$(bashio::config 'api_accessible')" \
     port "$(bashio::addon.port 80)" \
     ip_array "^$(printf '%s\n' "${ip_array[@]}" | jq -R . | jq -s .)" \
     | tempio \

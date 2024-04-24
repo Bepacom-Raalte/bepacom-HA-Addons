@@ -1153,8 +1153,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
     async def do_ConfirmedCOVNotificationRequest(
         self, apdu: ConfirmedCOVNotificationRequest
     ) -> None:
-        if _debug:
-            ChangeOfValueServices._debug("do_ConfirmedCOVNotificationRequest %r", apdu)
 
         address = apdu.pduSource
         subscriber_process_identifier = apdu.subscriberProcessIdentifier
@@ -1169,8 +1167,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         if (not scm) or (
             apdu.monitoredObjectIdentifier != scm.monitored_object_identifier
         ):
-            if _debug:
-                ChangeOfValueServices._debug("    - scm not found")
             raise ServicesError(errorCode="unknownSubscription")
 
         # queue the property values
@@ -1179,8 +1175,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         # success
         resp = SimpleAckPDU(context=apdu)
-        if _debug:
-            ChangeOfValueServices._debug("    - resp: %r", resp)
 
         # return the result
         await self.response(resp)

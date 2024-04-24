@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: Bepacom BACnet/IP Interface Development Version
-version: "1.4.1b6"
+version: "1.4.1b7"
 slug: bacnetinterface_dev
 description: Bepacom BACnet/IP interface for the Bepacom EcoPanel. Allows BACnet/IP devices to be available to Home Assistant through an API
 url: "https://github.com/Bepacom-Raalte/bepacom-HA-Addons/tree/main/bacnetinterface"
@@ -41,6 +41,7 @@ options:
       slow_poll_list:
         - all
   entity_list: []
+  api_accessible: false
   loglevel: WARNING
   segmentation: segmentedBoth
 schema:
@@ -62,6 +63,7 @@ schema:
         - str?
   entity_list:
     - str?
+  api_accessible: bool?
   foreignBBMD: str?
   foreignTTL: str?
   vendorID: int?

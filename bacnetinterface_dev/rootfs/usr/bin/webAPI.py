@@ -158,6 +158,8 @@ async def webapp(request: Request):
         for file in EDE_files:
             dict_to_send = deep_update(dict_to_send, file)
 
+    dict_to_send = jsonable_encoder(dict_to_send)
+    
     return templates.TemplateResponse(
         "index.html", {"request": request, "bacnet_devices": dict_to_send}
     )
@@ -510,6 +512,8 @@ async def unsubscribe_objectid(deviceid: str, objectid: str):
 async def websocket_endpoint(websocket: WebSocket):
     """This function will be called whenever a new client connects to the server."""
     await websocket.accept()
+    
+    LOGGER.debug(f"Accepted websocket: {websocket.url}")
 
     # Start a task to write data to the websocket
     write_task = asyncio.create_task(websocket_writer(websocket))
@@ -519,6 +523,7 @@ async def websocket_endpoint(websocket: WebSocket):
     while True:
         try:
             data = await websocket.receive()
+            LOGGER.debug(f"Data received: {data}")
             if data["type"] == "websocket.disconnect":
                 raise WebSocketDisconnect
 
@@ -565,20 +570,20 @@ async def websocket_endpoint(websocket: WebSocket):
                 else:
                     LOGGER.warning(f"message: {message} is not processed")
 
-        except (RuntimeError, asyncio.CancelledError) as error:
+        except (RuntimeError, asyncio.CancelledError) as err:
             write_task.cancel()
             activeSockets.remove(websocket)
-            LOGGER.error("Disconnected with RuntimeError or CancelledError...")
+            LOGGER.error(f"Disconnected with Exception... {err}")
             return
-        except WebSocketDisconnect:
+        except WebSocketDisconnect as err:
             write_task.cancel()
             activeSockets.remove(websocket)
-            LOGGER.info("Disconnected websocket")
+            LOGGER.info(f"Disconnected websocket: {err}")
             return
-        except Exception as e:
+        except Exception as err:
             write_task.cancel()
             activeSockets.remove(websocket)
-            LOGGER.error("Disconnected with Exception" + str(e) + "...")
+            LOGGER.error(f"Disconnected with Exception {err}")
 
 
 async def websocket_writer(websocket: WebSocket):
@@ -588,7 +593,9 @@ async def websocket_writer(websocket: WebSocket):
         if not is_valid_json(bacnet_device_dict):
             LOGGER.warning(f"Websocket dict isn't converted to JSON'!")
         else:
-            await websocket.send_json(bacnet_device_dict)
+            data_to_send = jsonable_encoder(bacnet_device_dict)
+            await websocket.send_json(data_to_send)
+        LOGGER.debug("Passed send_json test")
         while True:
             if events.val_updated_event.is_set():
                 dict_to_send = bacnet_device_dict
@@ -609,11 +616,11 @@ async def websocket_writer(websocket: WebSocket):
             else:
                 await asyncio.sleep(1)
 
-    except asyncio.CancelledError as error:
-        LOGGER.debug(f"Websocket writer cancelled: {error}")
+    except asyncio.CancelledError as err:
+        LOGGER.debug(f"Websocket writer cancelled: {err}")
 
     except WebSocketDisconnect as err:
-        LOGGER.info("Websocket disconnected")
+        LOGGER.info(f"Websocket disconnected: {err}")
 
     except Exception as err:
         LOGGER.error(f"Error during writing: {err}")

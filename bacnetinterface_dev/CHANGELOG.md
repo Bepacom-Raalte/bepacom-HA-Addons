@@ -1,7 +1,7 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.4.1b6
-17/04/2024
+# 1.4.1b7
+24/04/2024
 
 If there are any issues, please report on GitHub!
 
