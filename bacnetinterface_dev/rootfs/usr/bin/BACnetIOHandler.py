@@ -48,7 +48,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
     object_to_id = {}
     available_ids = set()
     next_id = 1
-    default_subscription_lifetime = 28800
+    default_subscription_lifetime = 60
     subscription_list = []
     i_am_queue: asyncio.Queue = asyncio.Queue()
     poll_tasks: list[asyncio.Task] = []

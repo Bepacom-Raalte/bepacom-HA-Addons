@@ -19,6 +19,7 @@
 			<a id="docs" href="./redoc" title="API documentation can be found here. Need an internet connection to load the page.">Redoc API Docs</a>
 			<a href="https://www.bepacom.nl" style="float:right;" title="Bepacom, the company that made this possible.">About</a>
 			<a href="./apiv1/diagnostics/logs" style="float:right;" title="Download logs longer than Home Assistant's'.">Download logs</a>
+			<a style="float:right; cursor:pointer" title="Return to Home Assistant add-on view." onclick="goToAddon()">Add-on page</a>
 		</div>
 		<div class="div3">
 			<button class="button" onclick="command('iam')" title="Send I Am Request over the BACnet network.">I Am Request</button>
@@ -48,6 +49,12 @@
 		</div>
 	</div>
 	<script>
+        goToAddon() {
+            let url = top.location.href;
+            url = url.replace("ingress", "addon")
+            top.location.href = url;
+		}
+
 		function uploadFiles(event) {
 			console.log("Uploading...")
 			console.log(event)

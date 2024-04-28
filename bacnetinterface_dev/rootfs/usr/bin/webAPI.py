@@ -483,8 +483,8 @@ async def subscribe_objectid(
 
         await events.sub_queue.put(sub_tuple)
 
-    except Exception as e:
-        LOGGER.error(f"{str(e)} on subscribe from API POST request")
+    except Exception as err:
+        LOGGER.error(f"{err} on subscribe from API POST request")
         return status.HTTP_400_BAD_REQUEST
 
 
@@ -503,8 +503,8 @@ async def unsubscribe_objectid(deviceid: str, objectid: str):
 
         await events.unsub_queue.put(sub_tuple)
 
-    except Exception as e:
-        LOGGER.error(f"{str(e)} on subscribe from API DELETE request")
+    except Exception as err:
+        LOGGER.error(f"{err} on subscribe from API DELETE request")
         return status.HTTP_400_BAD_REQUEST
 
 
@@ -590,10 +590,10 @@ async def websocket_writer(websocket: WebSocket):
     """Writer task for when a websocket is opened"""
     try:
         global bacnet_device_dict
-        if not is_valid_json(bacnet_device_dict):
-            LOGGER.warning(f"Websocket dict isn't converted to JSON'!")
+        data_to_send = jsonable_encoder(bacnet_device_dict)
+        if not is_valid_json(data_to_send):
+            LOGGER.warning(f"Websocket dict isn't converted to JSON!")
         else:
-            data_to_send = jsonable_encoder(bacnet_device_dict)
             await websocket.send_json(data_to_send)
         LOGGER.debug("Passed send_json test")
         while True:
@@ -608,7 +608,8 @@ async def websocket_writer(websocket: WebSocket):
                     continue
                 data_to_send = jsonable_encoder(dict_to_send)
                 if not is_valid_json(data_to_send):
-                    LOGGER.warning(f"Websocket dict isn't converted to JSON'!")
+                    LOGGER.warning(f"Websocket dict isn't converted to JSON!")
+                    events.val_updated_event.clear()
                     continue
                 for websocket in activeSockets:
                     await websocket.send_json(data_to_send)
