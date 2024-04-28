@@ -133,10 +133,11 @@
 
         ws.onmessage = function (event) {
             try {
-                console.debug("Data not parsed: " + event.data);
+                console.debug("Non parsed + parsed data");
+                console.debug(event.data);
                 event.JSON
                 devicedict = JSON.parse(event.data)
-                console.debug("Data parsed: " + devicedict);
+                console.debug(devicedict);
                 updateProperties(devicedict)
                 fillOptions()
             }
