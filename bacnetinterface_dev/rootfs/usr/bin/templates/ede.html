@@ -49,11 +49,11 @@
 		</div>
 	</div>
 	<script>
-        goToAddon() {
+        function goToAddon() {
             let url = top.location.href;
             url = url.replace("ingress", "addon")
             top.location.href = url;
-		}
+        }
 
 		function uploadFiles(event) {
 			console.log("Uploading...")

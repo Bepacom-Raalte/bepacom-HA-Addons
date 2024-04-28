@@ -77,7 +77,7 @@
     </div>
     <!-- Groeten van de afstudeerder -->
     <script>
-        goToAddon() {
+        function goToAddon() {
             let url = top.location.href;
             url = url.replace("ingress", "addon")
             top.location.href = url;
@@ -133,9 +133,10 @@
 
         ws.onmessage = function (event) {
             try {
+                console.debug("Data not parsed: " + event.data);
                 event.JSON
                 devicedict = JSON.parse(event.data)
-                console.debug(devicedict);
+                console.debug("Data parsed: " + devicedict);
                 updateProperties(devicedict)
                 fillOptions()
             }
