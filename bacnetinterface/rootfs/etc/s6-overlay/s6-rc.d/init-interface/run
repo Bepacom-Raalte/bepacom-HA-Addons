@@ -18,6 +18,7 @@ declare foreignTTL
 declare maxSegmentsAccepted
 declare defaultPriority
 declare updateInterval
+declare ipaddr
 
 # Functions
 
