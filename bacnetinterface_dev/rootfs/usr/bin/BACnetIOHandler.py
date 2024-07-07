@@ -148,7 +148,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     device_identifier=device_identifier,
                     object_identifier=object_identifier,
                     confirmed_notifications=True,
-                    lifetime=config.get("CoV_lifetime", 600),
+                    lifetime=config.get("CoV_lifetime", self.default_subscription_lifetime),
                 )
                 await asyncio.sleep(0)
 
@@ -204,7 +204,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             await self.create_poll_task(
                 device_identifier=device_identifier,
                 object_list=object_list,
-                poll_rate=config.get("slow_poll_rate", 600),
+                poll_rate=config.get("slow_poll_rate", self.default_subscription_lifetime),
             )
 
         if "all" in config.get("CoV_list", []):
@@ -1049,7 +1049,14 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         device_identifier = self.addr_to_dev(addr=device_address)
 
-        task_name = f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]}"
+        if confirmed_notification:
+            notifications = "confirmed"
+        else:
+            notifications = "unconfirmed"        
+
+        task_name = f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]},{notifications}"
+        
+        unsubscribe_cov_request = None
 
         try:
             async with self.change_of_value(
@@ -1090,7 +1097,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         continue
 
                     LOGGER.debug(
-                        f"Confirmed CoV: {device_identifier} {object_identifier} {property_identifier} {property_value}"
+                        f"{notifications} CoV: {device_identifier} {object_identifier} {property_identifier} {property_value}"
                     )
 
                     self.dict_updater(
@@ -1099,15 +1106,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                         property_identifier=property_identifier,
                         property_value=property_value,
                     )
-
-            # subscription failed?
-            LOGGER.error(
-                f"Subscription failed??: {self.addr_to_dev(device_address)}, {object_identifier}: {err}"
-            )
-            for task in self.subscription_tasks:
-                if task_name in task.get_name():
-                    index = self.subscription_tasks.index(task)
-                    self.subscription_tasks.pop(index)
 
         except ErrorRejectAbortNack as err:
             LOGGER.error(
@@ -1118,6 +1116,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 if task_name in task.get_name():
                     index = self.subscription_tasks.index(task)
                     self.subscription_tasks.pop(index)
+                    
+        except AbortPDU as err:
+            LOGGER.error(f"{err}")
 
         except asyncio.CancelledError as err:
             LOGGER.error(
@@ -1125,7 +1126,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             )
 
             # send the request, wait for the response
-            response = await self.request(unsubscribe_cov_request)
+            if unsubscribe_cov_request:
+                response = await self.request(unsubscribe_cov_request)
 
             for task in self.subscription_tasks:
                 if task_name in task.get_name():
@@ -1136,7 +1138,8 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             LOGGER.error(f"Error: {device_identifier}, {object_identifier}: {err}")
 
             # send the request, wait for the response
-            response = await self.request(unsubscribe_cov_request)
+            if unsubscribe_cov_request:
+                response = await self.request(unsubscribe_cov_request)
 
             for task in self.subscription_tasks:
                 if task_name in task.get_name():

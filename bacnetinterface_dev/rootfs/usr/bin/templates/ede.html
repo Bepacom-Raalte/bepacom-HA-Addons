@@ -51,7 +51,7 @@
 	<script>
         function goToAddon() {
             let url = top.location.href;
-            url = url.replace("ingress", "addon")
+            url = url.replace("ingress", "addon").concat("/info");
             top.location.href = url;
         }
 

@@ -1,7 +1,8 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.4.1b7
-24/04/2024
+
+# 1.4.1b9
+07/07/2024
 
 If there are any issues, please report on GitHub!
 
@@ -16,6 +17,7 @@ If there are any issues, please report on GitHub!
 - Fixed infinite loop causing BACpypes3 to get stuck when sending too many subscribe requests.(since v1.4.1b4)
 - Fixed sending error reply too soon when receiving values before receiving confirmation of subscription. (since v1.4.1b4)
 - Fixed certain exceptions getting exceptions.
+- Now detecting predictable interface names using auto detection of IP address. [#66](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/66)
 
 ## Changed
 - Reverted back to old way of subscribing. Please report any issues encountered.
@@ -23,6 +25,7 @@ If there are any issues, please report on GitHub!
 ## Dependencies
 
 - ⬆️ Bumped base-python image to version v13.1.3.
+
 
 # 1.4.0
 27/03/2024
