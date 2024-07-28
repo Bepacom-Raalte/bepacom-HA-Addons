@@ -1,7 +1,7 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
 
-# 1.4.1b9
+# 1.4.1b10
 07/07/2024
 
 If there are any issues, please report on GitHub!
@@ -10,7 +10,8 @@ If there are any issues, please report on GitHub!
 - Reading resolution property now. Integration will use it once it's updated as well. [#46](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/46)
 - Added devices_setup configuration option to allow the user to configure behaviour. See Documentation for usage. [#43](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/discussions/43)
 - Updated DOCS.md
-- Added units for entity to BACnet translation. [#47](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/47)
+- Added units for entity to BACnet translation. [#47](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/47)\
+- Added array index to apiv2 writes.
 
 ## Fixed
 - If an entity has units that can't be translated, it'll result in the noUnit property value. [#47](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/47)
@@ -18,6 +19,7 @@ If there are any issues, please report on GitHub!
 - Fixed sending error reply too soon when receiving values before receiving confirmation of subscription. (since v1.4.1b4)
 - Fixed certain exceptions getting exceptions.
 - Now detecting predictable interface names using auto detection of IP address. [#66](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/66)
+- Fixed an issue where OctetString would cause the API to fail.
 
 ## Changed
 - Reverted back to old way of subscribing. Please report any issues encountered.
@@ -25,7 +27,10 @@ If there are any issues, please report on GitHub!
 ## Dependencies
 
 - ⬆️ Bumped base-python image to version v13.1.3.
-
+- ⬆️ Bumped bacpypes3 to version v0.0.97.
+- ⬆️ Bumped jinja2 to version v3.1.4.
+- ⬆️ Bumped uvicorn to version v0.30.1.
+- ⬆️ Bumped requests to version 2.32.3.
 
 # 1.4.0
 27/03/2024

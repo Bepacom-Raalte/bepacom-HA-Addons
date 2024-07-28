@@ -23,11 +23,12 @@ from bacpypes3.constructeddata import AnyAtomic
 from bacpypes3.debugging import bacpypes_debugging
 from bacpypes3.errors import *
 from bacpypes3.ipv4.app import ForeignApplication, NormalApplication
+from bacpypes3.json.util import octetstring_encode
 from bacpypes3.local.analog import AnalogInputObject, AnalogValueObject
 from bacpypes3.local.binary import BinaryInputObject, BinaryValueObject
 from bacpypes3.object import CharacterStringValueObject, get_vendor_info
 from bacpypes3.pdu import Address
-from bacpypes3.primitivedata import ObjectIdentifier, ObjectType
+from bacpypes3.primitivedata import ObjectIdentifier, ObjectType, OctetString
 from const import (LOGGER, device_properties_to_read,
                    object_properties_to_read_once,
                    object_properties_to_read_periodically,
@@ -148,7 +149,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     device_identifier=device_identifier,
                     object_identifier=object_identifier,
                     confirmed_notifications=True,
-                    lifetime=config.get("CoV_lifetime", self.default_subscription_lifetime),
+                    lifetime=config.get(
+                        "CoV_lifetime", self.default_subscription_lifetime
+                    ),
                 )
                 await asyncio.sleep(0)
 
@@ -204,7 +207,9 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
             await self.create_poll_task(
                 device_identifier=device_identifier,
                 object_list=object_list,
-                poll_rate=config.get("slow_poll_rate", self.default_subscription_lifetime),
+                poll_rate=config.get(
+                    "slow_poll_rate", self.default_subscription_lifetime
+                ),
             )
 
         if "all" in config.get("CoV_list", []):
@@ -610,6 +615,17 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                     f"{device_identifier[0]}:{device_identifier[1]}": {
                         f"{object_identifier[0].attr}:{object_identifier[1]}": {
                             property_identifier.attr: property_value.attr,
+                        }
+                    }
+                },
+            )
+        elif isinstance(property_value, OctetString):
+            self.deep_update(
+                self.bacnet_device_dict,
+                {
+                    f"{device_identifier[0]}:{device_identifier[1]}": {
+                        f"{object_identifier[0].attr}:{object_identifier[1]}": {
+                            property_identifier.attr: octetstring_encode(property_value)
                         }
                     }
                 },
@@ -1052,10 +1068,10 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         if confirmed_notification:
             notifications = "confirmed"
         else:
-            notifications = "unconfirmed"        
+            notifications = "unconfirmed"
 
         task_name = f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]},{notifications}"
-        
+
         unsubscribe_cov_request = None
 
         try:
@@ -1116,7 +1132,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 if task_name in task.get_name():
                     index = self.subscription_tasks.index(task)
                     self.subscription_tasks.pop(index)
-                    
+
         except AbortPDU as err:
             LOGGER.error(f"{err}")
 
@@ -1664,7 +1680,7 @@ class ObjectManager:
         elif unit == "h":
             bacnetUnits = EngineeringUnits("hours")
         elif unit == "d":
-            bacnetUnits = EngineeringUnits("days")        
+            bacnetUnits = EngineeringUnits("days")
         elif unit == "w":
             bacnetUnits = EngineeringUnits("weeks")
         elif unit == "m":

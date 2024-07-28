@@ -21,6 +21,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic import parse_obj_as
 
 # ===================================================
 # Global variables
@@ -159,7 +160,7 @@ async def webapp(request: Request):
             dict_to_send = deep_update(dict_to_send, file)
 
     dict_to_send = jsonable_encoder(dict_to_send)
-    
+
     return templates.TemplateResponse(
         "index.html", {"request": request, "bacnet_devices": dict_to_send}
     )
@@ -512,7 +513,7 @@ async def unsubscribe_objectid(deviceid: str, objectid: str):
 async def websocket_endpoint(websocket: WebSocket):
     """This function will be called whenever a new client connects to the server."""
     await websocket.accept()
-    
+
     LOGGER.debug(f"Accepted websocket: {websocket.url}")
 
     # Start a task to write data to the websocket
@@ -632,19 +633,40 @@ async def write_property(
     deviceid: str = Path(description="device:instance"),
     objectid: str = Path(description="object:instance"),
     property: str = Path(description="property, for example presentValue"),
-    value: str | int | float | None = Query(default=None, description="Property value"),
+    value: str
+    | int
+    | float
+    | bool
+    | None = Query(default=None, description="Property value"),
+    array_index: int
+    | None = Query(default=None, description="Array index, usually left empty"),
     priority: int | None = Query(default=None, description="Write priority"),
 ):
     """Write to a property of an object from a device."""
     property_dict: dict[dict, Any] = {}
     dict_to_write: dict[dict, Any] = {}
 
+    def is_bool(input_val) -> bool:
+        if isinstance(input_val, bool):
+            return True
+        if isinstance(input_val, str):
+            return input_val.lower() in ("true", "false")
+        return False
+
     try:
         deviceid = ObjectIdentifier(deviceid)
         objectid = ObjectIdentifier(objectid)
         property = PropertyIdentifier(property)
+
+        if is_bool(value):
+            value = parse_obj_as(bool, value)
+
     except Exception as err:
         LOGGER.error(f"Error while trying to make a write request: {err}")
         return status.HTTP_400_BAD_REQUEST
 
-    await events.write_queue.put([deviceid, objectid, property, value, None, priority])
+    LOGGER.error(f"{deviceid}, {objectid}, {property}, {value}, {priority}")
+
+    await events.write_queue.put(
+        [deviceid, objectid, property, value, array_index, priority]
+    )
