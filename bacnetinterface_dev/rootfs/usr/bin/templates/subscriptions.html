@@ -69,8 +69,8 @@
     <script>
         function goToAddon() {
             let url = top.location.href;
-            url = url.replace("ingress", "addon").concat("/info");
-            top.location.href = url;
+            var new_url = url.replace("ingress", "addon")
+            top.location.href = new_url;
         }
 
         const API_URL = './apiv1/json';

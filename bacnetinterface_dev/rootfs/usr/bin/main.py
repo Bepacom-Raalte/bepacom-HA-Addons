@@ -2,13 +2,16 @@
 
 import asyncio
 import configparser
+import ipaddress
 import json
 import os
+import socket
 from datetime import datetime
 from logging import Formatter, Logger, StreamHandler, getLogger
 from logging.handlers import RotatingFileHandler
 from typing import TypeVar
 
+import psutil
 import uvicorn
 import webAPI
 from BACnetIOHandler import BACnetIOHandler, ObjectManager
@@ -31,6 +34,46 @@ def exception_handler(loop, context):
         LOGGER.exception(f'An uncaught error occurred: {context["exception"]}')
     except:
         LOGGER.error("Tried to log error, but something went horribly wrong!!!")
+
+
+def exception_handler(loop, context):
+    """Handle uncaught exceptions"""
+    try:
+        LOGGER.exception(f'An uncaught error occurred: {context["exception"]}')
+    except:
+        LOGGER.error("Tried to log error, but something went horribly wrong!!!")
+
+
+def get_ip_and_netmask():
+    for iface, addrs in psutil.net_if_addrs().items():
+        if iface.startswith(("enp", "eth", "eno")):
+            for addr in addrs:
+                if addr.family == socket.AF_INET:
+                    return addr.address, addr.netmask
+    return None, None
+
+
+def ip_prefix_by_netmask(netmask):
+    return ipaddress.IPv4Network(f"0.0.0.0/{netmask}").prefixlen
+
+
+def get_auto_ip() -> str:
+
+    ipaddr, netmask = get_ip_and_netmask()
+
+    if ipaddr:
+        cidr = ip_prefix_by_netmask(netmask)
+
+    else:
+        print(
+            "Warning: No suitable ethernet adapters found. You probably won't detect anything now."
+        )
+        ipaddr = socket.gethostbyname(socket.gethostname())
+        cidr = "24"
+
+    LOGGER.debug(f"{ipaddr}/{cidr}")
+
+    return f"{ipaddr}/{cidr}"
 
 
 async def updater_task(app: Application, interval: int, event: asyncio.Event) -> None:
@@ -173,18 +216,6 @@ async def unsubscribe_handler_task(
 
 
 def get_configuration() -> tuple:
-    if os.name == "nt":
-        config_file = "BACpypes.ini"
-    else:
-        config_file = "/usr/bin/BACpypes.ini"
-
-    config = configparser.ConfigParser()
-
-    try:
-        config.read(config_file)
-    except Exception as err:
-        LOGGER.warning(f"No BACpypes.ini detected! {err}")
-
     try:
         with open("/data/options.json") as f:
             options = json.load(f)
@@ -211,36 +242,37 @@ def get_configuration() -> tuple:
         LOGGER.warning(f"No Token received! {err}")
         token = None
 
-    default_write_prio = config.get("BACpypes", "defaultPriority", fallback=15)
+    default_write_prio = options.get("defaultPriority", 15)
 
-    loglevel = config.get("BACpypes", "loglevel", fallback="INFO")
+    loglevel = options.get("loglevel", "INFO")
 
-    ipv4_address = config.get("BACpypes", "address", fallback=None)
+    ipv4_address = options.get("address", None)
+
+    if ipv4_address == "auto":
+        ipv4_address = get_auto_ip()
 
     if not ipv4_address:
         ipv4_address = input("BACnet IP Address as *x.x.x.x/24*: ")
 
     ipv4_address = IPv4Address(ipv4_address)
 
-    object_identifier = config.get("BACpypes", "objectIdentifier", fallback=60)
+    object_identifier = options.get("objectIdentifier", 60)
 
-    object_name = config.get("BACpypes", "objectName", fallback="EcoPanel")
+    object_name = options.get("objectName", "EcoPanel")
 
-    vendor_id = config.get("BACpypes", "vendorIdentifier", fallback=15)
+    vendor_id = options.get("vendorIdentifier", 15)
 
-    segmentation_supported = config.get(
-        "BACpypes", "segmentation", fallback=Segmentation.noSegmentation
-    )
+    segmentation_supported = options.get("segmentation", Segmentation.noSegmentation)
 
-    max_apdu = config.get("BACpypes", "maxApduLengthAccepted", fallback=480)
+    max_apdu = options.get("maxApduLengthAccepted", 480)
 
-    max_segments = config.get("BACpypes", "maxSegmentsAccepted", fallback=64)
+    max_segments = options.get("maxSegmentsAccepted", 64)
 
-    foreign_ip = config.get("BACpypes", "foreignBBMD", fallback=None)
+    foreign_ip = options.get("foreignBBMD", None)
 
-    foreign_ttl = config.get("BACpypes", "foreignTTL", fallback=255)
+    foreign_ttl = options.get("foreignTTL", 255)
 
-    update_interval = config.get("BACpypes", "updateInterval", fallback=60)
+    update_interval = options.get("updateInterval", 60)
 
     return (
         default_write_prio,

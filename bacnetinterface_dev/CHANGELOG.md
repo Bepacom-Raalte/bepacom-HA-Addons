@@ -1,10 +1,11 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
 
-# 1.4.1b10
-07/07/2024
+# 1.5.0b11
+10/08/2024
 
 If there are any issues, please report on GitHub!
+Changed from v1.4.1 to 1.5.0 as there's a lot of changes!
 
 ## Added
 - Reading resolution property now. Integration will use it once it's updated as well. [#46](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/46)
@@ -22,15 +23,17 @@ If there are any issues, please report on GitHub!
 - Fixed an issue where OctetString would cause the API to fail.
 
 ## Changed
-- Reverted back to old way of subscribing. Please report any issues encountered.
+- Subscribing to properties now creates tasks that should maintain CoV subscription.
+- Setting up of the python program now solely relies on options.json.
 
 ## Dependencies
-
-- ⬆️ Bumped base-python image to version v13.1.3.
-- ⬆️ Bumped bacpypes3 to version v0.0.97.
+- ⬆️ Bumped base-python image to version v14.0.0.
+- ⬆️ Bumped bacpypes3 to version v0.0.98.
+- ⬆️ Bumped pydantic to version v1.10.17.
 - ⬆️ Bumped jinja2 to version v3.1.4.
 - ⬆️ Bumped uvicorn to version v0.30.1.
 - ⬆️ Bumped requests to version 2.32.3.
+
 
 # 1.4.0
 27/03/2024
