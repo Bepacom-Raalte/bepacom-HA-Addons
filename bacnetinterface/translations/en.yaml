@@ -1,46 +1,46 @@
 configuration:
   objectName:
-    name: Device Name
-    description: The name of the interface in the BACnet network.
+    name: Device Naam
+    description: Naam van het BACnet apparaat op het netwerk.
   address:
     name: Interface IP
-    description: BACnet/IP host address. "auto" tries to automatically get your IP. x.x.x.x/24 format.
+    description: BACnet/IP host adres. "auto" probeert je LAN IP automatisch op te halen. {interface IP}/24 format.
   objectIdentifier:
     name: Device ID
-    description: The identifier (number) of the interface.
+    description: De identifier die je apparaat mee krijgt.
   defaultPriority:
     name: BACnet write priority
-    description: Priority of the BACnet write request. Priority 1 is highest, priority 16 is lowest it can go.
+    description: Prioriteit van een BACnet schrijf request. 1 is hoogste en 16 is laagste prioriteit.
   loglevel:
-    name: Level of Logging
-    description: The severity of log messages being displayed.
+    name: Loggingsniveau
+    description: Het niveau waarop de gebeurtenissen gelogd worden.
   maxApduLenghtAccepted: 
-    name: Maximum  APDU Length Accepted
-    description: Maximum amount of Application Layer Protocol Data Units allowed.
+    name: Maximum  APDU Lengte Geaccepteerd
+    description: Maximum hoeveelheid Application Layer Protocol Data Units toegestaan.
   segmentation:
-    name: Segmentation Supported
-    description: Supported segmentation type of the interface.
+    name: Segmentatie Ondersteund
+    description: Ondersteunde type segmentatie. "segmentedBoth" als standaard.
   vendorID:
     name: Vendor Identifier
-    description: The vendor ID of the interface.
+    description: Het ID van de regelaar's leverancier.
   foreignBBMD:
-    name: BACnet/IP Broadcast Management Device Address
-    description: IP address of the BBMD.
+    name: BACnet/IP Broadcast Management Device Adres
+    description: IP address van het BBMD.
   foreignTTL: 
     name: Foreign TTL
-    description: Time To Live of the packets sent for BBMD.
+    description: Time To Live packets voor BBMD.
   maxSegmentsAccepted:
-    name: Maximum Segments Accepted
-    description: The maximum amount of segments accepted in a message.
-  updateInterval:
-    name: Update Interval
-    description: Time between periodic updates in seconds.
-  subscriptions:
-    name: CoV subscriptions
-    description: For which object types have to be subscribed to.
+    name: Maximum Segmenten Geaccepted
+    description: De maximale hoeveelheid segmenten er in een BACnet bericht mogen zitten.
   entity_list:
-    name: Entities to BACnet objects
-    description: Home Assistant entity IDs that will be turned into BACnet objects. Please read the documentation to see which entity types are supported and how BACnet object identifiers are determined.
+    name: Entities naar BACnet objecten
+    description: Home Assistant entity IDs die als BACnet objecten moeten gaan dienen. Lees de documentatie om te weten welke entity typen ondersteund worden en hoe de object identifiers bepaald worden.
+  devices_setup:
+    name: Apparaat configuratie
+    description: Configureer apparaten die appart behandeld moeten worden. Zie documentatie over hoe deze optie gebruikt moet worden.
+  api_accessible:
+    name: Toegang tot API toestaan
+    description: Sta toe dat de API toegankelijk is buiten Home Assistant.
 network:
-  47808/udp: BACnet port.
-  80/tcp: Port which the integration should connect to. If you leave this empty, the integration should connect to port 8099.
+  47808/udp: BACnet poort.
+  80/tcp: Poort waarmee de integration moet verbinden. Wanneer je deze poort leeg laat, moet de integration met poort 8099 verbinden.

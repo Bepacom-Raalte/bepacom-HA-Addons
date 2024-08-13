@@ -4,6 +4,8 @@ The Bepacom BACnet/IP interface add-on is intended to be a bridge between the BA
 
 The goal of this add-on is to add BACnet functionality to Home Assistant so these devices can be displayed on the dashboard.
 
+The add-on is not directly responsible for generating entities in Home Assistant, for that, check out the [Bepacom BACnet/IP Interface integration](https://github.com/Bepacom-Raalte/Bepacom-BACnet-IP-Integration/tree/main).
+
 This add-on works on Home Assistant OS as well as Home Assistant Supervised.
 
 Created and maintained by [Bepacom B.V. Raalte](https://www.bepacom.nl/)
@@ -29,7 +31,7 @@ After installing the add-on, there are 2 ways you can turn data into Home Assist
 
 ### Integration
 
-The first and recommended way is to use the accompanying integration made by us. This is the [Bepacom BACnet/IP Interface integration](https://github.com/Bepacom-Raalte/bepacom-custom_components/tree/main/custom_components/bacnet_interface).
+The first and recommended way is to use the accompanying integration made by us. This is the [Bepacom BACnet/IP Interface integration](https://github.com/Bepacom-Raalte/Bepacom-BACnet-IP-Integration/tree/main).
 Installation instructions are included in the README.md file. The installation is straightforward, like any other custom integration.
 
 ### RESTful Sensor
@@ -103,83 +105,107 @@ Example add-on configuration:
 
 ```yaml
 objectName: EcoPanel
-address: 192.168.2.11/24
+address: auto
 objectIdentifier: 420
 defaultPriority: 15
-updateInterval: 60
-subscriptions:
-  analogInput: true
-  analogOutput: true
-  analogValue: true
-  binaryInput: true
-  binaryOutput: true
-  binaryValue: true
-  multiStateInput: false
-  multiStateOutput: false
-  multiStateValue: false
+devices_setup:
+  - deviceID: all
+    CoV_lifetime: 60
+    CoV_list:
+      - all
+    quick_poll_rate: 5
+    quick_poll_list: []
+    slow_poll_rate: 600
+    slow_poll_list:
+      - all
+  - deviceID: device:1835087
+    CoV_lifetime: 600
+    CoV_list: []
+    quick_poll_rate: 5
+    quick_poll_list:
+      - analogInput:0
+      - analogInput:1
+      - analogInput:2
+    slow_poll_rate: 300
+    slow_poll_list:
+      - all
 entity_list:
-  - input_number.coolnumber
   - sensor.incomfort_cv_pressure
   - input_boolean.cooltoggle
+  - input_number.coolnumber
+  - sensor.energyzero_today_energy_next_hour_price
 loglevel: WARNING
 segmentation: segmentedBoth
 vendorID: 15
+maxApduLenghtAccepted: 1476
+maxSegmentsAccepted: 64
 ```
 
-### Option: `Device Name`
+### Option: `objectName` Device Name
 The Object Name that this device will get. This will be seen by other devices on the BACnet network.
 
-### Option: `Interface IP`
+### Option: `address` Interface IP
 The address of the BACnet/IP interface.
 You can write the IP yourself or use "auto" to let the add-on automatically try to get the right IP address.
 If you want to write your IP manually, don't forget to put the CIDR behind the IP. For example: 192.168.2.11/24.
-If you use subnet mask of 255.255.255.0, just put /24 behind your IP address.
+If you use subnet mask of 255.255.255.0, just put /24 behind your IP address. 
+If you have a subnet of 255.255.0.0 then your CIDR notation would be /16
 
-### Option: `Device ID`
+### Option: `objectIdentifier` Device ID
 The Object Identifier that this device will get. This will be seen by other devices on the BACnet network. **Make sure it's unique in your network!**
 
-### Option: `BACnet write priority`
+### Option: `defaultPriority` BACnet write priority
 The priority your write requests get. 
 Low number means high priority. 
 High number means low priority. 
 Recommended to keep at 15 or 16 unless you know what a higher priority can do to your BACnet devices.
 
-### Option: `Level of logging`
-The verbosity of the logs in the add-on. 
-There are 5 levels of logging:
-- DEBUG: You'll get too much info. Only useful for development.
-- INFO: You'll receive a lot of info that could be useful for troubleshooting.
-- WARNING: You'll only receive logs if something went wrong.
-- ERROR: You'll only see errors pop up.
-- CRITICAL: You want to ignore everything that's happening.
+### Option: `devices_setup` Device Setup
 
-Usually WARNING is sufficient.
-
-### Option: `Update Interval`
-The time after which the interface will try to read all object properties of each detected device again.
-
-### Option: `CoV Subscriptions`
-The types of objects you want to automatically subscribe to with a CoV subscription. 
-Per object you can set true or false. 
-Objects not included here don't get subscribed to.
+The `devices_setup` configuration is a list of configurations for specific devices. 
+Each list entry will contain a deviceID along with settings for Change of Value as well as polling.
 
 ```yaml
-analogInput: true
-analogOutput: true
-analogValue: true
-binaryInput: true
-binaryOutput: true
-binaryValue: true
-multiStateInput: false
-multiStateOutput: false
-multiStateValue: false
+devices_setup:
+  - deviceID: device:1835087
+    CoV_lifetime: 60
+    CoV_list:
+      - all
+    quick_poll_rate: 5
+    quick_poll_list: []
+    slow_poll_rate: 600
+    slow_poll_list:
+      - all
 ```
 
-### Option: `Home Assistant API Pollrate`
-Pollrate in seconds to the Home Assistant API. This is to get data for the following 2 options. Recommended to not set it too fast.
-This determines how fast the device's objects update their presentValue property.
+- `deviceID` This key contains the device identifier (in "device:xxxx" format where xxxx is the number) for the device you want the following options to count for. A special "all" key will make the settings below a general configuration.
+- `CoV_lifetime` This key contains the lifetime for each CoV subscription made. This value is in seconds and can be between 60 and 28800. The add-on will automatically resubscribe once the lifetime has passed.
+- `CoV_list` This key contains a list containing each object identifier (in "object:xxxx" format where xxxx is the number and object written in the format as seen below) the add-on has to subscribe to. A special "all" key will make the add-on subscribe to all supported objects of the device. The list can be empty if no CoV subscriptions are desired.
+```yaml
+analogInput
+analogOutput
+analogValue
+binaryInput
+binaryOutput
+binaryValue
+multiStateInput
+multiStateOutput
+multiStateValue
+```
+- `quick_poll_rate` This key contains the rate at which quick poll objects have to be read. This is in seconds, between 3 and 30.
+- `quick_poll_list` This key contains a list containing each object identifier the add-on has to poll at the poll rate defined above. The list can be empty if no quick polling is desired.
+- `slow_poll_rate` This key contains the rate at which quick poll objects have to be read. This is in seconds, between 30 and 3000.
+- `slow_poll_list` This key contains a list containing each object identifier the add-on has to poll at the poll rate defined above. The list can be empty if no slow polling is desired. A special "all" key will make the add-on poll all objects of the device.
 
-### Option: `Entities to BACnet objects`
+The following properties will be read each poll:
+- presentValue
+- statusFlags
+- outOfService
+- eventState
+- reliability
+- covIncrement
+
+### Option: `entity_list` Entities to BACnet objects
 The entity ID's of what entities you want to make available as a BACnet objects. 
 Keeping it empty will result in no additional objects next to your virtual device on the BACnet network.
 
@@ -208,18 +234,43 @@ All the -Value objects can be written to!
 
 Plans to include "climate", "water_heater", "media_player" and "vacuum" as supported entity types in the future.
 
-### Option: `BACnet/IP Broadcast Management Device Address`
+### Option: `foreignBBMD` BACnet/IP Broadcast Management Device Address
 If you have your BACnet/IP network on another subnet, write the IP of your BBMD device here. This way, the add-on can communicate with the BBMD.
 Otherwise keep this option empty.
 
-### Option: `Foreign TTL`
+### Option: `foreignTTL` Foreign TTL
 Time To Live of foreign packets.
 
-### Option: `Vendor Identifier`
+### Option: `loglevel` Level of logging
+The verbosity of the logs in the add-on. 
+There are 5 levels of logging:
+- DEBUG: You'll get too much info. Only useful for development.
+- INFO: You'll receive a lot of info that could be useful for troubleshooting.
+- WARNING: You'll only receive logs if something went wrong.
+- ERROR: You'll only see errors pop up.
+- CRITICAL: You want to ignore everything that's happening.
+
+Usually WARNING is sufficient.
+
+### Option: `vendorID` Vendor Identifier
 Identifier of the vendor of the interface. As we don't have an official identifier, put anything you want in here.
 
-### Option: `Segmentation Supported`
+### Option: `segmentation` Segmentation Supported
 Segmentation type of the add-on. Recommended to leave on SegmentedBoth for the best compatibility.
+Segmentation is whether the device supports splitting up large BACnet messages. 
+A BACnet message will be split based on the maximum APDU length accepted. 
+This is usually the case when using Read Property Multiple requests.
+- segmentedBoth allows both the incoming and outgoing messaged to be split up. 
+- segmentedTransmit allows only sending split messages.
+- segmentedReceive allows only incoming messages to be segmented.
+- noSegmentation allows no segmentation.
+
+### Option: `maxSegmentsAccepted` Maximum Segments Accepted
+The amount of segments that the device can accept at most for a single service request. Default is 64 segments.
+
+### Option: `maxApduLength` Maximum APDU Length Accepted
+Maximum size a BACnet message/segment is allowed to be. 
+A common BACnet/IP value and the default for the add-on is 1476, and a common BACnet/MSTP value is 480.
 
 ### Network port: `80/TCP`
 Port which the integration should connect to. If you leave this empty, the integration should connect to port 8099.
@@ -234,6 +285,7 @@ BACnet/IP port. The add-on seems to work if you leave this empty. Feel free to s
 If you're using Node-Red for BACnet applications, chances are very high it's also using the BACnet port 47808.
 This is causing a conflict between te add-ons, as we need the 47808 port as well for our BACnet/IP duties.
 Removing the BACnet part from your Node-Red should solve this issue. 
+You could also try to remove all ports to see if this works, but this hasn't been tested.
 If this doesn't work, please check the webserver port isn't conflicting with another add-on either.
 
 

@@ -21,6 +21,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic import parse_obj_as
 
 # ===================================================
 # Global variables
@@ -129,7 +130,7 @@ app = FastAPI(
     lifespan=lifespan,
     title="Bepacom BACnet/IP Interface API",
     description=description,
-    version="1.4.0",
+    version="1.4.1",
     contact={
         "name": "Bepacom B.V. Contact",
         "url": "https://www.bepacom.nl/contact/",
@@ -157,6 +158,8 @@ async def webapp(request: Request):
     if EDE_files:
         for file in EDE_files:
             dict_to_send = deep_update(dict_to_send, file)
+
+    dict_to_send = jsonable_encoder(dict_to_send)
 
     return templates.TemplateResponse(
         "index.html", {"request": request, "bacnet_devices": dict_to_send}
@@ -481,8 +484,8 @@ async def subscribe_objectid(
 
         await events.sub_queue.put(sub_tuple)
 
-    except Exception as e:
-        LOGGER.error(f"{str(e)} on subscribe from API POST request")
+    except Exception as err:
+        LOGGER.error(f"{err} on subscribe from API POST request")
         return status.HTTP_400_BAD_REQUEST
 
 
@@ -490,6 +493,7 @@ async def subscribe_objectid(
 async def unsubscribe_objectid(deviceid: str, objectid: str):
     """Subscribe to an object of a device."""
     try:
+        LOGGER.debug(f"{deviceid}, {objectid}")
         deviceid = ObjectIdentifier(deviceid)
         objectid = ObjectIdentifier(objectid)
 
@@ -500,8 +504,8 @@ async def unsubscribe_objectid(deviceid: str, objectid: str):
 
         await events.unsub_queue.put(sub_tuple)
 
-    except Exception as e:
-        LOGGER.error(f"{str(e)} on subscribe from API DELETE request")
+    except Exception as err:
+        LOGGER.error(f"{err} on subscribe from API DELETE request")
         return status.HTTP_400_BAD_REQUEST
 
 
@@ -509,6 +513,8 @@ async def unsubscribe_objectid(deviceid: str, objectid: str):
 async def websocket_endpoint(websocket: WebSocket):
     """This function will be called whenever a new client connects to the server."""
     await websocket.accept()
+
+    LOGGER.debug(f"Accepted websocket: {websocket.url}")
 
     # Start a task to write data to the websocket
     write_task = asyncio.create_task(websocket_writer(websocket))
@@ -518,6 +524,7 @@ async def websocket_endpoint(websocket: WebSocket):
     while True:
         try:
             data = await websocket.receive()
+            LOGGER.debug(f"Data received: {data}")
             if data["type"] == "websocket.disconnect":
                 raise WebSocketDisconnect
 
@@ -564,30 +571,32 @@ async def websocket_endpoint(websocket: WebSocket):
                 else:
                     LOGGER.warning(f"message: {message} is not processed")
 
-        except (RuntimeError, asyncio.CancelledError) as error:
+        except (RuntimeError, asyncio.CancelledError) as err:
             write_task.cancel()
             activeSockets.remove(websocket)
-            LOGGER.error("Disconnected with RuntimeError or CancelledError...")
+            LOGGER.error(f"Disconnected with Exception... {err}")
             return
-        except WebSocketDisconnect:
+        except WebSocketDisconnect as err:
             write_task.cancel()
             activeSockets.remove(websocket)
-            LOGGER.info("Disconnected websocket")
+            LOGGER.info(f"Disconnected websocket: {err}")
             return
-        except Exception as e:
+        except Exception as err:
             write_task.cancel()
             activeSockets.remove(websocket)
-            LOGGER.error("Disconnected with Exception" + str(e) + "...")
+            LOGGER.error(f"Disconnected with Exception {err}")
 
 
 async def websocket_writer(websocket: WebSocket):
     """Writer task for when a websocket is opened"""
     try:
         global bacnet_device_dict
-        if not is_valid_json(bacnet_device_dict):
-            LOGGER.warning(f"Websocket dict isn't converted to JSON'!")
+        data_to_send = jsonable_encoder(bacnet_device_dict)
+        if not is_valid_json(data_to_send):
+            LOGGER.warning(f"Websocket dict isn't converted to JSON!")
         else:
-            await websocket.send_json(bacnet_device_dict)
+            await websocket.send_json(data_to_send)
+        LOGGER.debug("Passed send_json test")
         while True:
             if events.val_updated_event.is_set():
                 dict_to_send = bacnet_device_dict
@@ -600,7 +609,8 @@ async def websocket_writer(websocket: WebSocket):
                     continue
                 data_to_send = jsonable_encoder(dict_to_send)
                 if not is_valid_json(data_to_send):
-                    LOGGER.warning(f"Websocket dict isn't converted to JSON'!")
+                    LOGGER.warning(f"Websocket dict isn't converted to JSON!")
+                    events.val_updated_event.clear()
                     continue
                 for websocket in activeSockets:
                     await websocket.send_json(data_to_send)
@@ -608,11 +618,11 @@ async def websocket_writer(websocket: WebSocket):
             else:
                 await asyncio.sleep(1)
 
-    except asyncio.CancelledError as error:
-        LOGGER.debug(f"Websocket writer cancelled: {error}")
+    except asyncio.CancelledError as err:
+        LOGGER.debug(f"Websocket writer cancelled: {err}")
 
     except WebSocketDisconnect as err:
-        LOGGER.info("Websocket disconnected")
+        LOGGER.info(f"Websocket disconnected: {err}")
 
     except Exception as err:
         LOGGER.error(f"Error during writing: {err}")
@@ -623,19 +633,40 @@ async def write_property(
     deviceid: str = Path(description="device:instance"),
     objectid: str = Path(description="object:instance"),
     property: str = Path(description="property, for example presentValue"),
-    value: str | int | float | None = Query(default=None, description="Property value"),
+    value: str
+    | int
+    | float
+    | bool
+    | None = Query(default=None, description="Property value"),
+    array_index: int
+    | None = Query(default=None, description="Array index, usually left empty"),
     priority: int | None = Query(default=None, description="Write priority"),
 ):
     """Write to a property of an object from a device."""
     property_dict: dict[dict, Any] = {}
     dict_to_write: dict[dict, Any] = {}
 
+    def is_bool(input_val) -> bool:
+        if isinstance(input_val, bool):
+            return True
+        if isinstance(input_val, str):
+            return input_val.lower() in ("true", "false")
+        return False
+
     try:
         deviceid = ObjectIdentifier(deviceid)
         objectid = ObjectIdentifier(objectid)
         property = PropertyIdentifier(property)
+
+        if is_bool(value):
+            value = parse_obj_as(bool, value)
+
     except Exception as err:
         LOGGER.error(f"Error while trying to make a write request: {err}")
         return status.HTTP_400_BAD_REQUEST
 
-    await events.write_queue.put([deviceid, objectid, property, value, None, priority])
+    LOGGER.error(f"{deviceid}, {objectid}, {property}, {value}, {priority}")
+
+    await events.write_queue.put(
+        [deviceid, objectid, property, value, array_index, priority]
+    )

@@ -51,6 +51,7 @@ object_properties_to_read_once: list = [
     PropertyIdentifier("inactiveText"),
     PropertyIdentifier("polarity"),
     PropertyIdentifier("relinquishDefault"),
+    PropertyIdentifier("resolution"),
 ]
 
 object_properties_to_read_periodically: list = [
@@ -60,7 +61,6 @@ object_properties_to_read_periodically: list = [
     PropertyIdentifier("eventState"),
     PropertyIdentifier("reliability"),
     PropertyIdentifier("covIncrement"),
-    PropertyIdentifier("notificationClass"),
 ]
 
 subscribable_objects: list = [
@@ -74,12 +74,12 @@ subscribable_objects: list = [
     ObjectType("multiStateValue"),
     ObjectType("multiStateInput"),
     ObjectType("multiStateOutput"),
-    ObjectType("alertEnrollment"),
-    ObjectType("eventEnrollment"),
+    # ObjectType("alertEnrollment"),
+    # ObjectType("eventEnrollment"),
     ObjectType("integerValue"),
-    ObjectType("calendar"),
+    # ObjectType("calendar"),
     ObjectType("pulseConverter"),
-    ObjectType("program"),
+    # ObjectType("program"),
     ObjectType("largeAnalogValue"),
     ObjectType("positiveIntegerValue"),
     ObjectType("lightingOutput"),

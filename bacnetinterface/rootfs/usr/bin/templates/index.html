@@ -18,7 +18,8 @@
             <a href="./docs" title="API documentation can be found here. Need an internet connection to load the page.">Swagger API Docs</a>
             <a href="./redoc" title="API documentation can be found here. Need an internet connection to load the page.">Redoc API Docs</a>
             <a href="https://www.bepacom.nl" style="float:right;" title="Bepacom, the company that made this possible.">About</a>
-            <a href="./apiv1/diagnostics/logs" style="float:right;" title="Download logs longer than Home Assistant's'.">Download logs</a>
+            <a href="./apiv1/diagnostics/logs" style="float:right;" title="Download logs longer than Home Assistant's.">Download logs</a>
+            <a style="float:right;cursor:pointer;" title="Return to Home Assistant add-on view." onclick="goToAddon()">Add-on page</a>
         </div>
         <div class="div3">
             <button class="button" onclick="command('iam')" title="Send I Am Request over the BACnet network.">I Am Request</button>
@@ -76,6 +77,12 @@
     </div>
     <!-- Groeten van de afstudeerder -->
     <script>
+        function goToAddon() {
+            let url = top.location.href;
+            var new_url = url.replace("ingress", "addon")
+            top.location.href = new_url;
+        }
+
         updateCheckboxes()
         const API_URL = './apiv1/json';
         var refreshing = false; // flag to check if the page is already
@@ -84,9 +91,15 @@
         fetch(API_URL)
             .then((response) => response.json())
             .then((data) => {
-                devicedict = data;
-                updateProperties(devicedict)
-                fillOptions()
+                try {
+
+                    devicedict = data;
+                    updateProperties(devicedict)
+                    fillOptions()
+                }
+                catch (error) {
+                    console.error(error);
+                }
             });
 
         function command(text) {
@@ -119,18 +132,31 @@
         var gotMessage = false;
 
         ws.onmessage = function (event) {
-            event.JSON
-            devicedict = JSON.parse(event.data)
-            updateProperties(devicedict)
-            fillOptions()
+            try {
+                console.debug("Non parsed + parsed data");
+                console.debug(event.data);
+                event.JSON
+                devicedict = JSON.parse(event.data)
+                console.debug(devicedict);
+                updateProperties(devicedict)
+                fillOptions()
+            }
+            catch (error) {
+                console.log(error);
+            }
         }
 
         function updateProperties(devicedict) {
             for (let device in devicedict) {
                 for (let object in devicedict[device]) {
                     for (let property in devicedict[device][object]) {
-                        propertyItem = document.getElementById(device + "-" + object + "-" + property);
-                        propertyItem.textContent = property + " : " + devicedict[device][object][property]
+                        try {
+                            propertyItem = document.getElementById(device + "-" + object + "-" + property);
+                            propertyItem.textContent = property + " : " + devicedict[device][object][property]
+                        }
+                        catch (error) {
+                            console.log(device + ", " + object + ": " + error)
+                        }
                     }
                 }
             }
@@ -188,15 +214,15 @@
                         propertyItem.appendChild(valueItem);
 
                         propertyList.appendChild(propertyItem);
-                        console.log(property);
+                        //console.log(property);
                     }
                     objectItem.appendChild(propertyList);
                     objectList.appendChild(objectItem);
-                    console.log(object);
+                    //console.log(object);
                 }
                 deviceItem.appendChild(objectList);
                 list.appendChild(deviceItem);
-                console.log(device);
+                //console.log(device);
             }
 
             // Add event listeners to make the list collapsible
@@ -251,7 +277,7 @@
             var checkbox = document.getElementById("checkbox-" + id);
             var nestedLi = document.querySelectorAll('li[id*="' + id + "-" + '"]');
 
-            console.log(nestedLi);
+            //console.log(nestedLi);
 
             nestedLi.forEach(function (li) {
                 if (li.id === id) {
@@ -294,8 +320,8 @@
                     }
                 }
             }
-            console.log(selectDevice)
-            console.log(selectObject)
+            //console.log(selectDevice)
+            //console.log(selectObject)
         }
 
         function submitForm() {

@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: Bepacom BACnet/IP Interface
-version: "1.4.0"
+version: "1.5.0"
 slug: bacnetinterface
 description: Bepacom BACnet/IP interface for the Bepacom EcoPanel. Allows BACnet/IP devices to be available to Home Assistant through an API.
 url: "https://github.com/Bepacom-Raalte/bepacom-HA-Addons/tree/main/bacnetinterface"
@@ -30,39 +30,44 @@ options:
   address: auto
   objectIdentifier: 420
   defaultPriority: 15
-  updateInterval: 600
-  subscriptions:
-    analogInput: true
-    analogOutput: true
-    analogValue: true
-    binaryInput: true
-    binaryOutput: true
-    binaryValue: true
-    multiStateInput: true
-    multiStateOutput: true
-    multiStateValue: true
+  devices_setup:
+    - deviceID: all
+      CoV_lifetime: 600
+      CoV_list:
+        - all
+      quick_poll_rate: 5
+      quick_poll_list: []
+      slow_poll_rate: 600
+      slow_poll_list:
+        - all
+      resub_on_iam: true
+      reread_on_iam: false
   entity_list: []
+  api_accessible: false
   loglevel: WARNING
   segmentation: segmentedBoth
 schema:
   objectName: str
   address: str
   objectIdentifier: int
-  defaultPriority: "int(1,16)"
+  defaultPriority: int(1,16)
   loglevel: list(DEBUG|INFO|WARNING|ERROR|CRITICAL|)
-  updateInterval: int
-  subscriptions:
-    analogInput: bool
-    analogOutput: bool
-    analogValue: bool
-    binaryInput: bool
-    binaryOutput: bool
-    binaryValue: bool
-    multiStateInput: bool
-    multiStateOutput: bool
-    multiStateValue: bool
+  devices_setup:
+    - deviceID: str? 
+      CoV_lifetime: int(60,28800)?
+      CoV_list:
+        - str? 
+      quick_poll_rate: int(3,30)?
+      quick_poll_list:
+        - str? 
+      slow_poll_rate: int(30,3000)?
+      slow_poll_list:
+        - str?
+      resub_on_iam: bool? #idk
+      reread_on_iam: bool? #idk
   entity_list:
     - str?
+  api_accessible: bool?
   foreignBBMD: str?
   foreignTTL: str?
   vendorID: int?

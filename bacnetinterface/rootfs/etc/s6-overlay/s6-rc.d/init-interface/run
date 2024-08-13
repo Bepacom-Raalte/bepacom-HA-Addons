@@ -17,8 +17,6 @@ declare foreignBBMD
 declare foreignTTL
 declare maxSegmentsAccepted
 declare defaultPriority
-declare updateInterval
-declare ipaddr
 
 # Functions
 
@@ -36,22 +34,29 @@ IPprefix_by_netmask() {
 
 bashio::log.info "Running init-interface."
 
-readarray -t eth_adapters < <(ifconfig -a | grep -oE '^(enp|eth|eno)[a-z0-9]+')
+readarray -t eth_adapters < <(ifconfig -a | grep -oE '^(eno|ens|en|eth)[a-z0-9]+')
 
-{ # Try
-    for adapter in "${eth_adapters[@]}"
-    do
-        ipaddr=$(ifconfig "$adapter" | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
-        if [ -n "$ipaddr" ]; then
-            netmask=$(ifconfig $adapter | grep 'Mask' | cut -d: -f4)
-            cidr=$(IPprefix_by_netmask $netmask)
-            break
-        fi
-    done
-} || {
-    bashio::log.warning "No suitable ethernet adapters found. You probably won't detect anything now."
+if (( ${#eth_adapters[@]} )); then
+    { # Try
+        for adapter in "${eth_adapters[@]}"
+        do
+            ipaddr=$(ifconfig "$adapter" | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
+            if [ -n "$ipaddr" ]; then
+                netmask=$(ifconfig $adapter | grep 'Mask' | cut -d: -f4)
+                cidr=$(IPprefix_by_netmask $netmask)
+                break
+            fi
+        done
+    } || {
+        bashio::log.warning "No suitable ethernet adapters found. Write the IP address of the device in the configuration manually."
+        ipaddr=$(hostname -i)
+        cidr="/24"
+    }
+else
+    bashio::log.warning "No suitable ethernet adapters found. Write the IP address of the device in the configuration manually."
     ipaddr=$(hostname -i)
-}
+    cidr="/24"
+fi
 
 header='[BACpypes]'
 objectname="objectName: $(bashio::config 'objectName')"
@@ -94,12 +99,37 @@ else
 fi
 
 defaultPriority="defaultPriority: $(bashio::config 'defaultPriority')"
-updateInterval="updateInterval: $(bashio::config 'updateInterval')"
 
 # Generate INI file
 
-printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentation" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" "$loglevel" "$defaultPriority" "$updateInterval" > /usr/bin/BACpypes.ini
+printf '%s\n' "$header" "$objectname" "$address" "$objectIdentifier" "$maxApduLenghtAccepted" "$segmentation" "$vendorID" "$foreignBBMD" "$foreignTTL" "$maxSegmentsAccepted" "$loglevel" "$defaultPriority" > /usr/bin/BACpypes.ini
 cat /usr/bin/BACpypes.ini
 
 printf "$(bashio::addon.ingress_url)" > /usr/bin/ingress.ini
 printf "${__BASHIO_SUPERVISOR_TOKEN}" > /usr/bin/auth_token.ini
+
+# Check for non existing config options
+
+if bashio::config.exists 'subscriptions'; then
+    bashio::addon.option 'subscriptions'
+fi 
+
+if bashio::config.exists 'updateInterval'; then
+    bashio::addon.option 'updateInterval'
+fi 
+
+if bashio::config.exists 'fast_poll_rate'; then
+    bashio::addon.option 'fast_poll_rate'
+fi 
+
+if bashio::config.exists 'fast_poll'; then
+    bashio::addon.option 'fast_poll'
+fi 
+
+if bashio::config.exists 'cov_whitelist'; then
+    bashio::addon.option 'cov_whitelist'
+fi 
+
+if bashio::config.exists 'export_log'; then
+    bashio::addon.option 'export_log'
+fi 

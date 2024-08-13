@@ -19,6 +19,7 @@
             <a id="docs" href="./redoc" title="API documentation can be found here. Need an internet connection to load the page.">Redoc API Docs</a>
             <a href="https://www.bepacom.nl" style="float:right;" title="Bepacom, the company that made this possible.">About</a>
             <a href="./apiv1/diagnostics/logs" style="float:right;" title="Download logs longer than Home Assistant's'.">Download logs</a>
+            <a style="float:right; cursor:pointer" title="Return to Home Assistant add-on view." onclick="goToAddon()">Add-on page</a>
         </div>
         <div class="div3">
             <button class="button" onclick="command('iam')" title="Send I Am Request over the BACnet network.">I Am Request</button>
@@ -33,12 +34,11 @@
             </label>
             {% for key in subs %}
             <label class="selectable-label">
-                {% set string_list = key | map('string') | list %}
-                <input type="checkbox" id="checkbox-{{ " ".join(string_list) }}">
+                <input type="checkbox" id="checkbox-{{ key.get_name() }}">
                 <span class="ede_selection">
-                    <a>{{ key[4] }}</a>
-                    <a>{{ key[1] }}</a>
-                    <a>{{ key[2] }}</a>
+                    <a>{{ key.get_name().split(",")[0] }}</a>
+                    <a>{{ key.get_name().split(",")[1] }}</a>
+                    <a>{{ key.get_name().split(",")[2] }}</a>
                 </span>
             </label>
             {% endfor %}
@@ -67,6 +67,12 @@
         </div>
     </div>
     <script>
+        function goToAddon() {
+            let url = top.location.href;
+            var new_url = url.replace("ingress", "addon")
+            top.location.href = new_url;
+        }
+
         const API_URL = './apiv1/json';
         var refreshing = false; // flag to check if the page is ready
         var devicedict = null;
@@ -168,8 +174,8 @@
             console.log(keys)
 
             for (let i = 0; i < keys.length; i++) {
-                let split_keys = keys[i].split(" ")
-                let device_identifier = split_keys[4]
+                let split_keys = keys[i].split(",")
+                let device_identifier = split_keys[0]
                 let object_identifier = split_keys[1]
                 let url = './apiv1/subscribe/' + device_identifier + "/" + object_identifier
                 console.log(url)

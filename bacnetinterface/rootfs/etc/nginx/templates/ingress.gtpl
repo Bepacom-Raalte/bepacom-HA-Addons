@@ -13,7 +13,11 @@ server {
         allow {{ . }};
     {{ end }}
 
-    deny all;
+    {{if not .accessible}}
+        deny all;
+    {{else}}
+        allow all;
+    {{end}}
 
     # forward request to backend
     location / {
