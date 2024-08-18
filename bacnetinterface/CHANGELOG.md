@@ -3,9 +3,6 @@
 # 1.5.0
 13/08/2024
 
-If there are any issues, please report on GitHub!
-Changed from v1.4.1 to 1.5.0 as there's a lot of changes!
-
 ## Added
 - Reading resolution property now. Integration will use it once it's updated as well. [#46](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/46)
 - Added devices_setup configuration option to allow the user to configure behaviour. See Documentation for usage. [#43](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/discussions/43)
