@@ -105,9 +105,37 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         self.update_event = update_event
         self.vendor_info = get_vendor_info(0)
         asyncio.get_event_loop().create_task(self.IAm_handler())
-        self.addon_device_config = addon_device_config
+        self.addon_device_config = (
+            addon_device_config if addon_device_config else list()
+        )
         self.startup_complete.set()
         LOGGER.debug("Application initialised")
+
+    def get_config_from_addon_config(self, device_identifier: ObjectIdentifier) -> dict:
+        specific_config = next(
+            (
+                config
+                for config in self.addon_device_config
+                if config.get("deviceID")
+                == f"{device_identifier[0]}:{device_identifier[1]}"
+            ),
+            None,
+        )
+        if specific_config:
+            return specific_config
+
+        all_config = next(
+            (
+                config
+                for config in self.addon_device_config
+                if config.get("deviceID") == f"all"
+            ),
+            None,
+        )
+        if all_config:
+            return all_config
+
+        return dict()
 
     async def generate_specific_tasks(
         self, device_identifier: ObjectIdentifier
@@ -522,10 +550,15 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         if not in_cache:
             await self.i_am_queue.put(apdu)
-        else:
+            return
+
+        config = self.get_config_from_addon_config(apdu.iAmDeviceIdentifier)
+
+        if config.get("resub_on_iam", True):
             # Check if object list is still the same, otherwise read entire dict again
             await self.handle_object_list_check(apdu)
 
+        if config.get("reread_on_iam", True):
             # Check if CoV tasks are still active, otherwise resub.
             await self.handle_cov_check(apdu.iAmDeviceIdentifier)
 
@@ -533,19 +566,28 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         device_id = apdu.iAmDeviceIdentifier[1]
 
-        object_list = self.bacnet_device_dict[f"device:{apdu.iAmDeviceIdentifier[1]}"][
+        old_object_list = self.bacnet_device_dict[
             f"device:{apdu.iAmDeviceIdentifier[1]}"
-        ].get("objectList")
+        ][f"device:{apdu.iAmDeviceIdentifier[1]}"].get("objectList")
 
         if not await self.read_multiple_device_props(apdu=apdu):
             LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
             if self.bacnet_device_dict.get(f"device:{device_id}"):
                 self.bacnet_device_dict.pop(f"device:{device_id}")
 
-        if object_list != self.bacnet_device_dict[
+        new_object_list = self.bacnet_device_dict[
             f"device:{apdu.iAmDeviceIdentifier[1]}"
-        ][f"device:{apdu.iAmDeviceIdentifier[1]}"].get("objectList"):
-            LOGGER.warning(f"Not implemented yet: object lists aren't equal!")
+        ][f"device:{apdu.iAmDeviceIdentifier[1]}"].get("objectList")
+
+        if apdu.iAmDeviceIdentifier in new_object_list:
+            new_object_list.remove(apdu.iAmDeviceIdentifier)
+
+        if list(old_object_list) != list(new_object_list):
+            LOGGER.debug(
+                f"Object lists aren't equal!... {old_object_list} -> {new_object_list}"
+            )
+
+            await self.read_multiple_objects(apdu.iAmDeviceIdentifier)
 
     def identifier_to_string(self, object_identifier) -> str:
         return f"{object_identifier[0].attr}:{object_identifier[1]}"

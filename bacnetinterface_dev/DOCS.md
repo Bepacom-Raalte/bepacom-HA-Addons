@@ -196,6 +196,8 @@ multiStateValue
 - `quick_poll_list` This key contains a list containing each object identifier the add-on has to poll at the poll rate defined above. The list can be empty if no quick polling is desired.
 - `slow_poll_rate` This key contains the rate at which quick poll objects have to be read. This is in seconds, between 30 and 3000.
 - `slow_poll_list` This key contains a list containing each object identifier the add-on has to poll at the poll rate defined above. The list can be empty if no slow polling is desired. A special "all" key will make the add-on poll all objects of the device.
+- `resub_on_iam` Resubscribe to an object with CoV when an I-Am request has been received. When the lifetime of the object has passed, enabling this key will result in the resubscription of a CoV subscription. Otherwise it'll just update any new information of the device.
+- `reread_on_iam` Reread the object list when an I-Am request has been received. This key will result in all objects of this device to be read again.
 
 The following properties will be read each poll:
 - presentValue
@@ -271,6 +273,7 @@ The amount of segments that the device can accept at most for a single service r
 ### Option: `maxApduLength` Maximum APDU Length Accepted
 Maximum size a BACnet message/segment is allowed to be. 
 A common BACnet/IP value and the default for the add-on is 1476, and a common BACnet/MSTP value is 480.
+
 
 ### Network port: `80/TCP`
 Port which the integration should connect to. If you leave this empty, the integration should connect to port 8099.
