@@ -36,14 +36,6 @@ def exception_handler(loop, context):
         LOGGER.error("Tried to log error, but something went horribly wrong!!!")
 
 
-def exception_handler(loop, context):
-    """Handle uncaught exceptions"""
-    try:
-        LOGGER.exception(f'An uncaught error occurred: {context["exception"]}')
-    except:
-        LOGGER.error("Tried to log error, but something went horribly wrong!!!")
-
-
 def get_ip_and_netmask():
     for iface, addrs in psutil.net_if_addrs().items():
         if iface.startswith(("enp", "eth", "eno")):

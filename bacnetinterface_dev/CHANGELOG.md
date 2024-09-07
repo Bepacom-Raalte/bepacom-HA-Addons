@@ -1,7 +1,7 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.5.1b2
-24/08/2024
+# 1.5.1
+07/09/2024
 
 ## Fixed
 - Fixed monitoring of CoV subscriptions failing due to loss of connection. CoV tasks will now get removed after trying to resub without response when the CoV lifetime has passed.

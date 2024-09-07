@@ -1,4 +1,5 @@
 """API script for BACnet add-on."""
+
 import asyncio
 import codecs
 import csv
@@ -633,13 +634,12 @@ async def write_property(
     deviceid: str = Path(description="device:instance"),
     objectid: str = Path(description="object:instance"),
     property: str = Path(description="property, for example presentValue"),
-    value: str
-    | int
-    | float
-    | bool
-    | None = Query(default=None, description="Property value"),
-    array_index: int
-    | None = Query(default=None, description="Array index, usually left empty"),
+    value: str | int | float | bool | None = Query(
+        default=None, description="Property value"
+    ),
+    array_index: int | None = Query(
+        default=None, description="Array index, usually left empty"
+    ),
     priority: int | None = Query(default=None, description="Write priority"),
 ):
     """Write to a property of an object from a device."""

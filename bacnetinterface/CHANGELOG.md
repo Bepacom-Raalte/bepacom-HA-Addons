@@ -1,5 +1,20 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.5.1
+07/09/2024
+
+## Fixed
+- Fixed monitoring of CoV subscriptions failing due to loss of connection. CoV tasks will now get removed after trying to resub without response when the CoV lifetime has passed.
+- If address changed since last I Am request, it'll get updated internally now.
+
+## Added
+- Added resubscribing CoV to an object after the subscription had been timed out due to no response. [#52](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/52)
+- `resub_on_iam` and `reread_on_iam` options under `devices_setup` in the add-on configuration. [#57](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/57)
+
+## Dependencies
+- ⬆️ Bumped base-python image to version v14.0.1.
+
+
 # 1.5.0
 13/08/2024
 

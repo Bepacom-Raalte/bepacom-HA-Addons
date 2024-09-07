@@ -1,7 +1,9 @@
 """BACnet handler classes for BACnet add-on."""
+
 import asyncio
 import json
 from ast import List
+from logging import config
 from math import e, isinf, isnan
 from re import A
 from typing import Any, Dict, TypeVar
@@ -29,6 +31,7 @@ from bacpypes3.local.binary import BinaryInputObject, BinaryValueObject
 from bacpypes3.object import CharacterStringValueObject, get_vendor_info
 from bacpypes3.pdu import Address
 from bacpypes3.primitivedata import ObjectIdentifier, ObjectType, OctetString
+from bacpypes3.service.cov import SubscriptionContextManager
 from const import (LOGGER, device_properties_to_read,
                    object_properties_to_read_once,
                    object_properties_to_read_periodically,
@@ -36,6 +39,34 @@ from const import (LOGGER, device_properties_to_read,
 
 KeyType = TypeVar("KeyType")
 _debug = 0
+
+
+def custom_init(
+    self,
+    app: "Application",  # noqa: F821
+    address: Address,
+    monitored_object_identifier: ObjectIdentifier,
+    subscriber_process_identifier: int,
+    issue_confirmed_notifications: bool,
+    lifetime: int,
+):
+    original_init(
+        self,
+        app,
+        address,
+        monitored_object_identifier,
+        subscriber_process_identifier,
+        issue_confirmed_notifications,
+        lifetime,
+    )
+
+    # result of refresh task to check if exception occurred
+    self.refresh_subscription_task = None
+
+
+original_init = SubscriptionContextManager.__init__
+
+SubscriptionContextManager.__init__ = custom_init
 
 
 class BACnetIOHandler(NormalApplication, ForeignApplication):
@@ -74,9 +105,37 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         self.update_event = update_event
         self.vendor_info = get_vendor_info(0)
         asyncio.get_event_loop().create_task(self.IAm_handler())
-        self.addon_device_config = addon_device_config
+        self.addon_device_config = (
+            addon_device_config if addon_device_config else list()
+        )
         self.startup_complete.set()
         LOGGER.debug("Application initialised")
+
+    def get_config_from_addon_config(self, device_identifier: ObjectIdentifier) -> dict:
+        specific_config = next(
+            (
+                config
+                for config in self.addon_device_config
+                if config.get("deviceID")
+                == f"{device_identifier[0]}:{device_identifier[1]}"
+            ),
+            None,
+        )
+        if specific_config:
+            return specific_config
+
+        all_config = next(
+            (
+                config
+                for config in self.addon_device_config
+                if config.get("deviceID") == f"all"
+            ),
+            None,
+        )
+        if all_config:
+            return all_config
+
+        return dict()
 
     async def generate_specific_tasks(
         self, device_identifier: ObjectIdentifier
@@ -422,9 +481,11 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         return mapping
 
     def dev_to_addr(self, dev: ObjectIdentifier) -> Address | None:
-        for instance in self.device_info_cache.instance_cache:
-            if instance == dev[1]:
-                return self.device_info_cache.instance_cache[instance].address
+
+        for address, device_info in self.device_info_cache.address_cache.items():
+            if device_info.device_instance == dev[1]:
+                return address
+
         return None
 
     def addr_to_dev(self, addr: Address) -> ObjectIdentifier | None:
@@ -479,6 +540,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         if device_id in self.device_info_cache.instance_cache:
             LOGGER.debug(f"Device {apdu.iAmDeviceIdentifier} already in cache!")
+            await self.device_info_cache.set_device_info(apdu)
             in_cache = True
         else:
             await self.device_info_cache.set_device_info(apdu)
@@ -488,6 +550,125 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         if not in_cache:
             await self.i_am_queue.put(apdu)
+            return
+
+        config = self.get_config_from_addon_config(apdu.iAmDeviceIdentifier)
+
+        if config.get("resub_on_iam", True):
+            # Check if object list is still the same, otherwise read entire dict again
+            await self.handle_object_list_check(apdu)
+
+        if config.get("reread_on_iam", True):
+            # Check if CoV tasks are still active, otherwise resub.
+            await self.handle_cov_check(apdu.iAmDeviceIdentifier)
+
+    async def handle_object_list_check(self, apdu) -> None:
+
+        device_id = apdu.iAmDeviceIdentifier[1]
+
+        old_object_list = self.bacnet_device_dict[
+            f"device:{apdu.iAmDeviceIdentifier[1]}"
+        ][f"device:{apdu.iAmDeviceIdentifier[1]}"].get("objectList")
+
+        if not await self.read_multiple_device_props(apdu=apdu):
+            LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
+            if self.bacnet_device_dict.get(f"device:{device_id}"):
+                self.bacnet_device_dict.pop(f"device:{device_id}")
+
+        new_object_list = self.bacnet_device_dict[
+            f"device:{apdu.iAmDeviceIdentifier[1]}"
+        ][f"device:{apdu.iAmDeviceIdentifier[1]}"].get("objectList")
+
+        if apdu.iAmDeviceIdentifier in new_object_list:
+            new_object_list.remove(apdu.iAmDeviceIdentifier)
+
+        if list(old_object_list) != list(new_object_list):
+            LOGGER.debug(
+                f"Object lists aren't equal!... {old_object_list} -> {new_object_list}"
+            )
+
+            await self.read_multiple_objects(apdu.iAmDeviceIdentifier)
+
+    def identifier_to_string(self, object_identifier) -> str:
+        return f"{object_identifier[0].attr}:{object_identifier[1]}"
+
+    def task_in_tasklist(self, task_name) -> bool:
+        return any(task_name in task.get_name() for task in self.subscription_tasks)
+
+    async def handle_cov_check(self, device_identifier) -> None:
+
+        device_string = self.identifier_to_string(device_identifier)
+
+        if self.addon_device_config is None:
+            return
+
+        specific_config = [
+            config
+            for config in self.addon_device_config
+            if config.get("deviceID")
+            == f"{device_identifier[0]}:{device_identifier[1]}"
+        ]
+
+        if not specific_config:
+            specific_config = [
+                config
+                for config in self.addon_device_config
+                if config.get("deviceID") == "all"
+            ]
+            if not specific_config:
+                return
+
+        index = self.addon_device_config.index(specific_config[0])
+
+        config = self.addon_device_config[index]
+
+        if "all" in config.get("CoV_list", []):
+            object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
+                f"device:{device_identifier[1]}"
+            ].get("objectList")
+
+            if device_identifier in object_list:
+                object_list.remove(device_identifier)
+
+            object_list = [
+                object_identifier
+                for object_identifier in object_list
+                if object_identifier[0] in subscribable_objects
+            ]
+
+            for object_identifier in object_list:
+
+                task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)},confirmed"
+
+                if self.task_in_tasklist(task_name):
+                    continue
+
+                await self.create_subscription_task(
+                    device_identifier=device_identifier,
+                    object_identifier=object_identifier,
+                    confirmed_notifications=True,
+                    lifetime=config.get(
+                        "CoV_lifetime", self.default_subscription_lifetime
+                    ),
+                )
+                await asyncio.sleep(0)
+
+        elif config.get("CoV_list", []):
+
+            for object_identifier in config.get("CoV_list"):
+
+                task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)},confirmed"
+
+                if self.task_in_tasklist(task_name):
+                    continue
+
+                await self.create_subscription_task(
+                    device_identifier=device_identifier,
+                    object_identifier=object_identifier,
+                    confirmed_notifications=True,
+                    lifetime=config.get("CoV_lifetime"),
+                )
+                await asyncio.sleep(0)
 
     async def IAm_handler(self):
         """Do the things when receiving I Am requests"""
@@ -1094,7 +1275,45 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
                 LOGGER.debug(f"Created {task_name} subscription task successfully")
 
                 while True:
-                    property_identifier, property_value = await subscription.get_value()
+                    try:
+                        property_identifier, property_value = await asyncio.wait_for(
+                            subscription.get_value(), 10
+                        )
+                    except asyncio.TimeoutError:
+                        # check if address has changes
+                        if subscription.address != self.dev_to_addr(
+                            dev=device_identifier
+                        ):
+                            old_key = (
+                                subscription.address,
+                                subscription.subscriber_process_identifier,
+                            )
+                            self._cov_contexts.pop(old_key)
+
+                            subscription.address = self.dev_to_addr(
+                                dev=device_identifier
+                            )
+
+                            new_key = (
+                                subscription.address,
+                                subscription.subscriber_process_identifier,
+                            )
+
+                            self._cov_contexts[new_key] = subscription
+
+                        if not isinstance(
+                            subscription.refresh_subscription_task, asyncio.Task
+                        ):
+                            continue
+
+                        if subscription.refresh_subscription_task.done():
+                            # check for exceptions (gets raised by result if there is)
+                            subscription.refresh_subscription_task.result()
+
+                        continue
+
+                    except Exception:
+                        raise
 
                     object_class = self.vendor_info.get_object_class(
                         subscription.monitored_object_identifier[0]
