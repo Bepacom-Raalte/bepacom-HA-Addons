@@ -554,11 +554,11 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         config = self.get_config_from_addon_config(apdu.iAmDeviceIdentifier)
 
-        if config.get("resub_on_iam", True):
+        if config.get("reread_on_iam", True):
             # Check if object list is still the same, otherwise read entire dict again
             await self.handle_object_list_check(apdu)
 
-        if config.get("reread_on_iam", True):
+        if config.get("resub_on_iam", True):
             # Check if CoV tasks are still active, otherwise resub.
             await self.handle_cov_check(apdu.iAmDeviceIdentifier)
 
