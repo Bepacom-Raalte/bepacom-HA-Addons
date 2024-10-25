@@ -15,12 +15,12 @@ RUN \
     'pydantic<=1.10.17' \
     'fastapi<=0.108.0' \
     'jinja2<=3.1.4' \
-    'uvicorn<=0.30.1' \
-    'websockets<=12.0' \
-    'python-multipart<=0.0.9' \
+    'uvicorn<=0.32.0' \
+    'websockets<=13.1' \
+    'python-multipart<=0.0.12' \
     'requests<=2.32.3 ' \
     'backoff<=2.2.1' \
-    'psutil<=6.0.0'
+    'psutil<=6.1.0'
 
 WORKDIR /
 

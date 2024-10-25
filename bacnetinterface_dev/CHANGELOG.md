@@ -1,5 +1,24 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+# 1.6.0b1
+25/10/2024
+
+## Added
+- New apiv2 points!
+	- _/cov_ for creating, reading and deleting CoV subscriptions.
+	- Improved reading and writing functionality.
+
+## Changed
+- Subscriptions are now monitored through context, through apiv2 current subscription status can be read.
+- Subscription tasks are now eager, hopefully improving performance.
+
+## Dependencies
+- ⬆️ Bumped psutil to version v6.1.0.
+- ⬆️ Bumped python-multipart to version v0.0.12.
+- ⬆️ Bumped websockets to version v13.1.
+- ⬆️ Bumped uvicorn to version v0.32.0.
+
+
 # 1.5.1
 07/09/2024
 
@@ -12,7 +31,7 @@
 - `resub_on_iam` and `reread_on_iam` options under `devices_setup` in the add-on configuration. [#57](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/57)
 
 ## Dependencies
-- ⬆️ Bumped base-python image to version v14.0.1.
+- ⬆️ Bumped psutil to version v14.0.1.
 
 
 # 1.5.0
@@ -22,7 +41,7 @@
 - Reading resolution property now. Integration will use it once it's updated as well. [#46](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/46)
 - Added devices_setup configuration option to allow the user to configure behaviour. See Documentation for usage. [#43](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/discussions/43)
 - Updated DOCS.md
-- Added units for entity to BACnet translation. [#47](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/47)\
+- Added units for entity to BACnet translation. [#47](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/47)
 - Added array index to apiv2 writes.
 
 ## Fixed

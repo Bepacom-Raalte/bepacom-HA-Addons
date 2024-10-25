@@ -2,7 +2,8 @@
 <html>
 <head>
 	<link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
-	<link href="{{ url_for('static', path='/css/styles.css') }}" rel="stylesheet">
+	<!-- <link href="{{ url_for('static', path='/css/styles.css') }}" rel="stylesheet"> -->
+	<link href="./static/css/styles.css" rel="stylesheet">
 	<title>WebUI</title>
 </head>
 <body>
@@ -29,12 +30,12 @@
 		<div class="div4">
 			<label style="background-color: #f60000; color: white;">EDE files:</label>
 			{%	for file in files	%}
-				{% for key, value in file.items() %}
-				<label class="selectable-label">
-					<input type="checkbox" id="checkbox-{{ key }}">
-					<span class="ede_selection">{{ key }}</span>
-				</label>
-				{% endfor %}
+			{% for key, value in file.items() %}
+			<label class="selectable-label">
+				<input type="checkbox" id="checkbox-{{ key }}">
+				<span class="ede_selection">{{ key }}</span>
+			</label>
+			{% endfor %}
 			{%	endfor	%}
 		</div>
 		<div class="div5">
@@ -49,11 +50,11 @@
 		</div>
 	</div>
 	<script>
-        function goToAddon() {
-            let url = top.location.href;
-            var new_url = url.replace("ingress", "addon")
-            top.location.href = new_url;
-        }
+		function goToAddon() {
+			let url = top.location.href;
+			var new_url = url.replace("ingress", "addon")
+			top.location.href = new_url;
+		}
 
 		function uploadFiles(event) {
 			console.log("Uploading...")
@@ -72,43 +73,43 @@
 			fetch(url, {
 				method: 'POST',
 				headers: {
-				  'accept': 'application/json'
+					'accept': 'application/json'
 				},
 				body: formData
 			})
-			.then(response => {
-				if (response.status === 200) {
-					alert('EDE Files added!');
-				} else {
-					console.log("Unexpected response:", response.status);
-					// Handle other response statuses here
-					alert('Something went wrong...');
-				}
-			})
-			.then(data => {
-				console.log('API response:', data);
-				// Handle the API response here
-				location.reload() 
-			})
-			.catch(error => {
-				console.error('Error:', error);
-				// Handle any errors that occur during the API request here
-				location.reload() 
-			});
+				.then(response => {
+					if (response.status === 200) {
+						alert('EDE Files added!');
+					} else {
+						console.log("Unexpected response:", response.status);
+						// Handle other response statuses here
+						alert('Something went wrong...');
+					}
+				})
+				.then(data => {
+					console.log('API response:', data);
+					// Handle the API response here
+					location.reload()
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					// Handle any errors that occur during the API request here
+					location.reload()
+				});
 		}
-		
+
 
 		function deleteFiles() {
 			// Get all checkboxes that are checked
 			var checkboxes = document.querySelectorAll('.selectable-label input[type="checkbox"]:checked');
 
 			// Get the selected keys as an array
-			var keys = Array.from(checkboxes).map(function(checkbox) {
+			var keys = Array.from(checkboxes).map(function (checkbox) {
 				return checkbox.id.replace('checkbox-', '');
 			});
 
 			// Prepare the query parameter value
-			var queryParam = 'device_ids=' + keys.map(function(key) {
+			var queryParam = 'device_ids=' + keys.map(function (key) {
 				return key;
 			}).join(',');
 
@@ -119,28 +120,28 @@
 			fetch(url + '?' + queryParam, {
 				method: 'DELETE',
 				headers: {
-				  'accept': 'application/json'
+					'accept': 'application/json'
 				}
 			})
-			.then(response => {
-				if (response.status === 200) {
-					alert('Deleted selection!');
-				} else {
-					console.log("Unexpected response:", response.status);
-					// Handle other response statuses here
-					alert('Something went wrong...');
-				}
-			})
-			.then(data => {
-				console.log('API response:', data);
-				// Handle the API response here
-				location.reload() 
-			})
-			.catch(error => {
-				console.error('Error:', error);
-				// Handle any errors that occur during the API request here
-				location.reload() 
-			});
+				.then(response => {
+					if (response.status === 200) {
+						alert('Deleted selection!');
+					} else {
+						console.log("Unexpected response:", response.status);
+						// Handle other response statuses here
+						alert('Something went wrong...');
+					}
+				})
+				.then(data => {
+					console.log('API response:', data);
+					// Handle the API response here
+					location.reload()
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					// Handle any errors that occur during the API request here
+					location.reload()
+				});
 		}
 
 

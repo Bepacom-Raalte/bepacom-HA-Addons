@@ -340,6 +340,8 @@ async def main():
     LOGGER.addHandler(stream_handler)
 
     LOGGER.setLevel("DEBUG")
+    
+    LOGGER.debug(f"Starting with settings: ID = {object_identifier}, Name = {object_name}, IP = {ipv4_address}, max apdu = {max_apdu}, max segments = {max_segments}, segmentation = {segmentation_supported}, foreign IP = {foreign_ip}, log level = {loglevel}")
 
     this_device = DeviceObject(
         objectIdentifier=ObjectIdentifier(f"device,{object_identifier}"),
@@ -401,6 +403,7 @@ async def main():
 
     webAPI.sub_list = app.subscription_tasks
     webAPI.bacnet_device_dict = app.bacnet_device_dict
+    webAPI.bacnet_application = app
     webAPI.who_is_func = app.who_is
     webAPI.i_am_func = app.i_am
     webAPI.events.startup_complete_event = app.startup_complete

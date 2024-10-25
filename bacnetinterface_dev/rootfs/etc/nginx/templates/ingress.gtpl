@@ -30,6 +30,11 @@ server {
         proxy_pass http://127.0.0.1:7813;
     }
 
+    location /css/styles.css {
+        add_header Content-Type text/css;
+        proxy_pass http://127.0.0.1:7813/css/styles.css;
+    }
+
     location /ws {
         proxy_pass http://127.0.0.1:7813/ws;
         proxy_http_version 1.1;
