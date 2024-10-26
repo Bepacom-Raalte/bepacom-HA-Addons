@@ -1,7 +1,7 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.6.0b1
-25/10/2024
+# 1.6.0b2
+26/10/2024
 
 ## Added
 - New apiv2 points!
@@ -13,10 +13,13 @@
 - Subscription tasks are now eager, hopefully improving performance.
 
 ## Dependencies
-- ⬆️ Bumped psutil to version v6.1.0.
-- ⬆️ Bumped python-multipart to version v0.0.12.
-- ⬆️ Bumped websockets to version v13.1.
-- ⬆️ Bumped uvicorn to version v0.32.0.
+~~- ⬆️ Bumped psutil to version v6.1.0.~~
+
+~~- ⬆️ Bumped python-multipart to version v0.0.12.~~
+
+~~- ⬆️ Bumped websockets to version v13.1.~~
+
+~~- ⬆️ Bumped uvicorn to version v0.32.0.~~
 
 
 # 1.5.1
