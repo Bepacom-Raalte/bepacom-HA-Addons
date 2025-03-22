@@ -11,16 +11,17 @@ RUN \
     py3-setuptools \
     py3-wheel \
   && pip3 install --no-cache-dir --upgrade pip \
-    'bacpypes3<=0.0.98' \
-    'pydantic<=1.10.17' \
-    'fastapi<=0.108.0' \
-    'jinja2<=3.1.4' \
-    'uvicorn<=0.30.1' \
-    'websockets<=12.0' \
-    'python-multipart<=0.0.9' \
+    'bacpypes3<=0.0.102' \
+    'pydantic<=2.10.6' \
+    'fastapi<=0.115.11' \
+    'jinja2<=3.1.6' \
+    'uvicorn<=0.34.0' \
+    'websockets<=15.0.1' \
+    'python-multipart<=0.0.20' \
     'requests<=2.32.3 ' \
     'backoff<=2.2.1' \
-    'psutil<=6.0.0'
+    'sqlitedict<=2.1.0' \
+    'psutil<=7.0.0'
 
 WORKDIR /
 

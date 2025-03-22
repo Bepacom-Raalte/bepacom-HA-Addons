@@ -1,7 +1,11 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.6.0b2
-26/10/2024
+# 1.6.0b3
+22/03/2025
+
+## Fixed
+- CoV configuration not filtering properly causing no CoV subscriptions being made.
+- CSS file should now be served by NGINX
 
 ## Added
 - New apiv2 points!
@@ -11,15 +15,20 @@
 ## Changed
 - Subscriptions are now monitored through context, through apiv2 current subscription status can be read.
 - Subscription tasks are now eager, hopefully improving performance.
+- BACnet data now being handled through a SQLite database instead of Python dict.
+- Saved data gets converted to json at the moment of saving to db.
 
 ## Dependencies
-~~- ⬆️ Bumped psutil to version v6.1.0.~~
-
-~~- ⬆️ Bumped python-multipart to version v0.0.12.~~
-
-~~- ⬆️ Bumped websockets to version v13.1.~~
-
-~~- ⬆️ Bumped uvicorn to version v0.32.0.~~
+- ⬆️ Bumped bacpypes3 to version 0.0.102.
+- ⬆️ Bumped pydantic to version 2.10.6.
+- ⬆️ Bumped fastapi to version 0.115.11.
+- ⬆️ Bumped jinja2 to version 3.1.6.
+- ⬆️ Bumped uvicorn to version 0.34.0.
+- ⬆️ Bumped websockets to version 15.0.1.
+- ⬆️ Bumped python-multipart to version 0.0.20.
+- ⬆️ Bumped requests to version 2.32.3.
+- ⬆️ Bumped psutil to version 7.0.0.
+- ⬆️ added sqlitedict version 2.1.0.
 
 
 # 1.5.1

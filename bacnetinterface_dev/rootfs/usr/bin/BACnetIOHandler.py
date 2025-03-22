@@ -7,40 +7,83 @@ from contextvars import Context, ContextVar
 from logging import config
 from math import e, isinf, isnan
 from re import A
-from typing import Any, Dict, TypeVar, Callable
+from typing import Any, Callable, Dict, TypeVar
 
 import backoff
+import bacpypes3
 import requests
 import websockets
-from bacpypes3.apdu import (AbortPDU, ConfirmedCOVNotificationRequest,
-							ErrorPDU, ErrorRejectAbortNack,
-							ReadPropertyMultipleRequest, ReadPropertyRequest,
-							RejectPDU, SimpleAckPDU, SubscribeCOVRequest,
-							UnconfirmedCOVNotificationRequest,
-							WritePropertyRequest)
-from bacpypes3.basetypes import (BinaryPV, DeviceStatus, EngineeringUnits,
-								 ErrorClass, ErrorCode, ErrorType, EventState,
-								 PropertyIdentifier, ReadAccessResult,
-								 Reliability, ServicesSupported)
-from bacpypes3.constructeddata import AnyAtomic
+from bacpypes3.apdu import (
+	AbortPDU,
+	ConfirmedCOVNotificationRequest,
+	ErrorPDU,
+	ErrorRejectAbortNack,
+	ReadPropertyMultipleRequest,
+	ReadPropertyRequest,
+	RejectPDU,
+	SimpleAckPDU,
+	SubscribeCOVRequest,
+	UnconfirmedCOVNotificationRequest,
+	WritePropertyRequest,
+)
+from bacpypes3.basetypes import (
+	BinaryPV,
+	DeviceStatus,
+	EngineeringUnits,
+	ErrorClass,
+	ErrorCode,
+	ErrorType,
+	EventState,
+	PropertyIdentifier,
+	ReadAccessResult,
+	Reliability,
+	ServicesSupported,
+)
+from bacpypes3.constructeddata import AnyAtomic, ExtendedList, Sequence
 from bacpypes3.debugging import bacpypes_debugging
 from bacpypes3.errors import *
 from bacpypes3.ipv4.app import ForeignApplication, NormalApplication
-from bacpypes3.json.util import octetstring_encode
+from bacpypes3.json.util import (
+	atomic_encode,
+	extendedlist_to_json_list,
+	octetstring_encode,
+	sequence_to_json,
+	taglist_to_json_list,
+	integer_encode
+)
 from bacpypes3.local.analog import AnalogInputObject, AnalogValueObject
 from bacpypes3.local.binary import BinaryInputObject, BinaryValueObject
 from bacpypes3.object import CharacterStringValueObject, get_vendor_info
 from bacpypes3.pdu import Address
-from bacpypes3.primitivedata import ObjectIdentifier, ObjectType, OctetString
+from bacpypes3.primitivedata import (
+	Atomic,
+	ObjectIdentifier,
+	ObjectType,
+	OctetString,
+	TagList,
+)
 from bacpypes3.service.cov import SubscriptionContextManager
-from const import (LOGGER, device_properties_to_read,
-				   object_properties_to_read_once,
-				   object_properties_to_read_periodically,
-				   subscribable_objects)
-
+from const import (
+	LOGGER,
+	device_properties_to_read,
+	object_properties_to_read_once,
+	object_properties_to_read_periodically,
+	subscribable_objects,
+)
+from sqlitedict import SqliteDict
+from utils import (
+	bitstring_alt_encode,
+	enumerated_alt_encode,
+	objectidentifier_alt_encode,
+)
 
 KeyType = TypeVar("KeyType")
 _debug = 0
+_create_task_delay = 0.001
+
+bacpypes3.json.util.objectidentifier_encode = objectidentifier_alt_encode
+bacpypes3.json.util.bitstring_encode = bitstring_alt_encode
+bacpypes3.json.util.enumerated_encode = enumerated_alt_encode
 
 
 def custom_init(
@@ -72,7 +115,7 @@ SubscriptionContextManager.__init__ = custom_init
 
 
 class BACnetIOHandler(NormalApplication, ForeignApplication):
-	bacnet_device_dict: dict = {}
+	bacnet_device_dict: SqliteDict = SqliteDict("bacnet.sqlite", autocommit=True)
 	subscription_tasks: list = []
 	update_event: asyncio.Event = asyncio.Event()
 	startup_complete: asyncio.Event = asyncio.Event()
@@ -202,7 +245,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 			object_list = [
 				object_identifier
 				for object_identifier in object_list
-				if object_identifier[0] in subscribable_objects
+				if ObjectType(object_identifier[0]) in subscribable_objects
 			]
 
 			for object_identifier in object_list:
@@ -214,7 +257,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 						"CoV_lifetime", self.default_subscription_lifetime
 					),
 				)
-				#await asyncio.sleep(0)
+				# await asyncio.sleep(_create_task_delay)
 
 		elif config.get("CoV_list", []):
 			for object_identifier in config.get("CoV_list"):
@@ -224,7 +267,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 					confirmed_notifications=True,
 					lifetime=config.get("CoV_lifetime"),
 				)
-				#await asyncio.sleep(0)
+				# await asyncio.sleep(_create_task_delay)
 
 		return
 
@@ -283,7 +326,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 			object_list = [
 				object_identifier
 				for object_identifier in object_list
-				if object_identifier[0] in subscribable_objects
+				if ObjectType(object_identifier[0]) in subscribable_objects
 			]
 
 			for object_identifier in object_list:
@@ -293,7 +336,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 					confirmed_notifications=True,
 					lifetime=config.get("CoV_lifetime", 600),
 				)
-				#await asyncio.sleep(0)
+				# await asyncio.sleep(_create_task_delay)
 
 		elif config.get("CoV_list", []):
 			for object_identifier in config.get("CoV_list"):
@@ -303,7 +346,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 					confirmed_notifications=True,
 					lifetime=config.get("CoV_lifetime", 600),
 				)
-				#await asyncio.sleep(0)
+				# await asyncio.sleep(_create_task_delay)
 
 		return
 
@@ -334,7 +377,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 						)
 						continue
 
-					if services_supported["read-property-multiple"] == 1:
+					if "read-property-multiple" in ServicesSupported(services_supported):
 						try:
 							response = await self.read_property_multiple(
 								address=self.dev_to_addr(device_identifier),
@@ -543,7 +586,10 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 		if device_id in self.device_info_cache.instance_cache:
 			LOGGER.debug(f"Device {apdu.iAmDeviceIdentifier} already in cache!")
 			await self.device_info_cache.set_device_info(apdu)
-			in_cache = True
+			if self.bacnet_device_dict.get(f"device:{device_id}", False):
+				in_cache = False
+			else:
+				in_cache = True
 		else:
 			await self.device_info_cache.set_device_info(apdu)
 			in_cache = False
@@ -635,7 +681,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 			object_list = [
 				object_identifier
 				for object_identifier in object_list
-				if object_identifier[0] in subscribable_objects
+				if ObjectType(object_identifier[0]) in subscribable_objects
 			]
 
 			for object_identifier in object_list:
@@ -653,7 +699,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 						"CoV_lifetime", self.default_subscription_lifetime
 					),
 				)
-				#await asyncio.sleep(0)
+				# await asyncio.sleep(_create_task_delay)
 
 		elif config.get("CoV_list", []):
 
@@ -670,56 +716,54 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 					confirmed_notifications=True,
 					lifetime=config.get("CoV_lifetime"),
 				)
-				#await asyncio.sleep(0)
+				# await asyncio.sleep(_create_task_delay)
 
 	async def IAm_handler(self):
 		"""Do the things when receiving I Am requests"""
 
 		while True:
-			try:
-				apdu = await self.i_am_queue.get()
+			apdu = await self.i_am_queue.get()
 
-				device_id = apdu.iAmDeviceIdentifier[1]
+			device_id = apdu.iAmDeviceIdentifier[1]
 
-				# if failed stop handling response
-				if not await self.read_multiple_device_props(apdu=apdu):
-					LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
-					if self.bacnet_device_dict.get(f"device:{device_id}"):
-						self.bacnet_device_dict.pop(f"device:{device_id}")
-					continue
+			LOGGER.debug(f"I am handler for: {device_id}")
 
-				if not self.bacnet_device_dict.get(f"device:{device_id}"):
-					LOGGER.warning(f"Failed to get: {device_id}")
-					continue
+			# if failed stop handling response
+			if not await self.read_multiple_device_props(apdu=apdu):
+				LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
+				if self.bacnet_device_dict.get(f"device:{device_id}"):
+					self.bacnet_device_dict.pop(f"device:{device_id}")
+				continue
 
-				if not self.bacnet_device_dict[f"device:{device_id}"].get(
-					f"device:{device_id}"
-				):
-					LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
-					continue
+			if not self.bacnet_device_dict.get(f"device:{device_id}"):
+				LOGGER.warning(f"Failed to get: {device_id}")
+				continue
 
-				services_supported = self.bacnet_device_dict[f"device:{device_id}"][
-					f"device:{device_id}"
-				].get("protocolServicesSupported", ServicesSupported())
+			if not self.bacnet_device_dict[f"device:{device_id}"].get(
+				f"device:{device_id}"
+			):
+				LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
+				continue
 
-				if services_supported["read-property-multiple"] == 1:
-					await self.read_multiple_objects(
-						device_identifier=apdu.iAmDeviceIdentifier
-					)
-				else:
-					await self.read_objects(device_identifier=apdu.iAmDeviceIdentifier)
+			services_supported = self.bacnet_device_dict[f"device:{device_id}"][
+				f"device:{device_id}"
+			].get("protocolServicesSupported", ServicesSupported())
 
-				if self.addon_device_config:
-					await self.generate_specific_tasks(
-						device_identifier=apdu.iAmDeviceIdentifier
-					)
-				else:
-					await self.subscribe_object_list(
-						device_identifier=apdu.iAmDeviceIdentifier
-					)
+			if "read-property-multiple" in ServicesSupported(services_supported):
+				await self.read_multiple_objects(
+					device_identifier=apdu.iAmDeviceIdentifier
+				)
+			else:
+				await self.read_objects(device_identifier=apdu.iAmDeviceIdentifier)
 
-			except Exception as err:
-				LOGGER.error(f"I Am Handler failed {apdu.iAmDeviceIdentifier}: {err}")
+			if self.addon_device_config:
+				await self.generate_specific_tasks(
+					device_identifier=apdu.iAmDeviceIdentifier
+				)
+			else:
+				await self.subscribe_object_list(
+					device_identifier=apdu.iAmDeviceIdentifier
+				)
 
 	def dict_updater(
 		self,
@@ -728,102 +772,73 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 		property_identifier: PropertyIdentifier,
 		property_value,
 	):
+
 		if isinstance(property_value, ErrorType):
-			return
-		elif property_value is None or property_identifier is None:
-			LOGGER.debug(
-				f"NoneType property (identifier) value: {device_identifier}, {object_identifier}, {property_identifier} {property_value}"
+			LOGGER.info(
+				f"Error updating: {device_identifier} {object_identifier} {property_identifier} {sequence_to_json(property_value)}"
 			)
 			return
-		elif isinstance(property_value, float):
+		
+		if isinstance(property_value, AnyAtomic):
+			property_value = property_value.get_value()
+			LOGGER.info(
+				f"Get value from any atomic: {device_identifier} {object_identifier} {property_identifier} {property_value}"
+			)
+
+		if isinstance(property_value, Atomic):
+			property_value = atomic_encode(property_value)
+			LOGGER.debug(
+				f"Update atomic: {device_identifier} {object_identifier} {property_identifier} {property_value}"
+			)
+
+		elif isinstance(property_value, Sequence):
+			property_value = sequence_to_json(property_value)
+			LOGGER.debug(
+				f"Update sequence: {device_identifier} {object_identifier} {property_identifier} {property_value}"
+			)
+
+		elif isinstance(property_value, ExtendedList):
+			property_value = extendedlist_to_json_list(property_value)
+			LOGGER.debug(
+				f"Update extendedlist: {device_identifier} {object_identifier} {property_identifier} {property_value}"
+			)
+
+		elif isinstance(property_value, TagList):
+			property_value = taglist_to_json_list(property_value)
+			LOGGER.debug(
+				f"Update taglist: {device_identifier} {object_identifier} {property_identifier} {property_value}"
+			)
+
+		else:
+			LOGGER.warning(
+				f"None of the ones before update: {device_identifier} {object_identifier} {property_identifier} {property_value}"
+			)
+			return
+		
+		if isinstance(property_value, float):
 			if isnan(property_value):
 				LOGGER.warning(
-					f"Ignoring property: {device_identifier}, {object_identifier}, {property_identifier}... NaN value: {property_value}"
+					f"NaN property cast as None: {device_identifier}, {object_identifier}, {property_identifier}... NaN value: {property_value}"
 				)
-				property_value = 0
-				return
-			if isinf(property_value):
+				property_value = None
+			elif isinf(property_value):
 				LOGGER.warning(
-					f"Ignoring property: {device_identifier}, {object_identifier}, {property_identifier}... Inf value: {property_value}"
+					f"Inf property cast as None: {device_identifier}, {object_identifier}, {property_identifier}... Inf value: {property_value}"
 				)
-				property_value = 0
-				return
-			property_value = round(property_value, 4)
-		elif isinstance(property_value, AnyAtomic):
-			LOGGER.debug(
-				f"AnyAtomic property value: {device_identifier}, {object_identifier}, {property_identifier} {property_value}"
-			)
-			property_value = property_value.get_value()
+				property_value = None
+			else:				
+				property_value = round(property_value, 4)
 
-		if isinstance(property_value, list):
-			prop_list: list = []
-			for val in property_value:
-				if isinstance(val, ObjectIdentifier):
-					prop_list.append(
-						[
-							val[0].attr,
-							val[1],
-						]
-					)
-
-		if isinstance(property_value, list) and all(
-			isinstance(item, ReadAccessResult) for item in property_value
-		):
-			LOGGER.debug(
-				f"ReadAccessResult property value: {device_identifier}, {object_identifier}, {property_identifier} {property_value}"
-			)
-			return  # ignore for now...
-
-		if isinstance(property_value, ObjectIdentifier):
-			self.deep_update(
-				self.bacnet_device_dict,
-				{
-					f"{device_identifier[0]}:{device_identifier[1]}": {
-						f"{object_identifier[0].attr}:{object_identifier[1]}": {
-							property_identifier.attr: (
-								property_value[0].attr,
-								property_value[1],
-							)
-						}
+		self.deep_update(
+			self.bacnet_device_dict,
+			{
+				f"{device_identifier[0]}:{device_identifier[1]}": {
+					f"{object_identifier[0].attr}:{object_identifier[1]}": {
+						property_identifier.attr: property_value
 					}
-				},
-			)
-		elif isinstance(
-			property_value,
-			(EventState, DeviceStatus, EngineeringUnits, Reliability, BinaryPV),
-		):
-			self.deep_update(
-				self.bacnet_device_dict,
-				{
-					f"{device_identifier[0]}:{device_identifier[1]}": {
-						f"{object_identifier[0].attr}:{object_identifier[1]}": {
-							property_identifier.attr: property_value.attr,
-						}
-					}
-				},
-			)
-		elif isinstance(property_value, OctetString):
-			self.deep_update(
-				self.bacnet_device_dict,
-				{
-					f"{device_identifier[0]}:{device_identifier[1]}": {
-						f"{object_identifier[0].attr}:{object_identifier[1]}": {
-							property_identifier.attr: octetstring_encode(property_value)
-						}
-					}
-				},
-			)
-		else:
-			self.deep_update(
-				self.bacnet_device_dict,
-				{
-					f"{device_identifier[0]}:{device_identifier[1]}": {
-						f"{object_identifier[0].attr}:{object_identifier[1]}": {
-							property_identifier.attr: property_value
-						}
-					}
-				},
-			)
+				}
+			},
+		)
 
 	async def read_multiple_device_props(self, apdu) -> bool:
 		try:  # Send readPropertyMultiple and get response
@@ -1204,7 +1219,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 					confirmed_notifications=True,
 					lifetime=self.default_subscription_lifetime,
 				)
-				#await asyncio.sleep(0)
+				# await asyncio.sleep(_create_task_delay)
 
 	async def create_subscription_task(
 		self,
@@ -1212,7 +1227,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 		object_identifier: ObjectIdentifier,
 		confirmed_notifications: bool,
 		lifetime: int | None = None,
-		done_callback: Callable | None = lambda x: None
+		done_callback: Callable | None = lambda x: None,
 	):
 		device_address = self.dev_to_addr(ObjectIdentifier(device_identifier))
 		if confirmed_notifications:
@@ -1239,7 +1254,7 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
 		task.add_done_callback(done_callback)
 
-		#await asyncio.sleep(0.1)
+		await asyncio.sleep(_create_task_delay)
 		self.subscription_tasks.append(task)
 
 	async def subscription_task(
@@ -1335,8 +1350,6 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 						if subscription.refresh_subscription_task.done():
 							# check for exceptions (gets raised by result if there is)
 							subscription.refresh_subscription_task.result()
-							
-
 
 						continue
 

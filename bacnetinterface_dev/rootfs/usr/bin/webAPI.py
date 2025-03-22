@@ -11,23 +11,38 @@ from contextlib import asynccontextmanager
 from contextvars import Context, ContextVar, copy_context
 from dataclasses import dataclass
 from random import choice, randint
-from typing import Annotated, Any, Callable, Union, Dict
+from typing import Annotated, Any, Callable, Dict, Union
 
 from BACnetIOHandler import BACnetIOHandler
-from bacpypes3.basetypes import (EngineeringUnits, ObjectIdentifier,
-								 ObjectType, ObjectTypesSupported,
-								 PropertyIdentifier, Null)
 from bacpypes3.apdu import ErrorRejectAbortNack
+from bacpypes3.basetypes import (
+	EngineeringUnits,
+	Null,
+	ObjectIdentifier,
+	ObjectType,
+	ObjectTypesSupported,
+	PropertyIdentifier,
+)
 from const import LOGGER
-from fastapi import (FastAPI, Path, Query, Request, Response, UploadFile,
-					 WebSocket, WebSocketDisconnect, status)
+from fastapi import (
+	FastAPI,
+	HTTPException,
+	Path,
+	Query,
+	Request,
+	Response,
+	UploadFile,
+	WebSocket,
+	WebSocketDisconnect,
+	status,
+)
 from fastapi.encoders import jsonable_encoder
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pydantic import parse_obj_as, BaseModel
-from models import SubscriptionDeviceData, DeviceData
-
+from models import DeviceData, SubscriptionDeviceData
+from pydantic import BaseModel, parse_obj_as
 
 # ===================================================
 # Global variables
@@ -145,6 +160,17 @@ app = FastAPI(
 	openapi_tags=tags_metadata,
 )
 
+origins = [
+	"http://localhost",
+]
+
+app.add_middleware(
+	CORSMiddleware,
+	allow_origins=["*"],
+	allow_credentials=True,
+	allow_methods=["*"],
+	allow_headers=["*"],
+)
 
 path_str = os.path.dirname(os.path.realpath(__file__))
 
@@ -669,8 +695,10 @@ def get_subscription_data_from_task(
 		(value for key, value in items if key.name == "lifetime_remaining_context"),
 		None,
 	)
-	
-	lifetime_remaining = round(max(0, lifetime_remaining - asyncio.get_event_loop().time()), 1)
+
+	lifetime_remaining = round(
+		max(0, lifetime_remaining - asyncio.get_event_loop().time()), 1
+	)
 
 	return {
 		device_id: {
@@ -702,7 +730,7 @@ async def get_subscription_device_object(
 	return JSONResponse(content=subscriptions_dict)
 
 
-@app.get("/apiv2/cov/{deviceid}", tags=["apiv2"],status_code=200)
+@app.get("/apiv2/cov/{deviceid}", tags=["apiv2"], status_code=200)
 async def get_subscriptions_device(
 	deviceid: str = Path(description="device:instance"),
 ):
@@ -734,7 +762,12 @@ async def get_subscriptions_all() -> dict():
 	return JSONResponse(content=subscriptions_dict)
 
 
-@app.post("/apiv2/cov/{deviceid}/{objectid}", tags=["apiv2"], status_code=201, response_model=SubscriptionDeviceData)
+@app.post(
+	"/apiv2/cov/{deviceid}/{objectid}",
+	tags=["apiv2"],
+	status_code=201,
+	response_model=SubscriptionDeviceData,
+)
 async def subscribe_to_object(
 	deviceid: str = Path(description="device:instance"),
 	objectid: str = Path(description="object:instance"),
@@ -746,13 +779,13 @@ async def subscribe_to_object(
 	),
 ):
 	"""Subscribe to an object"""
-	
+
 	subscriptions_dict = {}
-	
+
 	# check whether it already exists
 	for subscription in bacnet_application.subscription_tasks:
 		if f"{deviceid},{objectid}" in subscription.get_name():
-			data = get_subscription_data_from_task(subscription,deviceid,objectid)
+			data = get_subscription_data_from_task(subscription, deviceid, objectid)
 			subscriptions_dict = jsonable_encoder(data)
 			return JSONResponse(content=subscriptions_dict)
 
@@ -761,14 +794,14 @@ async def subscribe_to_object(
 		object_identifier=ObjectIdentifier(objectid),
 		confirmed_notifications=confirmation,
 		lifetime=lifetime,
-		)
-	
+	)
+
 	# give subscription some time to fail
 	await asyncio.sleep(0.5)
 
 	for subscription in bacnet_application.subscription_tasks:
 
-		if data := get_subscription_data_from_task(subscription,deviceid,objectid):
+		if data := get_subscription_data_from_task(subscription, deviceid, objectid):
 			subscriptions_dict = deep_update(subscriptions_dict, data)
 			break
 
@@ -783,22 +816,27 @@ async def delete_subscription(
 	objectid: str = Path(description="object:instance"),
 ):
 	"""Delete an active subscription"""
-	
+
 	subscriptions_dict = {}
-	
+
 	# check whether it already exists
 	for subscription in bacnet_application.subscription_tasks:
 		if f"{deviceid},{objectid}" in subscription.get_name():
 			subscription.cancel()
-			subscriptions_dict = jsonable_encoder({"result":"success"})
+			subscriptions_dict = jsonable_encoder({"result": "success"})
 			return JSONResponse(content=subscriptions_dict)
-			
-	subscriptions_dict = jsonable_encoder({"result":"no subscription found!"})
+
+	subscriptions_dict = jsonable_encoder({"result": "no subscription found!"})
 
 	return JSONResponse(content=subscriptions_dict)
 
 
-@app.get("/apiv2/{deviceid}/{objectid}/{propertyid}", tags=["apiv2"], status_code=200, response_model=DeviceData)
+@app.get(
+	"/apiv2/{deviceid}/{objectid}/{propertyid}",
+	tags=["apiv2"],
+	status_code=200,
+	response_model=DeviceData,
+)
 async def read_property(
 	deviceid: str = Path(description="device:instance"),
 	objectid: str = Path(description="object:instance"),
@@ -810,29 +848,36 @@ async def read_property(
 	"""read a property of an object from a device."""
 	try:
 		address = bacnet_application.dev_to_addr(ObjectIdentifier(deviceid))
-	
+
 		objectid = ObjectIdentifier(objectid)
 	except Exception as err:
 		return JSONResponse(content={"result": jsonable_encoder(err)})
-	
+
 	try:
-		result = await bacnet_application.read_property(address, objectid, propertyid, array_index)
+		result = await bacnet_application.read_property(
+			address, objectid, propertyid, array_index
+		)
 	except ErrorRejectAbortNack as err:
 		return JSONResponse(content=jsonable_encoder({"result": str(err)}))
 
 	# maybe update internal dict!
 
 	return JSONResponse(content=jsonable_encoder({"result": result}))
-	
 
 
-@app.post("/apiv2/{deviceid}/{objectid}/{propertyid}", tags=["apiv2"], status_code=200, )
+@app.post(
+	"/apiv2/{deviceid}/{objectid}/{propertyid}",
+	tags=["apiv2"],
+	status_code=200,
+)
 async def write_property(
 	deviceid: str = Path(description="device:instance"),
 	objectid: str = Path(description="object:instance"),
 	propertyid: str = Path(description="property identifier", example="presentValue"),
 	value: str | int | float | bool | None = Query(
-		default=None, description="Property value", example = "true",
+		default=None,
+		description="Property value",
+		example="true",
 	),
 	array_index: int | None = Query(
 		default=None, description="Array index, usually left empty"
@@ -840,31 +885,28 @@ async def write_property(
 	priority: int | None = Query(default=None, description="Write priority"),
 ):
 	"""Write to a property of an object from a device."""
-	def is_bool(input_val) -> bool:
-		if isinstance(input_val, bool):
-			return True if input_val else False
-		if isinstance(input_val, str):
-			return input_val.lower() in ("true", "false")
-		return False
 
 	try:
 		deviceid = ObjectIdentifier(deviceid)
 		objectid = ObjectIdentifier(objectid)
 		propertyid = PropertyIdentifier(propertyid)
 		address = bacnet_application.dev_to_addr(deviceid)
-		
-		if not address:
-			return JSONResponse(content=jsonable_encoder({"result": "Unknown device"}),status_code=400)
 
-		if is_bool(value):
-			value = parse_obj_as(bool, value)
+		object_class = bacnet_application.vendor_info.get_object_class(objectid[0])
+
+		property_type = object_class.get_property_type(propertyid)
+
+		value = property_type(value)
+
+		if not address:
+			return JSONResponse(content={"result": "Unknown device"}, status_code=400)
 
 	except Exception as err:
-		return JSONResponse(content=jsonable_encoder({"result": str(err)}), status_code=400)
-	
+		return JSONResponse(content={"result": str(err)}, status_code=400)
+
 	if value == None:
 		value = Null("null")
-		
+
 	try:
 		result = await bacnet_application.write_property(
 			address=address,
@@ -875,8 +917,9 @@ async def write_property(
 			priority=priority,
 		)
 	except ErrorRejectAbortNack as err:
-		return JSONResponse(content=jsonable_encoder({"result": str(err)}), status_code=405)
-	
+		return JSONResponse(content={"result": str(err)}, status_code=405)
+
+	except Exception as err:
+		return JSONResponse(content={"result": str(err)}, status_code=400)
+
 	return JSONResponse(content=jsonable_encoder({"result": "success"}))
-
-

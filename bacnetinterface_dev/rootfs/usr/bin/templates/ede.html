@@ -2,8 +2,7 @@
 <html>
 <head>
 	<link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
-	<!-- <link href="{{ url_for('static', path='/css/styles.css') }}" rel="stylesheet"> -->
-	<link href="./static/css/styles.css" rel="stylesheet">
+	<link href="{{ url_for('static', path='/css/styles.css') }}" rel="stylesheet">
 	<title>WebUI</title>
 </head>
 <body>
@@ -49,8 +48,7 @@
 			</form>
 		</div>
 	</div>
-	<script>
-		function goToAddon() {
+	<script>function goToAddon() {
 			let url = top.location.href;
 			var new_url = url.replace("ingress", "addon")
 			top.location.href = new_url;
@@ -142,10 +140,6 @@
 					// Handle any errors that occur during the API request here
 					location.reload()
 				});
-		}
-
-
-
-	</script>
+		}</script>
 </body>
 </html>

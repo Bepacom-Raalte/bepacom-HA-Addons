@@ -30,9 +30,11 @@ server {
         proxy_pass http://127.0.0.1:7813;
     }
 
-    location /css/styles.css {
+    # Serve static files
+    location /static/ {
+        root /usr/bin/;
+        autoindex off;
         add_header Content-Type text/css;
-        proxy_pass http://127.0.0.1:7813/css/styles.css;
     }
 
     location /ws {
