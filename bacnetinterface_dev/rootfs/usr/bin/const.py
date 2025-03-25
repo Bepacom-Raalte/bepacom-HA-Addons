@@ -2,7 +2,7 @@ import logging
 
 from bacpypes3.basetypes import ObjectType, PropertyIdentifier
 
-LOGGER = logging.getLogger(__package__)
+LOGGER = logging.getLogger("asyncio")
 
 device_properties_to_read: list = [
     PropertyIdentifier("objectIdentifier"),

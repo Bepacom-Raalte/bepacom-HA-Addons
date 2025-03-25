@@ -1,11 +1,12 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.6.0b3
-22/03/2025
+# 1.6.0b4
+23/03/2025
 
 ## Fixed
 - CoV configuration not filtering properly causing no CoV subscriptions being made.
-- CSS file should now be served by NGINX
+- CSS file should now be served by NGINX.
+- All regular BACnet datatypes should be supported now.
 
 ## Added
 - New apiv2 points!
