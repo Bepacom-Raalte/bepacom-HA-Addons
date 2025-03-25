@@ -4,14 +4,13 @@
     "\\bacnetinterface_dev",
     "\\bacnetinterface_dev\\rootfs",
     "\\bacnetinterface_dev\\rootfs\\etc",
-    "\\bacnetinterface_dev\\rootfs\\etc\\nginx",
-    "\\bacnetinterface_dev\\rootfs\\etc\\nginx\\templates",
     "\\bacnetinterface_dev\\rootfs\\etc\\s6-overlay",
     "\\bacnetinterface_dev\\rootfs\\etc\\s6-overlay\\s6-rc.d",
-    "\\bacnetinterface_dev\\rootfs\\etc\\s6-overlay\\s6-rc.d\\nginx",
-    "\\bacnetinterface_dev\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user",
-    "\\bacnetinterface_dev\\rootfs\\etc\\s6-overlay\\s6-rc.d\\user\\contents.d"
+    "\\bacnetinterface_dev\\rootfs\\etc\\s6-overlay\\s6-rc.d\\interface",
+    "\\bacnetinterface_dev\\rootfs\\usr",
+    "\\bacnetinterface_dev\\rootfs\\usr\\bin",
+    "\\bacnetinterface_dev\\rootfs\\usr\\bin\\templates"
   ],
-  "SelectedNode": "\\bacnetinterface_dev\\rootfs\\etc\\nginx\\templates\\ingress.gtpl",
+  "SelectedNode": "\\bacnetinterface_dev\\config.yaml",
   "PreviewInSolutionExplorer": false
 }

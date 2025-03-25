@@ -1146,7 +1146,7 @@ class BACnetIOHandler(
 
                 for property_id in object_properties_to_read_once:
 
-                    if property_id not in property_list:
+                    if property_id not in property_list and property_list:
                         continue
 
                     property_class = object_class.get_property_type(property_id)
