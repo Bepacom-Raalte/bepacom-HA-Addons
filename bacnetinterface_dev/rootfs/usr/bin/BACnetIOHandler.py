@@ -77,7 +77,6 @@ from utils import (
     TimeSynchronizationService,
     bitstring_alt_encode,
     enumerated_alt_encode,
-    format_identifier,
     objectidentifier_alt_encode,
 )
 
@@ -118,7 +117,6 @@ original_init = SubscriptionContextManager.__init__
 SubscriptionContextManager.__init__ = custom_init
 
 # reinitializeDevice service
-# Timesync service
 
 
 class BACnetIOHandler(
@@ -171,7 +169,7 @@ class BACnetIOHandler(
                 config
                 for config in self.addon_device_config
                 if config.get("deviceID")
-                == f"{device_identifier[0]}:{device_identifier[1]}"
+                == self.identifier_to_string(device_identifier)
             ),
             None,
         )
@@ -200,7 +198,7 @@ class BACnetIOHandler(
             config
             for config in self.addon_device_config
             if config.get("deviceID")
-            == f"{device_identifier[0]}:{device_identifier[1]}"
+            == self.identifier_to_string(device_identifier)
         ]
 
         if not specific_config:
@@ -392,8 +390,8 @@ class BACnetIOHandler(
                     property_list = [
                         PropertyIdentifier(property_id)
                         for property_id in self.bacnet_device_dict[
-                            format_identifier(device_identifier)
-                        ][format_identifier(object_identifier)]
+                            self.identifier_to_string(device_identifier)
+                        ][self.identifier_to_string(object_identifier)]
                     ]
 
                     properties_to_read = list(
@@ -463,7 +461,7 @@ class BACnetIOHandler(
             LOGGER.info(f"Poll task for {device_identifier} cancelled")
 
         except Exception as err:
-            LOGGER.error(err)
+            LOGGER.error(f"Error: {type(err)} {err}")
 
     async def create_poll_task(
         self,
@@ -494,7 +492,7 @@ class BACnetIOHandler(
                 object_identifier = ObjectIdentifier(object_identifier)
 
                 if not self.bacnet_device_dict[f"device:{device_identifier[1]}"].get(
-                    f"{object_identifier[0].attr}:{object_identifier[1]}"
+                    self.identifier_to_string(object_identifier)
                 ):
                     """
                     try:
@@ -523,7 +521,7 @@ class BACnetIOHandler(
 
             task = asyncio.create_task(
                 self.poll_task(device_identifier, objects_to_poll, poll_rate),
-                name=f"{device_identifier[0]}:{device_identifier[1]}",
+                name=self.identifier_to_string(device_identifier),
             )
 
             await asyncio.sleep(_create_task_delay)
@@ -690,7 +688,7 @@ class BACnetIOHandler(
             config
             for config in self.addon_device_config
             if config.get("deviceID")
-            == f"{device_identifier[0]}:{device_identifier[1]}"
+            == self.identifier_to_string(device_identifier)
         ]
 
         if not specific_config:
@@ -888,8 +886,8 @@ class BACnetIOHandler(
         self.deep_update(
             self.bacnet_device_dict,
             {
-                f"{device_identifier[0]}:{device_identifier[1]}": {
-                    f"{object_identifier[0].attr}:{object_identifier[1]}": {
+                self.identifier_to_string(device_identifier): {
+                    self.identifier_to_string(object_identifier): {
                         property_identifier.attr: property_value
                     }
                 }
@@ -1074,11 +1072,10 @@ class BACnetIOHandler(
                 )
 
                 if "unrecognized-service" in str(err):
-                    await self.read_objects(device_identifier)
-                    return
+                    return await self.read_objects(device_identifier)
                 elif "segmentation-not-supported" in str(err):
-                    await self.read_objects(device_identifier)
-                    return
+                    return await self.read_objects(device_identifier)
+                    
                 elif "no-response" in str(err):
                     return False
 
@@ -1105,6 +1102,7 @@ class BACnetIOHandler(
                             property_identifier=property_identifier,
                             property_value=property_value,
                         )
+                return True
 
     async def read_objects(self, device_identifier):
         try:
@@ -1143,9 +1141,6 @@ class BACnetIOHandler(
                     pass
                 except ErrorRejectAbortNack:
                     LOGGER.debug(f"No propertylist {obj_id}")
-                    
-                if not PropertyIdentifier("objectIdentifier") in property_list:
-                    property_list.append(PropertyIdentifier("objectIdentifier"))
 
                 for property_id in object_properties_to_read_once:
 
