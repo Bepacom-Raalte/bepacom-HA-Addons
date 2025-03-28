@@ -1143,10 +1143,13 @@ class BACnetIOHandler(
                     pass
                 except ErrorRejectAbortNack:
                     LOGGER.debug(f"No propertylist {obj_id}")
+                    
+                if not PropertyIdentifier("objectIdentifier") in property_list:
+                    property_list.append(PropertyIdentifier("objectIdentifier"))
 
                 for property_id in object_properties_to_read_once:
 
-                    if property_id not in property_list and property_list:
+                    if property_id not in property_list and property_list and property_id is not PropertyIdentifier("objectIdentifier"):
                         continue
 
                     property_class = object_class.get_property_type(property_id)
