@@ -117,6 +117,7 @@ original_init = SubscriptionContextManager.__init__
 SubscriptionContextManager.__init__ = custom_init
 
 # reinitializeDevice service
+# Timesync service
 
 
 class BACnetIOHandler(
@@ -1106,6 +1107,8 @@ class BACnetIOHandler(
 
     async def read_objects(self, device_identifier):
         try:
+            
+            LOGGER.info(f"Reading objects from objectList of {device_identifier} one by one...")
 
             for obj_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"][
                 f"device:{device_identifier[1]}"
@@ -1144,7 +1147,7 @@ class BACnetIOHandler(
 
                 for property_id in object_properties_to_read_once:
 
-                    if property_id not in property_list and property_list and property_id is not PropertyIdentifier("objectIdentifier"):
+                    if property_id not in property_list and property_list and property_id != PropertyIdentifier("objectIdentifier"):
                         continue
 
                     property_class = object_class.get_property_type(property_id)
