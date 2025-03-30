@@ -49,7 +49,6 @@ def ip_prefix_by_netmask(netmask):
 
 
 def get_auto_ip() -> str:
-
     ipaddr, netmask = get_ip_and_netmask()
 
     if ipaddr:
@@ -288,7 +287,7 @@ async def main():
 
     loop = asyncio.get_event_loop()
 
-    #loop.set_exception_handler(exception_handler)
+    # loop.set_exception_handler(exception_handler)
 
     (
         default_write_prio,
@@ -425,6 +424,9 @@ async def main():
     await server.serve()
 
     if app:
+        LOGGER.info("Shutting down!")
+        app.bacnet_device_dict.commit()
+        app.bacnet_device_dict.close()
         update_task.cancel()
         write_task.cancel()
         sub_task.cancel()

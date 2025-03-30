@@ -85,7 +85,7 @@ subscribable_objects: list = [
     ObjectType("lightingOutput"),
 ]
 
-object_types_to_ignore: list = [
+object_types_to_ignore: list[ObjectType] = [
     ObjectType("file"),
     ObjectType("structuredView"),
     ObjectType("trendLog"),
@@ -93,4 +93,4 @@ object_types_to_ignore: list = [
     ObjectType("alertEnrollment"),
     ObjectType("eventEnrollment"),
     ObjectType("notificationClass"),
-    ]
+]
