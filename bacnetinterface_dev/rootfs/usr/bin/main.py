@@ -288,7 +288,7 @@ async def main():
 
     loop = asyncio.get_event_loop()
 
-    loop.set_exception_handler(exception_handler)
+    #loop.set_exception_handler(exception_handler)
 
     (
         default_write_prio,
@@ -375,6 +375,8 @@ async def main():
     app.asap.segmentationSupported = Segmentation(segmentation_supported)
 
     app.asap.maxSegmentsAccepted = int(max_segments)
+
+    app.asap.apduTimeout = int(5000)
 
     app.subscription_list = subscribable_objects
 

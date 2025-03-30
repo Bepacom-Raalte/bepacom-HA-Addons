@@ -8,7 +8,7 @@ from logging import config
 from math import e, isinf, isnan
 from re import A
 from typing import Any, Callable, Dict, TypeVar
-
+from collections.abc import Mapping
 import backoff
 import bacpypes3
 import requests
@@ -123,7 +123,7 @@ SubscriptionContextManager.__init__ = custom_init
 class BACnetIOHandler(
 	NormalApplication, ForeignApplication, TimeSynchronizationService
 ):
-	bacnet_device_dict: SqliteDict = SqliteDict("/config/bacnet.sqlite", autocommit=True)
+	bacnet_device_dict: SqliteDict = SqliteDict("/config/bacnet.sqlite", autocommit=True, outer_stack=False)
 	subscription_tasks: list = []
 	update_event: asyncio.Event = asyncio.Event()
 	startup_complete: asyncio.Event = asyncio.Event()
@@ -139,6 +139,8 @@ class BACnetIOHandler(
 	poll_tasks: list[asyncio.Task] = []
 	addon_device_config: list = []
 	init_discovery_complete: asyncio.Event = asyncio.Event()
+	read_semaphore: asyncio.Semaphore = asyncio.Semaphore(10)
+	device_configurations: list = []
 
 	def __init__(
 		self,
@@ -175,7 +177,9 @@ class BACnetIOHandler(
 			device_address: Address = i_am.pduSource
 			device_identifier: ObjectIdentifier = i_am.iAmDeviceIdentifier   
 
-			if self.init_discovery_complete.is_set:
+			LOGGER.info(f"Handling I am of {device_identifier}")
+
+			if self.init_discovery_complete.is_set():
 				
 				#check config about what to do
 				if self.is_in_dict(device_identifier, device_identifier):
@@ -185,13 +189,15 @@ class BACnetIOHandler(
 			
 			# We know what to do with a config
 			configuration = self.generate_config(device_identifier)
-			LOGGER.debug(configuration)
-			
-			# Generate tasks
-			await self.config_to_tasks(configuration)
+
+			self.device_configurations.append(configuration)
 				
 		# After running for the first time
 		self.init_discovery_complete.set()
+
+		# Generate tasks
+		for config in self.device_configurations:
+			await self.config_to_tasks(config)
 		
 	def generate_config(self, device_identifier: ObjectIdentifier) -> DeviceConfiguration:
 		configuration = DeviceConfiguration(self.get_config_dict(device_identifier))
@@ -199,14 +205,34 @@ class BACnetIOHandler(
 			
 		# populate config with actual objects
 		object_list = self.bacnet_device_dict[device_id_str][device_id_str].get("objectList")
-		if device_identifier in object_list:
-			object_list.remove(device_identifier)
+
 		configuration.all_to_objects(object_list)
 		# remove object from slow poll if fast polled
 		configuration.remove_duplicate_slow_polls()
 		# remove object from quick poll if cov
 		configuration.remove_duplicate_quick_polls()
+
+		if device_identifier in configuration.cov_items:
+			configuration.cov_items.remove(device_identifier)
+		if device_identifier in configuration.poll_items_quick:
+			configuration.poll_items_quick.remove(device_identifier)
+		if device_identifier in configuration.poll_items_slow:
+			configuration.poll_items_slow.remove(device_identifier)
+		
 		return configuration
+
+	def is_valid_object_class(self, object_identifier: ObjectIdentifier) -> bool:
+		object_class = self.vendor_info.get_object_class(
+			object_identifier[0]
+		)
+
+		if object_class is None:
+			LOGGER.warning(
+				f"Object type is unknown: {object_identifier}"
+			)
+			return False
+		return True
+				
 
 	async def config_to_tasks(self, configuration: DeviceConfiguration):
 
@@ -218,12 +244,15 @@ class BACnetIOHandler(
 			
 			object_identifier = ObjectIdentifier(object_identifier)
 
+			if not self.is_valid_object_class(object_identifier):
+				continue
+
 			task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)},confirmed"
 
 			if self.task_in_tasklist(task_name):
 				continue
 
-			self.create_subscription_task(
+			await self.create_subscription_task(
 				device_identifier=device_identifier,
 				object_identifier=object_identifier,
 				confirmed_notifications=True,
@@ -236,6 +265,9 @@ class BACnetIOHandler(
 		for object_identifier in object_list:
 			
 			object_identifier = ObjectIdentifier(object_identifier)
+
+			if not self.is_valid_object_class(object_identifier):
+				continue
 
 			#task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)},confirmed"
 
@@ -255,6 +287,9 @@ class BACnetIOHandler(
 			
 			object_identifier = ObjectIdentifier(object_identifier)
 
+			if not self.is_valid_object_class(object_identifier):
+				continue
+
 			#task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)},confirmed"
 
 			#if self.task_in_tasklist(task_name):
@@ -272,9 +307,13 @@ class BACnetIOHandler(
 		# Get property list of the device
 		property_list = await self.get_property_list(device_identifier, device_identifier, device_properties_to_read)
 		#might have to limit properties read, only intersecting property list with device props to read
-			
+		
+		properties_to_read = list(
+			set(property_list) & set(device_properties_to_read)
+		)
+
 		# Actually read device properties
-		if not await self.properties_read_multiple(device_identifier, device_identifier, property_list):
+		if not await self.properties_read_multiple(device_identifier, device_identifier, properties_to_read):
 			LOGGER.warning(f"Failed to get device properties for {device_identifier}")
 			return
 			
@@ -290,6 +329,12 @@ class BACnetIOHandler(
 				objid=object_identifier,
 				prop=PropertyIdentifier("propertyList"),
 			)
+			if isinstance(property_list, list):
+				property_list.append(PropertyIdentifier("objectIdentifier"))
+				property_list.append(PropertyIdentifier("objectName"))
+			else:
+				LOGGER.error(f"Invalid property list: {property_list}")
+			
 		except ErrorRejectAbortNack as err:
 			LOGGER.debug(f"No propertylist for {device_identifier}, {object_identifier}. {err}")
 			property_list = fallback_list
@@ -305,11 +350,11 @@ class BACnetIOHandler(
 		LOGGER.debug(f"Read multiple: {device_identifier} {object_identifier}")
 		
 		try:
-			
-			response = await self.read_property_multiple(
-				address=self.dev_to_addr(device_identifier),
-				parameter_list=parameter_list,
-			)
+			async with self.read_semaphore:
+				response = await self.read_property_multiple(
+					address=self.dev_to_addr(device_identifier),
+					parameter_list=parameter_list,
+				)
 
 		except ErrorRejectAbortNack as err:
 			if "segmentation-not-supported" in str(err):
@@ -324,6 +369,9 @@ class BACnetIOHandler(
 			else:
 				LOGGER.debug(f"Other error: {device_identifier} {object_identifier} {err}")
 				return False
+		except InvalidTag as err:
+			LOGGER.debug(f"Invalid tag received: {device_identifier} {object_identifier} {err}")
+			return await self.properties_read(device_identifier, object_identifier, property_list)
 		else:
 			for (
 				object_identifier,
@@ -350,19 +398,20 @@ class BACnetIOHandler(
 		async def read_property_safely(property_id: PropertyIdentifier):
 			"""Reads a property and handles errors safely."""
 			try:
-				response = await self.read_property(
-					address=self.dev_to_addr(device_identifier), objid=object_identifier, prop=property_id
-				)
-
-				if response is not ErrorType:
-					self.dict_updater(
-						device_identifier=device_identifier,
-						object_identifier=object_identifier,
-						property_identifier=property_id,
-						property_value=response,
+				async with self.read_semaphore:
+					response = await self.read_property(
+						address=self.dev_to_addr(device_identifier), objid=object_identifier, prop=property_id
 					)
 
-				return response
+					if response is not ErrorType:
+						self.dict_updater(
+							device_identifier=device_identifier,
+							object_identifier=object_identifier,
+							property_identifier=property_id,
+							property_value=response,
+						)
+
+					return response
 			
 			except ErrorRejectAbortNack as err:
 				if "segmentation-not-supported" in str(err):
@@ -377,6 +426,9 @@ class BACnetIOHandler(
 				else:
 					LOGGER.debug(f"Other error: {device_identifier} {object_identifier} {err}")
 					return False
+			except InvalidTag as err:
+				LOGGER.debug(f"Invalid tag received: {device_identifier} {object_identifier} {err}")
+				return False
 
 		# Create tasks for all properties
 		tasks = [read_property_safely(property_id) for property_id in property_list]
@@ -460,17 +512,28 @@ class BACnetIOHandler(
 		else:
 			read_func = self.properties_read
 
+		tasks = []
+
 		for object_identifier in device[device_id_str].get("objectList"):
 			
 			object_identifier = ObjectIdentifier(object_identifier)
 
+			if not self.is_valid_object_class(object_identifier):
+				continue
+
 			# Get property list of the device
 			property_list = await self.get_property_list(device_identifier, object_identifier, object_properties_to_read_once)
-			LOGGER.debug(f"List of properties {device_identifier} {object_identifier} {property_list}")
 
-			if not await read_func(device_identifier, object_identifier, property_list):
-				LOGGER.warning(f"Error getting properties for {device_identifier} {object_identifier}")
-				continue
+			properties_to_read = list(
+				set(property_list) & set(object_properties_to_read_once)
+			)
+
+			tasks.append(read_func(device_identifier, object_identifier, properties_to_read))
+
+		results = await asyncio.gather(*tasks, return_exceptions=True)
+
+		if any(result is False for result in results):
+			LOGGER.warning(f"Some properties failed to read for {device_identifier}")
 			
 		return True
 	
@@ -535,8 +598,7 @@ class BACnetIOHandler(
 			None,
 		)
 		if generic_config:
-			generic_config["deviceID"] = self.identifier_to_string(device_identifier)
-			return generic_config
+			return {**generic_config, "deviceID": self.identifier_to_string(device_identifier)}
 
 		return dict()
 
@@ -601,21 +663,15 @@ class BACnetIOHandler(
 				f"Failed to create polling task {device_identifier}, {object_identifier} {err}"
 			)
 
-	def deep_update(
-		self, mapping: Dict[KeyType, Any], *updating_mappings: Dict[KeyType, Any]
-	) -> Dict[KeyType, Any]:
+	def deep_update(self, mapping: Dict[KeyType, Any], *updating_mappings: Dict[KeyType, Any]) -> Dict[KeyType, Any]:
 		for updating_mapping in updating_mappings:
 			for k, v in updating_mapping.items():
-				if (
-					k in mapping
-					and isinstance(mapping[k], dict)
-					and isinstance(v, dict)
-				):
+				if isinstance(v, Mapping) and isinstance(mapping.get(k), dict):
 					mapping[k] = self.deep_update(mapping[k], v)
 				else:
 					mapping[k] = v
+
 		self.update_event.set()
-		# LOGGER.debug(f"Updating {updating_mapping}")
 		return mapping
 
 	def dev_to_addr(self, dev: ObjectIdentifier) -> Address | None:
@@ -728,7 +784,7 @@ class BACnetIOHandler(
 			},
 		)
 
-	def create_subscription_task(
+	async def create_subscription_task(
 		self,
 		device_identifier: ObjectIdentifier,
 		object_identifier: ObjectIdentifier,
@@ -753,6 +809,8 @@ class BACnetIOHandler(
 			),
 			name=f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]},{notifications}",
 		)
+
+		await asyncio.sleep(_create_task_delay)
 
 		task.add_done_callback(done_callback)
 

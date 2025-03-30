@@ -84,3 +84,9 @@ subscribable_objects: list = [
     ObjectType("positiveIntegerValue"),
     ObjectType("lightingOutput"),
 ]
+
+object_types_to_ignore: list = [
+    ObjectType("file"),
+    ObjectType("structuredView"),
+    ObjectType("trendLog"),
+    ]
