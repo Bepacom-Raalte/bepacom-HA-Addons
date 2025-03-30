@@ -18,7 +18,7 @@ hassio_api: true
 homeassistant_api: true
 panel_icon: mdi:router-wireless-settings
 map:
-  - config:rw
+  - addon_config:rw
 ports:
   80/tcp: null
   47808/udp: 47808
