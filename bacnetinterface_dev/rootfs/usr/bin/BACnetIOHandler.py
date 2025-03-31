@@ -450,7 +450,6 @@ class BACnetIOHandler(
 						objid=object_identifier,
 						prop=property_id,
 					)
-
 				except ErrorRejectAbortNack as err:
 					LOGGER.warning(
 						f"Error during read multiple: {device_identifier} {object_identifier} {err}"
@@ -478,18 +477,16 @@ class BACnetIOHandler(
 							property_identifier=property_id,
 							property_value=response,
 						)
+			return True  # Ensure the function returns something in all cases
 
-			# Create tasks for all properties
-			tasks = [read_property_safely(property_id) for property_id in property_list]
+		# Now outside read_property_safely: create tasks
+		tasks = [read_property_safely(property_id) for property_id in property_list]
 
-			# Gather all tasks and wait for completion
-			results = await asyncio.gather(*tasks)
+		# Gather all tasks and wait for completion
+		results = await asyncio.gather(*tasks)
 
-			# If any property read returned False (due to "no-response"), return False
-			if False in results:
-				return False
-			else:
-				return True
+		# If any property read returned False (due to "no-response"), return False
+		return False if False in results else True
 
 	async def read_list_property(
 		self,
