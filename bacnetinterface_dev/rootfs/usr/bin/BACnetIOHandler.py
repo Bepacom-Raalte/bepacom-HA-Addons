@@ -352,22 +352,22 @@ class BACnetIOHandler(
 		self, device_identifier, object_identifier, fallback_list
 	) -> list[PropertyIdentifier]:
 
-		async with self.read_semaphore:
-			try:
+		try:
+			async with self.read_semaphore:
 				property_list = await self.read_property(
 					address=self.dev_to_addr(device_identifier),
 					objid=object_identifier,
 					prop=PropertyIdentifier("propertyList"),
 				)
-				if isinstance(property_list, list):
-					property_list.append(PropertyIdentifier("objectIdentifier"))
-					property_list.append(PropertyIdentifier("objectName"))
-				else:
-					LOGGER.error(f"Invalid property list: {property_list}")
-					property_list = fallback_list
-			except ErrorRejectAbortNack as err:
-				# LOGGER.debug(f"No propertylist for {device_identifier}, {object_identifier}. {err}")
+			if isinstance(property_list, list):
+				property_list.append(PropertyIdentifier("objectIdentifier"))
+				property_list.append(PropertyIdentifier("objectName"))
+			else:
+				LOGGER.error(f"Invalid property list: {property_list}")
 				property_list = fallback_list
+		except ErrorRejectAbortNack as err:
+			# LOGGER.debug(f"No propertylist for {device_identifier}, {object_identifier}. {err}")
+			property_list = fallback_list
 
 		if len(property_list) < 4:
 			property_list = fallback_list
@@ -385,52 +385,44 @@ class BACnetIOHandler(
 		object_identifier = ObjectIdentifier(object_identifier)
 		parameter_list = [object_identifier, property_list]
 
-		async with self.read_semaphore:
-			LOGGER.debug(f"Read multiple: {device_identifier} {object_identifier}")
-			try:
+		LOGGER.debug(f"Read multiple: {device_identifier} {object_identifier}")
+		try:
+			async with self.read_semaphore:  # Limit concurrency only for read_property_multiple
 				response = await self.read_property_multiple(
 					address=self.dev_to_addr(device_identifier),
 					parameter_list=parameter_list,
 				)
 
-			except ErrorRejectAbortNack as err:
-				LOGGER.warning(
-					f"Error during read multiple: {device_identifier} {object_identifier} {err}"
-				)
-				if "segmentation-not-supported" in str(err):
-					return await self.properties_read(
-						device_identifier, object_identifier, property_list
-					)
-				elif "unrecognized-service" in str(err):
-					return await self.properties_read(
-						device_identifier, object_identifier, property_list
-					)
-				elif "no-response" in str(err):
-					return False
-				else:
-					return False
-			except InvalidTag as err:
-				LOGGER.debug(
-					f"Invalid tag received: {device_identifier} {object_identifier} {err}"
-				)
-				return await self.properties_read(
-					device_identifier, object_identifier, property_list
-				)
+		except ErrorRejectAbortNack as err:
+			LOGGER.warning(
+				f"Error during read multiple: {device_identifier} {object_identifier} {err}"
+			)
+			if "segmentation-not-supported" in str(err) or "unrecognized-service" in str(err):
+				return await self.properties_read(device_identifier, object_identifier, property_list)
+			elif "no-response" in str(err):
+				return False
 			else:
-				for (
-					object_identifier,
-					property_identifier,
-					property_array_index,
-					property_value,
-				) in response:
-					if not isinstance(property_value, ErrorType):
-						self.dict_updater(
-							device_identifier=device_identifier,
-							object_identifier=object_identifier,
-							property_identifier=property_identifier,
-							property_value=property_value,
-						)
-				return True
+				return False
+		except InvalidTag as err:
+			LOGGER.debug(
+				f"Invalid tag received: {device_identifier} {object_identifier} {err}"
+			)
+			return await self.properties_read(device_identifier, object_identifier, property_list)
+		else:
+			for (
+				object_identifier,
+				property_identifier,
+				property_array_index,
+				property_value,
+			) in response:
+				if not isinstance(property_value, ErrorType):
+					self.dict_updater(
+						device_identifier=device_identifier,
+						object_identifier=object_identifier,
+						property_identifier=property_identifier,
+						property_value=property_value,
+					)
+			return True
 
 	async def properties_read(
 		self,
@@ -445,40 +437,40 @@ class BACnetIOHandler(
 
 		async def read_property_safely(property_id: PropertyIdentifier):
 			"""Reads a property and handles errors safely."""
-			async with self.read_semaphore:
-				try:
+			try:
+				async with self.read_semaphore:  # Limit concurrency only for read_property
 					response = await self.read_property(
 						address=self.dev_to_addr(device_identifier),
 						objid=object_identifier,
 						prop=property_id,
 					)
-				except ErrorRejectAbortNack as err:
-					LOGGER.warning(
-						f"Error during read: {device_identifier} {object_identifier} {err}"
+			except ErrorRejectAbortNack as err:
+				LOGGER.warning(
+					f"Error during read: {device_identifier} {object_identifier} {err}"
+				)
+				if "segmentation-not-supported" in str(err):
+					return await self.read_list_property(
+						device_identifier, object_identifier, property_id
 					)
-					if "segmentation-not-supported" in str(err):
-						return await self.read_list_property(
-							device_identifier, object_identifier, property_id
-						)
-					elif "unknown-property" in str(err):
-						return True
-					elif "no-response" in str(err):
-						return False
-					else:
-						return False
-				except InvalidTag as err:
-					LOGGER.debug(
-						f"Invalid tag received: {device_identifier} {object_identifier} {err}"
-					)
+				elif "unknown-property" in str(err):
+					return True
+				elif "no-response" in str(err):
 					return False
 				else:
-					if response is not ErrorType:
-						self.dict_updater(
-							device_identifier=device_identifier,
-							object_identifier=object_identifier,
-							property_identifier=property_id,
-							property_value=response,
-						)
+					return False
+			except InvalidTag as err:
+				LOGGER.debug(
+					f"Invalid tag received: {device_identifier} {object_identifier} {err}"
+				)
+				return False
+			else:
+				if response is not ErrorType:
+					self.dict_updater(
+						device_identifier=device_identifier,
+						object_identifier=object_identifier,
+						property_identifier=property_id,
+						property_value=response,
+					)
 			return True  # Ensure the function returns something in all cases
 
 		# Now outside read_property_safely: create tasks
@@ -505,54 +497,54 @@ class BACnetIOHandler(
 		LOGGER.debug(
 			f"Read list property: {device_identifier} {object_identifier} {property_id}"
 		)
-		async with self.read_semaphore:
-			try:
+		try:
+			async with self.read_semaphore:
 				object_amount = await self.read_property(
 					address=self.dev_to_addr(device_identifier),
 					objid=object_identifier,
 					prop=property_id,
 					array_index=0,
 				)
-
-				if object_amount == 0:
-					LOGGER.debug(
-						f"Amount is zero: {device_identifier} {object_identifier} {property_id}"
-					)
-					return False
-			except ErrorRejectAbortNack as err:
-				LOGGER.warning(
-					f"Error reading list size for: {device_identifier} {object_identifier} {property_id} {err}"
+			if object_amount == 0:
+				LOGGER.debug(
+					f"Amount is zero: {device_identifier} {object_identifier} {property_id}"
 				)
 				return False
+		except ErrorRejectAbortNack as err:
+			LOGGER.warning(
+				f"Error reading list size for: {device_identifier} {object_identifier} {property_id} {err}"
+			)
+			return False
 
-		async with self.read_semaphore:
-			try:
-				# Gather all property read tasks concurrently
-				tasks = [
-					self.read_property(
+		try:
+			# Read properties one by one, respecting the semaphore limit
+			async def read_with_semaphore(number):
+				async with self.read_semaphore:  # Acquire semaphore per task
+					return await self.read_property(
 						address=self.dev_to_addr(device_identifier),
 						objid=object_identifier,
 						prop=property_id,
 						array_index=number,
 					)
-					for number in range(1, object_amount + 1)
-				]
-				property_list = await asyncio.gather(*tasks)
 
-				self.dict_updater(
-					device_identifier=device_identifier,
-					object_identifier=object_identifier,
-					property_identifier=property_id,
-					property_value=property_list,
-				)
+			# Create tasks that respect the semaphore limit
+			tasks = [read_with_semaphore(number) for number in range(1, object_amount + 1)]
+			property_list = await asyncio.gather(*tasks)
 
-			except ErrorRejectAbortNack as err:
-				LOGGER.warning(
-					f"Error reading list size for: {device_identifier} {object_identifier} {property_id} {err}"
-				)
-				return False
-			else:
-				return True
+			self.dict_updater(
+				device_identifier=device_identifier,
+				object_identifier=object_identifier,
+				property_identifier=property_id,
+				property_value=property_list,
+			)
+
+		except ErrorRejectAbortNack as err:
+			LOGGER.warning(
+				f"Error reading list size for: {device_identifier} {object_identifier} {property_id} {err}"
+			)
+			return False
+		else:
+			return True
 
 	async def read_objects_of_device(self, device_identifier: ObjectIdentifier) -> bool:
 		device_identifier = ObjectIdentifier(device_identifier)
