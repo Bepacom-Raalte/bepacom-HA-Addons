@@ -144,7 +144,7 @@ class BACnetIOHandler(
 	poll_tasks: list[asyncio.Task] = []
 	addon_device_config: list = []
 	init_discovery_complete: asyncio.Event = asyncio.Event()
-	read_semaphore: asyncio.Semaphore = asyncio.Semaphore(24)
+	read_semaphore: asyncio.Semaphore = asyncio.Semaphore(20)
 	device_configurations: list = []
 
 	def __init__(
@@ -452,7 +452,7 @@ class BACnetIOHandler(
 					)
 				except ErrorRejectAbortNack as err:
 					LOGGER.warning(
-						f"Error during read multiple: {device_identifier} {object_identifier} {err}"
+						f"Error during read: {device_identifier} {object_identifier} {err}"
 					)
 					if "segmentation-not-supported" in str(err):
 						return await self.read_list_property(
@@ -503,53 +503,54 @@ class BACnetIOHandler(
 		LOGGER.debug(
 			f"Read list property: {device_identifier} {object_identifier} {property_id}"
 		)
-
-		try:
-			object_amount = await self.read_property(
-				address=self.dev_to_addr(device_identifier),
-				objid=object_identifier,
-				prop=property_id,
-				array_index=0,
-			)
-
-			if object_amount == 0:
-				LOGGER.debug(
-					f"Amount is zero: {device_identifier} {object_identifier} {property_id}"
-				)
-				return False
-		except ErrorRejectAbortNack as err:
-			LOGGER.warning(
-				f"Error reading list size for: {device_identifier} {object_identifier} {property_id} {err}"
-			)
-			return False
-
-		try:
-			# Gather all property read tasks concurrently
-			tasks = [
-				self.read_property(
+		async with self.read_semaphore:
+			try:
+				object_amount = await self.read_property(
 					address=self.dev_to_addr(device_identifier),
 					objid=object_identifier,
 					prop=property_id,
-					array_index=number,
+					array_index=0,
 				)
-				for number in range(1, object_amount + 1)
-			]
-			property_list = await asyncio.gather(*tasks)
 
-			self.dict_updater(
-				device_identifier=device_identifier,
-				object_identifier=object_identifier,
-				property_identifier=property_id,
-				property_value=property_list,
-			)
+				if object_amount == 0:
+					LOGGER.debug(
+						f"Amount is zero: {device_identifier} {object_identifier} {property_id}"
+					)
+					return False
+			except ErrorRejectAbortNack as err:
+				LOGGER.warning(
+					f"Error reading list size for: {device_identifier} {object_identifier} {property_id} {err}"
+				)
+				return False
 
-		except ErrorRejectAbortNack as err:
-			LOGGER.warning(
-				f"Error reading list size for: {device_identifier} {object_identifier} {property_id} {err}"
-			)
-			return False
-		else:
-			return True
+		async with self.read_semaphore:
+			try:
+				# Gather all property read tasks concurrently
+				tasks = [
+					self.read_property(
+						address=self.dev_to_addr(device_identifier),
+						objid=object_identifier,
+						prop=property_id,
+						array_index=number,
+					)
+					for number in range(1, object_amount + 1)
+				]
+				property_list = await asyncio.gather(*tasks)
+
+				self.dict_updater(
+					device_identifier=device_identifier,
+					object_identifier=object_identifier,
+					property_identifier=property_id,
+					property_value=property_list,
+				)
+
+			except ErrorRejectAbortNack as err:
+				LOGGER.warning(
+					f"Error reading list size for: {device_identifier} {object_identifier} {property_id} {err}"
+				)
+				return False
+			else:
+				return True
 
 	async def read_objects_of_device(self, device_identifier: ObjectIdentifier) -> bool:
 		device_identifier = ObjectIdentifier(device_identifier)
