@@ -351,21 +351,23 @@ class BACnetIOHandler(
 	async def get_property_list(
 		self, device_identifier, object_identifier, fallback_list
 	) -> list[PropertyIdentifier]:
-		try:
-			property_list = await self.read_property(
-				address=self.dev_to_addr(device_identifier),
-				objid=object_identifier,
-				prop=PropertyIdentifier("propertyList"),
-			)
-			if isinstance(property_list, list):
-				property_list.append(PropertyIdentifier("objectIdentifier"))
-				property_list.append(PropertyIdentifier("objectName"))
-			else:
-				LOGGER.error(f"Invalid property list: {property_list}")
+
+		async with self.read_semaphore:
+			try:
+				property_list = await self.read_property(
+					address=self.dev_to_addr(device_identifier),
+					objid=object_identifier,
+					prop=PropertyIdentifier("propertyList"),
+				)
+				if isinstance(property_list, list):
+					property_list.append(PropertyIdentifier("objectIdentifier"))
+					property_list.append(PropertyIdentifier("objectName"))
+				else:
+					LOGGER.error(f"Invalid property list: {property_list}")
+					property_list = fallback_list
+			except ErrorRejectAbortNack as err:
+				# LOGGER.debug(f"No propertylist for {device_identifier}, {object_identifier}. {err}")
 				property_list = fallback_list
-		except ErrorRejectAbortNack as err:
-			# LOGGER.debug(f"No propertylist for {device_identifier}, {object_identifier}. {err}")
-			property_list = fallback_list
 
 		if len(property_list) < 4:
 			property_list = fallback_list
