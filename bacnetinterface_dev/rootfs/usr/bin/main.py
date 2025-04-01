@@ -14,6 +14,7 @@ from typing import TypeVar
 import psutil
 import uvicorn
 import webAPI
+import signal
 from BACnetIOHandler import BACnetIOHandler, ObjectManager
 from bacpypes3.apdu import AbortPDU, ErrorPDU, RejectPDU
 from bacpypes3.basetypes import Null, ObjectType, Segmentation, ServicesSupported
@@ -282,6 +283,9 @@ def get_configuration() -> tuple:
     )
 
 
+def handler_stop_signals(signum, frame):
+    LOGGER.info("Shutting down!")
+
 async def main():
     """Main function of the application."""
 
@@ -421,10 +425,13 @@ async def main():
 
     server = uvicorn.Server(config)
 
+    
+    signal.signal(signal.SIGINT, handler_stop_signals)
+    signal.signal(signal.SIGTERM, handler_stop_signals)
+    
     await server.serve()
 
     if app:
-        LOGGER.info("Shutting down!")
         app.bacnet_device_sqlite.commit()
         app.bacnet_device_sqlite.close()
         update_task.cancel()
