@@ -126,19 +126,15 @@ SubscriptionContextManager.__init__ = custom_init
 class BACnetIOHandler(
 	NormalApplication, ForeignApplication, TimeSynchronizationService
 ):
-	bacnet_device_dict: SqliteDict = SqliteDict(
-		"/config/bacnet.sqlite", autocommit=False, outer_stack=False
+	bacnet_device_sqlite: SqliteDict = SqliteDict(
+		"/config/bacnet.sqlite", autocommit=True
 	)
+	bacnet_device_dict: dict = {}
 	subscription_tasks: list = []
 	update_event: asyncio.Event = asyncio.Event()
 	startup_complete: asyncio.Event = asyncio.Event()
 	write_to_api: asyncio.Event = asyncio.Event()
 	write_to_api_queue: asyncio.Queue = asyncio.Queue()
-	id_to_object = {}
-	object_to_id = {}
-	available_ids = set()
-	next_id = 1
-	default_subscription_lifetime = 60
 	subscription_list = []
 	i_am_queue: asyncio.Queue = asyncio.Queue(maxsize=1)
 	poll_tasks: list[asyncio.Task] = []
@@ -167,9 +163,19 @@ class BACnetIOHandler(
 		self.addon_device_config = (
 			addon_device_config if addon_device_config else list()
 		)
+		self.sqlite_restore(); 
 		self.startup_complete.set()
 		asyncio.get_event_loop().create_task(self.discover_devices())
+		asyncio.get_event_loop().create_task(self.sqlite_updater())
 		LOGGER.debug("Application initialised")
+
+	def sqlite_restore(self):
+		self.deep_update(self.bacnet_device_dict, self.bacnet_device_sqlite)
+
+	async def sqlite_updater(self):
+		while True:
+			await asyncio.sleep(300)
+			self.deep_update(self.bacnet_device_sqlite, self.bacnet_device_dict)
 
 	async def discover_devices(self):
 		"""Get a list of devices that respond to a whois request"""
