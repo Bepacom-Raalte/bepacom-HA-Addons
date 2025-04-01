@@ -141,7 +141,7 @@ class BACnetIOHandler(
 	addon_device_config: list = []
 	init_discovery_complete: asyncio.Event = asyncio.Event()
 	read_semaphore: asyncio.Semaphore = asyncio.Semaphore(20)
-	device_configurations: list = []
+	device_configurations: list[DeviceConfiguration] = []
 
 	def __init__(
 		self,
@@ -182,6 +182,9 @@ class BACnetIOHandler(
 		# Get to know the network
 		i_ams = await self.who_is(timeout=5)
 
+		generated_configs = []
+		retrieved_configs = []
+
 		async def handle_device(i_am):
 			"""Handle a single device"""
 			device_address: Address = i_am.pduSource
@@ -191,11 +194,13 @@ class BACnetIOHandler(
 
 			if self.init_discovery_complete.is_set():
 				if self.is_in_dict(device_identifier, device_identifier):
+					retrieved_configs.append(self.retrieve_config(device_identifier))
 					return  # Skip if already known
 
 			await self.explore_device(device_identifier)
 			configuration = self.generate_config(device_identifier)
 			self.device_configurations.append(configuration)
+			generated_configs.append(configuration)
 
 		# Run all device handling tasks concurrently
 		await asyncio.gather(*(handle_device(i_am) for i_am in i_ams))
@@ -204,8 +209,23 @@ class BACnetIOHandler(
 		self.init_discovery_complete.set()
 
 		# Generate tasks
+		for config in generated_configs + retrieved_configs:
+			if config in generated_configs:
+				await self.config_to_tasks(config)
+			else:
+				await self.config_to_tasks(config, False)
+
+	def retrieve_config(
+		self, device_identifier: ObjectIdentifier
+	) -> DeviceConfiguration:
+		
+		device_id_str = self.identifier_to_string(device_identifier)
+
 		for config in self.device_configurations:
-			await self.config_to_tasks(config)
+			if self.identifier_to_string(config.device_identifier) == device_id_str:
+				return config
+
+		return DeviceConfiguration()
 
 	def generate_config(
 		self, device_identifier: ObjectIdentifier
@@ -247,91 +267,119 @@ class BACnetIOHandler(
 			return False
 		return True
 
-	async def config_to_tasks(self, configuration: DeviceConfiguration):
+	async def config_to_tasks(self, configuration: DeviceConfiguration, first_run: bool = True) -> None:
+		
 		device_identifier = ObjectIdentifier(configuration.device_identifier)
+		
+		async def create_cov_tasks():
+			
+			object_list = [
+				item
+				for item in configuration.cov_items
+				if ObjectType(item[0]) in subscribable_objects
+			]
 
-		object_list = [
-			item
-			for item in configuration.cov_items
-			if ObjectType(item[0]) in subscribable_objects
-		]
+			for object_identifier in object_list:
+				object_identifier = ObjectIdentifier(object_identifier)
 
-		for object_identifier in object_list:
-			object_identifier = ObjectIdentifier(object_identifier)
+				if not self.is_valid_object_class(object_identifier):
+					continue
 
-			if not self.is_valid_object_class(object_identifier):
-				continue
+				if object_identifier[0] in object_types_to_ignore:
+					continue
 
-			if object_identifier[0] in object_types_to_ignore:
-				continue
+				if object_identifier == device_identifier:
+					continue
 
-			if object_identifier == device_identifier:
-				continue
+				task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)},confirmed"
 
-			task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)},confirmed"
+				if self.task_in_cov_tasklist(task_name):
+					LOGGER.debug(f"task already exists {task_name}")
+					continue
 
-			if self.task_in_tasklist(task_name):
-				continue
+				await self.create_subscription_task(
+					device_identifier=device_identifier,
+					object_identifier=object_identifier,
+					confirmed_notifications=True,
+					lifetime=configuration.cov_lifetime,
+				)
+				await asyncio.sleep(_create_task_delay)
+				
+		async def create_quick_poll_tasks():
+			
+			object_list = [item for item in configuration.poll_items_quick]
 
-			await self.create_subscription_task(
-				device_identifier=device_identifier,
-				object_identifier=object_identifier,
-				confirmed_notifications=True,
-				lifetime=configuration.cov_lifetime,
-			)
-			await asyncio.sleep(_create_task_delay)
+			for object_identifier in object_list:
+				object_identifier = ObjectIdentifier(object_identifier)
 
-		object_list = [item for item in configuration.poll_items_quick]
+				if not self.is_valid_object_class(object_identifier):
+					continue
 
-		for object_identifier in object_list:
-			object_identifier = ObjectIdentifier(object_identifier)
+				if object_identifier[0] in object_types_to_ignore:
+					continue
 
-			if not self.is_valid_object_class(object_identifier):
-				continue
+				if object_identifier == device_identifier:
+					continue
 
-			if object_identifier[0] in object_types_to_ignore:
-				continue
+				task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)}"
 
-			if object_identifier == device_identifier:
-				continue
+				if self.task_in_poll_tasklist(task_name):
+					LOGGER.debug(f"task already exists {task_name}")
+					continue
 
-			# task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)},confirmed"
+				self.create_poll_task(
+					device_identifier=device_identifier,
+					object_identifier=object_identifier,
+					poll_rate=configuration.poll_rate_quick,
+				)
+				await asyncio.sleep(_create_task_delay)
+				
+		async def create_slow_poll_tasks():
+			
+			object_list = [item for item in configuration.poll_items_slow]
 
-			# if self.task_in_tasklist(task_name):
-			# 	continue
+			for object_identifier in object_list:
+				object_identifier = ObjectIdentifier(object_identifier)
 
-			self.create_poll_task(
-				device_identifier=device_identifier,
-				object_identifier=object_identifier,
-				poll_rate=configuration.poll_rate_quick,
-			)
-			await asyncio.sleep(_create_task_delay)
+				if not self.is_valid_object_class(object_identifier):
+					continue
 
-		object_list = [item for item in configuration.poll_items_slow]
+				if object_identifier[0] in object_types_to_ignore:
+					continue
 
-		for object_identifier in object_list:
-			object_identifier = ObjectIdentifier(object_identifier)
+				if object_identifier == device_identifier:
+					continue
 
-			if not self.is_valid_object_class(object_identifier):
-				continue
+				task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)}"
 
-			if object_identifier[0] in object_types_to_ignore:
-				continue
+				if self.task_in_poll_tasklist(task_name):
+					LOGGER.debug(f"task already exists {task_name}")
+					continue
 
-			if object_identifier == device_identifier:
-				continue
+				self.create_poll_task(
+					device_identifier=device_identifier,
+					object_identifier=object_identifier,
+					poll_rate=configuration.poll_rate_slow,
+				)
+				await asyncio.sleep(_create_task_delay)
+		
+		if first_run:
+			await create_cov_tasks()
 
-			# task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)},confirmed"
+			await create_quick_poll_tasks()
+		
+			await create_slow_poll_tasks()
 
-			# if self.task_in_tasklist(task_name):
-			# 	continue
+			return
+		
+		if configuration.reread_on_iam:
+			await create_quick_poll_tasks()
+			await create_slow_poll_tasks()
+		
+		if configuration.resub_on_iam:
+			await create_cov_tasks()
+			
 
-			self.create_poll_task(
-				device_identifier=device_identifier,
-				object_identifier=object_identifier,
-				poll_rate=configuration.poll_rate_slow,
-			)
-			await asyncio.sleep(_create_task_delay)
 
 	async def explore_device(self, device_identifier: ObjectIdentifier) -> None:
 		# Get property list of the device
@@ -767,12 +815,26 @@ class BACnetIOHandler(
 		LOGGER.info(f"I Am from {apdu.iAmDeviceIdentifier}")
 
 		await super().do_IAmRequest(apdu)
+		
+		if not self.init_discovery_complete.is_set():
+			return
+		
+		config = self.retrieve_config(apdu.iAmDeviceIdentifier)
 
-	def identifier_to_string(self, object_identifier) -> str:
-		return f"{object_identifier[0].attr}:{object_identifier[1]}"
+		await self.config_to_tasks(config, False)		
 
-	def task_in_tasklist(self, task_name) -> bool:
+
+	def identifier_to_string(self, object_identifier: ObjectIdentifier | str) -> str:
+		if isinstance(object_identifier, ObjectIdentifier):
+			return f"{object_identifier[0].attr}:{object_identifier[1]}"
+		else:
+			return object_identifier
+
+	def task_in_cov_tasklist(self, task_name) -> bool:
 		return any(task_name in task.get_name() for task in self.subscription_tasks)
+	
+	def task_in_poll_tasklist(self, task_name) -> bool:
+		return any(task_name in task.get_name() for task in self.poll_tasks)
 
 	def dict_updater(
 		self,

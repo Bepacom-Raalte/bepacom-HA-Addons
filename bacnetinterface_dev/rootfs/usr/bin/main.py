@@ -425,8 +425,8 @@ async def main():
 
     if app:
         LOGGER.info("Shutting down!")
-        app.bacnet_device_dict.commit()
-        app.bacnet_device_dict.close()
+        app.bacnet_device_sqlite.commit()
+        app.bacnet_device_sqlite.close()
         update_task.cancel()
         write_task.cancel()
         sub_task.cancel()
