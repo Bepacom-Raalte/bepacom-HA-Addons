@@ -241,6 +241,14 @@ class BACnetIOHandler(
 			)
 			if ObjectType(obj[0]) not in object_types_to_ignore
 		]
+		
+		if configuration.device_identifier == 'all':
+			configuration.device_identifier = device_identifier
+		elif isinstance(configuration.device_identifier, str):
+			try:
+				configuration.device_identifier = ObjectIdentifier(configuration.device_identifier)
+			except Exception as error:
+				LOGGER.error(f"We got here... {error}")
 
 		configuration.all_to_objects(object_list)
 		# remove object from slow poll if fast polled
