@@ -108,7 +108,7 @@ async def lifespan(app: FastAPI):
     """Lifespan manager of FastAPI."""
     # Do nothing on startup
     await events.startup_complete_event.wait()
-    await asyncio.sleep(5)
+    # await asyncio.sleep(5)
     yield
     # Do nothing on shutdown
 
@@ -769,12 +769,12 @@ async def get_subscriptions_all() -> dict():
 async def subscribe_to_object(
     deviceid: str = Path(description="device:instance"),
     objectid: str = Path(description="object:instance"),
-    confirmation: bool
-    | None = Query(
+    confirmation: bool | None = Query(
         default=None, description="Whether CoV subscription is confirmed or unconfirmed"
     ),
-    lifetime: int
-    | None = Query(default=None, description="Lifetime of CoV subscription"),
+    lifetime: int | None = Query(
+        default=None, description="Lifetime of CoV subscription"
+    ),
 ):
     """Subscribe to an object"""
 
@@ -834,13 +834,11 @@ async def delete_subscription(
     status_code=201,
 )
 async def operator_time_sync(
-    deviceid: str
-    | None = Query(
+    deviceid: str | None = Query(
         default=None,
         description="device:instance",
     ),
-    date_time: datetime
-    | None = Query(
+    date_time: datetime | None = Query(
         default=None,
         description="Date and time to send. Empty is Home Assistant date and time.",
     ),
@@ -869,13 +867,11 @@ async def operator_time_sync(
     status_code=201,
 )
 async def operator_utc_time_sync(
-    deviceid: str
-    | None = Query(
+    deviceid: str | None = Query(
         default=None,
         description="device:instance",
     ),
-    date_time: datetime
-    | None = Query(
+    date_time: datetime | None = Query(
         default=None,
         description="Date and time to send. Empty is Home Assistant UTC date and time.",
     ),
@@ -908,8 +904,9 @@ async def read_property(
     deviceid: str = Path(description="device:instance"),
     objectid: str = Path(description="object:instance"),
     propertyid: str = Path(description="property, for example presentValue"),
-    array_index: int
-    | None = Query(default=None, description="Array index, usually left empty"),
+    array_index: int | None = Query(
+        default=None, description="Array index, usually left empty"
+    ),
 ):
     """read a property of an object from a device."""
     try:
@@ -940,17 +937,14 @@ async def write_property(
     deviceid: str = Path(description="device:instance"),
     objectid: str = Path(description="object:instance"),
     propertyid: str = Path(description="property identifier", example="presentValue"),
-    value: str
-    | int
-    | float
-    | bool
-    | None = Query(
+    value: str | int | float | bool | None = Query(
         default=None,
         description="Property value",
         example="true",
     ),
-    array_index: int
-    | None = Query(default=None, description="Array index, usually left empty"),
+    array_index: int | None = Query(
+        default=None, description="Array index, usually left empty"
+    ),
     priority: int | None = Query(default=None, description="Write priority"),
 ):
     """Write to a property of an object from a device."""

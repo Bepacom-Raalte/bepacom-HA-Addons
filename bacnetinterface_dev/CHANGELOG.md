@@ -1,7 +1,7 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
 # 1.6.0b5
-01/04/2025
+04/04/2025
 
 ## Fixed
 - CSS file should now be served by NGINX.
@@ -17,7 +17,7 @@
 - Subscriptions are now monitored through context, through apiv2 current subscription status can be read.
 - BACnet data now being backed up to sqlite database.
 - Saved data gets converted to json at the moment of saving to db.
-- Reads now being made concurrently! This massively improves performance.
+- Reads now being made concurrently. This massively improves performance.
 - Rewrote the discovery process.
 
 ## Dependencies
