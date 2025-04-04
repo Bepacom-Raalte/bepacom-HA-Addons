@@ -108,7 +108,7 @@ async def lifespan(app: FastAPI):
     """Lifespan manager of FastAPI."""
     # Do nothing on startup
     await events.startup_complete_event.wait()
-    await asyncio.sleep(5)
+    # await asyncio.sleep(5)
     yield
     # Do nothing on shutdown
 
@@ -721,7 +721,6 @@ async def get_subscription_device_object(
     subscriptions_dict = {}
 
     for subscription in bacnet_application.subscription_tasks:
-
         if data := get_subscription_data_from_task(subscription, deviceid, objectid):
             subscriptions_dict = deep_update(subscriptions_dict, data)
             break
@@ -739,7 +738,6 @@ async def get_subscriptions_device(
     subscriptions_dict = {}
 
     for subscription in bacnet_application.subscription_tasks:
-
         if data := get_subscription_data_from_task(subscription, deviceid):
             subscriptions_dict = deep_update(subscriptions_dict, data)
 
@@ -754,7 +752,6 @@ async def get_subscriptions_all() -> dict():
     subscriptions_dict = {}
 
     for subscription in bacnet_application.subscription_tasks:
-
         if data := get_subscription_data_from_task(subscription):
             subscriptions_dict = deep_update(subscriptions_dict, data)
 
@@ -801,7 +798,6 @@ async def subscribe_to_object(
     await asyncio.sleep(0.5)
 
     for subscription in bacnet_application.subscription_tasks:
-
         if data := get_subscription_data_from_task(subscription, deviceid, objectid):
             subscriptions_dict = deep_update(subscriptions_dict, data)
             break

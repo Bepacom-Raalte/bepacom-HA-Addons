@@ -1,12 +1,12 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
-# 1.6.0b4
-23/03/2025
+# 1.6.0b5
+04/04/2025
 
 ## Fixed
-- CoV configuration not filtering properly causing no CoV subscriptions being made.
 - CSS file should now be served by NGINX.
 - All regular BACnet datatypes should be supported now.
+- Shutting down more gracefully with a signal handler.
 
 ## Added
 - New apiv2 points!
@@ -15,9 +15,10 @@
 
 ## Changed
 - Subscriptions are now monitored through context, through apiv2 current subscription status can be read.
-- Subscription tasks are now eager, hopefully improving performance.
-- BACnet data now being handled through a SQLite database instead of Python dict.
+- BACnet data now being backed up to sqlite database.
 - Saved data gets converted to json at the moment of saving to db.
+- Reads now being made concurrently. This massively improves performance.
+- Rewrote the discovery process.
 
 ## Dependencies
 - ⬆️ Bumped bacpypes3 to version 0.0.102.

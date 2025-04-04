@@ -3,6 +3,7 @@
 import asyncio
 import json
 from ast import List
+from collections.abc import Mapping
 from contextvars import Context, ContextVar
 from logging import config
 from math import e, isinf, isnan
@@ -14,34 +15,25 @@ import bacpypes3
 import requests
 import websockets
 from bacpypes3.apdu import (
-    AbortPDU,
     ConfirmedCOVNotificationRequest,
-    ErrorPDU,
     ErrorRejectAbortNack,
     ReadPropertyMultipleRequest,
     ReadPropertyRequest,
     RejectPDU,
     SimpleAckPDU,
     SubscribeCOVRequest,
-    UnconfirmedCOVNotificationRequest,
     WritePropertyRequest,
 )
 from bacpypes3.basetypes import (
-    BinaryPV,
-    DeviceStatus,
     EngineeringUnits,
-    ErrorClass,
-    ErrorCode,
     ErrorType,
     EventState,
     PropertyIdentifier,
-    ReadAccessResult,
-    Reliability,
+    Segmentation,
     ServicesSupported,
 )
 from bacpypes3.constructeddata import Any as BACpypesAny
 from bacpypes3.constructeddata import AnyAtomic, ExtendedList, Sequence
-from bacpypes3.debugging import bacpypes_debugging
 from bacpypes3.errors import *
 from bacpypes3.ipv4.app import ForeignApplication, NormalApplication
 from bacpypes3.json.util import (
@@ -64,25 +56,24 @@ from bacpypes3.primitivedata import (
     TagList,
 )
 from bacpypes3.service.cov import SubscriptionContextManager
-from bacpypes3.service.device import WhoIsFuture
 from const import (
     LOGGER,
     device_properties_to_read,
     object_properties_to_read_once,
     object_properties_to_read_periodically,
+    object_types_to_ignore,
     subscribable_objects,
 )
 from sqlitedict import SqliteDict
 from utils import (
+    DeviceConfiguration,
     TimeSynchronizationService,
     bitstring_alt_encode,
     enumerated_alt_encode,
-    format_identifier,
     objectidentifier_alt_encode,
 )
 
 KeyType = TypeVar("KeyType")
-_debug = 0
 _create_task_delay = 0.001
 
 bacpypes3.json.util.objectidentifier_encode = objectidentifier_alt_encode
@@ -118,27 +109,27 @@ original_init = SubscriptionContextManager.__init__
 SubscriptionContextManager.__init__ = custom_init
 
 # reinitializeDevice service
-# Timesync service
 
 
 class BACnetIOHandler(
     NormalApplication, ForeignApplication, TimeSynchronizationService
 ):
-    bacnet_device_dict: SqliteDict = SqliteDict("bacnet.sqlite", autocommit=True)
+    bacnet_device_sqlite: SqliteDict = SqliteDict(
+        "/config/bacnet.sqlite", autocommit=True
+    )
+    bacnet_device_dict: dict = {}
     subscription_tasks: list = []
     update_event: asyncio.Event = asyncio.Event()
     startup_complete: asyncio.Event = asyncio.Event()
     write_to_api: asyncio.Event = asyncio.Event()
     write_to_api_queue: asyncio.Queue = asyncio.Queue()
-    id_to_object = {}
-    object_to_id = {}
-    available_ids = set()
-    next_id = 1
-    default_subscription_lifetime = 60
     subscription_list = []
     i_am_queue: asyncio.Queue = asyncio.Queue(maxsize=1)
     poll_tasks: list[asyncio.Task] = []
     addon_device_config: list = []
+    init_discovery_complete: asyncio.Event = asyncio.Event()
+    read_semaphore: asyncio.Semaphore = asyncio.Semaphore(20)
+    device_configurations: list[DeviceConfiguration] = []
 
     def __init__(
         self,
@@ -155,30 +146,567 @@ class BACnetIOHandler(
         else:
             NormalApplication.__init__(self, device, local_ip)
         super().i_am()
-        super().who_is()
         self.update_event = update_event
         self.vendor_info = get_vendor_info(0)
-        asyncio.get_event_loop().create_task(self.IAm_handler())
         self.addon_device_config = (
             addon_device_config if addon_device_config else list()
         )
+        self.sqlite_restore()
         self.startup_complete.set()
+        asyncio.get_event_loop().create_task(self.discover_devices())
+        asyncio.get_event_loop().create_task(self.sqlite_updater())
         LOGGER.debug("Application initialised")
 
-    def get_config_from_addon_config(self, device_identifier: ObjectIdentifier) -> dict:
+    def sqlite_restore(self):
+        self.deep_update(self.bacnet_device_dict, self.bacnet_device_sqlite)
+
+    async def sqlite_updater(self):
+        while True:
+            await asyncio.sleep(300)
+            self.deep_update(self.bacnet_device_sqlite, self.bacnet_device_dict)
+
+    async def discover_devices(self):
+        """Get a list of devices that respond to a whois request"""
+        # Get to know the network
+        i_ams = await self.who_is(timeout=5)
+
+        generated_configs = []
+        retrieved_configs = []
+
+        async def handle_device(i_am):
+            """Handle a single device"""
+            device_address: Address = i_am.pduSource
+            device_identifier: ObjectIdentifier = i_am.iAmDeviceIdentifier
+
+            LOGGER.info(f"Handling I am of {device_identifier}")
+
+            if self.init_discovery_complete.is_set():
+                if self.is_in_dict(device_identifier, device_identifier):
+                    retrieved_configs.append(self.retrieve_config(device_identifier))
+                    return  # Skip if already known
+
+            await self.explore_device(device_identifier)
+            configuration = self.generate_config(device_identifier)
+            self.device_configurations.append(configuration)
+            generated_configs.append(configuration)
+
+        # Run all device handling tasks concurrently
+        await asyncio.gather(*(handle_device(i_am) for i_am in i_ams))
+
+        # After running for the first time
+        self.init_discovery_complete.set()
+
+        # Generate tasks
+        for config in generated_configs + retrieved_configs:
+            if config in generated_configs:
+                await self.config_to_tasks(config)
+            else:
+                await self.config_to_tasks(config, False)
+
+    def retrieve_config(
+        self, device_identifier: ObjectIdentifier
+    ) -> DeviceConfiguration:
+
+        device_id_str = self.identifier_to_string(device_identifier)
+
+        for config in self.device_configurations:
+            if self.identifier_to_string(config.device_identifier) == device_id_str:
+                return config
+
+        return DeviceConfiguration()
+
+    def generate_config(
+        self, device_identifier: ObjectIdentifier
+    ) -> DeviceConfiguration:
+        configuration = DeviceConfiguration(self.get_config_dict(device_identifier))
+        device_id_str = self.identifier_to_string(device_identifier)
+
+        # populate config with actual objects
+        object_list = [
+            obj
+            for obj in self.bacnet_device_dict[device_id_str][device_id_str].get(
+                "objectList", []
+            )
+            if ObjectType(obj[0]) not in object_types_to_ignore
+        ]
+
+        if configuration.device_identifier == "all":
+            configuration.device_identifier = device_identifier
+        elif isinstance(configuration.device_identifier, str):
+            try:
+                configuration.device_identifier = ObjectIdentifier(
+                    configuration.device_identifier
+                )
+            except Exception as error:
+                LOGGER.error(f"We got here... {error}")
+
+        configuration.all_to_objects(object_list)
+        # remove object from slow poll if fast polled
+        configuration.remove_duplicate_slow_polls()
+        # remove object from quick poll if cov
+        configuration.remove_duplicate_quick_polls()
+
+        if device_identifier in configuration.cov_items:
+            configuration.cov_items.remove(device_identifier)
+        if device_identifier in configuration.poll_items_quick:
+            configuration.poll_items_quick.remove(device_identifier)
+        if device_identifier in configuration.poll_items_slow:
+            configuration.poll_items_slow.remove(device_identifier)
+
+        return configuration
+
+    def is_valid_object_class(self, object_identifier: ObjectIdentifier) -> bool:
+        object_identifier = ObjectIdentifier(object_identifier)
+
+        object_class = self.vendor_info.get_object_class(object_identifier[0])
+
+        if object_class is None:
+            LOGGER.warning(f"Object type is unknown: {object_identifier}")
+            return False
+        return True
+
+    async def config_to_tasks(
+        self, configuration: DeviceConfiguration, first_run: bool = True
+    ) -> None:
+
+        device_identifier = ObjectIdentifier(configuration.device_identifier)
+
+        async def create_cov_tasks():
+
+            object_list = [
+                item
+                for item in configuration.cov_items
+                if ObjectType(item[0]) in subscribable_objects
+            ]
+
+            for object_identifier in object_list:
+                object_identifier = ObjectIdentifier(object_identifier)
+
+                if not self.is_valid_object_class(object_identifier):
+                    continue
+
+                if object_identifier[0] in object_types_to_ignore:
+                    continue
+
+                if object_identifier == device_identifier:
+                    continue
+
+                task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)},confirmed"
+
+                if self.task_in_cov_tasklist(task_name):
+                    LOGGER.debug(f"task already exists {task_name}")
+                    continue
+
+                await self.create_subscription_task(
+                    device_identifier=device_identifier,
+                    object_identifier=object_identifier,
+                    confirmed_notifications=True,
+                    lifetime=configuration.cov_lifetime,
+                )
+                await asyncio.sleep(_create_task_delay)
+
+        async def create_quick_poll_tasks():
+
+            object_list = [item for item in configuration.poll_items_quick]
+
+            for object_identifier in object_list:
+                object_identifier = ObjectIdentifier(object_identifier)
+
+                if not self.is_valid_object_class(object_identifier):
+                    continue
+
+                if object_identifier[0] in object_types_to_ignore:
+                    continue
+
+                if object_identifier == device_identifier:
+                    continue
+
+                task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)}"
+
+                if self.task_in_poll_tasklist(task_name):
+                    LOGGER.debug(f"task already exists {task_name}")
+                    continue
+
+                self.create_poll_task(
+                    device_identifier=device_identifier,
+                    object_identifier=object_identifier,
+                    poll_rate=configuration.poll_rate_quick,
+                )
+                await asyncio.sleep(_create_task_delay)
+
+        async def create_slow_poll_tasks():
+
+            object_list = [item for item in configuration.poll_items_slow]
+
+            for object_identifier in object_list:
+                object_identifier = ObjectIdentifier(object_identifier)
+
+                if not self.is_valid_object_class(object_identifier):
+                    continue
+
+                if object_identifier[0] in object_types_to_ignore:
+                    continue
+
+                if object_identifier == device_identifier:
+                    continue
+
+                task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)}"
+
+                if self.task_in_poll_tasklist(task_name):
+                    LOGGER.debug(f"task already exists {task_name}")
+                    continue
+
+                self.create_poll_task(
+                    device_identifier=device_identifier,
+                    object_identifier=object_identifier,
+                    poll_rate=configuration.poll_rate_slow,
+                )
+                await asyncio.sleep(_create_task_delay)
+
+        if first_run:
+            await create_cov_tasks()
+
+            await create_quick_poll_tasks()
+
+            await create_slow_poll_tasks()
+
+            return
+
+        if configuration.reread_on_iam:
+            await create_quick_poll_tasks()
+            await create_slow_poll_tasks()
+
+        if configuration.resub_on_iam:
+            await create_cov_tasks()
+
+    async def explore_device(self, device_identifier: ObjectIdentifier) -> None:
+        # Get property list of the device
+        property_list = await self.get_property_list(
+            device_identifier, device_identifier, device_properties_to_read
+        )
+        # might have to limit properties read, only intersecting property list with device props to read
+
+        properties_to_read = list(set(property_list) & set(device_properties_to_read))
+
+        # Actually read device properties
+        if not await self.properties_read_multiple(
+            device_identifier, device_identifier, properties_to_read
+        ):
+            if not self.is_in_dict(device_identifier, device_identifier):
+                LOGGER.warning(
+                    f"Failed to get device properties for {device_identifier}"
+                )
+                return
+
+        # Actually read object properties
+        if not await self.read_objects_of_device(device_identifier):
+            LOGGER.warning(f"Failed to get object properties for {device_identifier}")
+
+    async def get_property_list(
+        self, device_identifier, object_identifier, fallback_list
+    ) -> list[PropertyIdentifier]:
+
+        try:
+            async with self.read_semaphore:
+                property_list = await self.read_property(
+                    address=self.dev_to_addr(device_identifier),
+                    objid=object_identifier,
+                    prop=PropertyIdentifier("propertyList"),
+                )
+            if isinstance(property_list, list):
+                property_list.append(PropertyIdentifier("objectIdentifier"))
+                property_list.append(PropertyIdentifier("objectName"))
+            else:
+                LOGGER.error(f"Invalid property list: {property_list}")
+                property_list = fallback_list
+        except ErrorRejectAbortNack as err:
+            # LOGGER.debug(f"No propertylist for {device_identifier}, {object_identifier}. {err}")
+            property_list = fallback_list
+
+        if len(property_list) < 4:
+            property_list = fallback_list
+
+        return property_list
+
+    async def properties_read_multiple(
+        self,
+        device_identifier: ObjectIdentifier,
+        object_identifier: ObjectIdentifier,
+        property_list: list[PropertyIdentifier],
+    ) -> bool:
+        # Basic useful vars
+        device_identifier = ObjectIdentifier(device_identifier)
+        object_identifier = ObjectIdentifier(object_identifier)
+        parameter_list = [object_identifier, property_list]
+
+        LOGGER.debug(f"Read multiple: {device_identifier} {object_identifier}")
+        try:
+            async with self.read_semaphore:  # Limit concurrency only for read_property_multiple
+                response = await self.read_property_multiple(
+                    address=self.dev_to_addr(device_identifier),
+                    parameter_list=parameter_list,
+                )
+
+        except ErrorRejectAbortNack as err:
+            LOGGER.warning(
+                f"Error during read multiple: {device_identifier} {object_identifier} {err}"
+            )
+            if "segmentation-not-supported" in str(
+                err
+            ) or "unrecognized-service" in str(err):
+                return await self.properties_read(
+                    device_identifier, object_identifier, property_list
+                )
+            elif "no-response" in str(err):
+                return False
+            else:
+                return False
+        except InvalidTag as err:
+            LOGGER.debug(
+                f"Invalid tag received: {device_identifier} {object_identifier} {err}"
+            )
+            return await self.properties_read(
+                device_identifier, object_identifier, property_list
+            )
+        else:
+            for (
+                object_identifier,
+                property_identifier,
+                property_array_index,
+                property_value,
+            ) in response:
+                if not isinstance(property_value, ErrorType):
+                    self.dict_updater(
+                        device_identifier=device_identifier,
+                        object_identifier=object_identifier,
+                        property_identifier=property_identifier,
+                        property_value=property_value,
+                    )
+            return True
+
+    async def properties_read(
+        self,
+        device_identifier: ObjectIdentifier,
+        object_identifier: ObjectIdentifier,
+        property_list: list[PropertyIdentifier],
+    ) -> bool:
+        # Basic useful vars
+        device_identifier = ObjectIdentifier(device_identifier)
+        object_identifier = ObjectIdentifier(object_identifier)
+        LOGGER.debug(f"Read: {device_identifier} {object_identifier}")
+
+        async def read_property_safely(property_id: PropertyIdentifier):
+            """Reads a property and handles errors safely."""
+            try:
+                async with self.read_semaphore:  # Limit concurrency only for read_property
+                    response = await self.read_property(
+                        address=self.dev_to_addr(device_identifier),
+                        objid=object_identifier,
+                        prop=property_id,
+                    )
+            except ErrorRejectAbortNack as err:
+                LOGGER.warning(
+                    f"Error during read: {device_identifier} {object_identifier} {err}"
+                )
+                if "segmentation-not-supported" in str(err):
+                    return await self.read_list_property(
+                        device_identifier, object_identifier, property_id
+                    )
+                elif "unknown-property" in str(err):
+                    return True
+                elif "no-response" in str(err):
+                    return False
+                else:
+                    return False
+            except InvalidTag as err:
+                LOGGER.debug(
+                    f"Invalid tag received: {device_identifier} {object_identifier} {err}"
+                )
+                return False
+            else:
+                if response is not ErrorType:
+                    self.dict_updater(
+                        device_identifier=device_identifier,
+                        object_identifier=object_identifier,
+                        property_identifier=property_id,
+                        property_value=response,
+                    )
+            return True  # Ensure the function returns something in all cases
+
+        # Now outside read_property_safely: create tasks
+        tasks = [read_property_safely(property_id) for property_id in property_list]
+
+        # Gather all tasks and wait for completion
+        results = await asyncio.gather(*tasks)
+
+        # If any property read returned False (due to "no-response"), return False
+        return False if False in results else True
+
+    async def read_list_property(
+        self,
+        device_identifier: ObjectIdentifier,
+        object_identifier: ObjectIdentifier,
+        property_id: PropertyIdentifier,
+    ) -> bool:
+        """Read list type property in the smallest possible way."""
+
+        # Basic useful vars
+        device_identifier = ObjectIdentifier(device_identifier)
+        object_identifier = ObjectIdentifier(object_identifier)
+        property_id = PropertyIdentifier(property_id)
+        LOGGER.debug(
+            f"Read list property: {device_identifier} {object_identifier} {property_id}"
+        )
+        try:
+            async with self.read_semaphore:
+                object_amount = await self.read_property(
+                    address=self.dev_to_addr(device_identifier),
+                    objid=object_identifier,
+                    prop=property_id,
+                    array_index=0,
+                )
+            if object_amount == 0:
+                LOGGER.debug(
+                    f"Amount is zero: {device_identifier} {object_identifier} {property_id}"
+                )
+                return False
+        except ErrorRejectAbortNack as err:
+            LOGGER.warning(
+                f"Error reading list size for: {device_identifier} {object_identifier} {property_id} {err}"
+            )
+            return False
+
+        try:
+            # Read properties one by one, respecting the semaphore limit
+            async def read_with_semaphore(number):
+                async with self.read_semaphore:  # Acquire semaphore per task
+                    return await self.read_property(
+                        address=self.dev_to_addr(device_identifier),
+                        objid=object_identifier,
+                        prop=property_id,
+                        array_index=number,
+                    )
+
+            # Create tasks that respect the semaphore limit
+            tasks = [
+                read_with_semaphore(number) for number in range(1, object_amount + 1)
+            ]
+            property_list = await asyncio.gather(*tasks)
+
+            self.dict_updater(
+                device_identifier=device_identifier,
+                object_identifier=object_identifier,
+                property_identifier=property_id,
+                property_value=property_list,
+            )
+
+        except ErrorRejectAbortNack as err:
+            LOGGER.warning(
+                f"Error reading list size for: {device_identifier} {object_identifier} {property_id} {err}"
+            )
+            return False
+        else:
+            return True
+
+    async def read_objects_of_device(self, device_identifier: ObjectIdentifier) -> bool:
+        device_identifier = ObjectIdentifier(device_identifier)
+
+        device_id_str = self.identifier_to_string(device_identifier)
+
+        device = self.bacnet_device_dict.get(device_id_str, None)
+
+        if device is None:
+            LOGGER.warning(f"Missing device entry for: {device_identifier}")
+            return False
+
+        if self.has_read_multiple_service(device_identifier):
+            read_func = self.properties_read_multiple
+        else:
+            read_func = self.properties_read
+
+        tasks = []
+
+        object_list = [
+            ObjectIdentifier(obj)
+            for obj in device[device_id_str].get("objectList", [])
+            if self.is_valid_object_class(ObjectIdentifier(obj))
+            and ObjectType(obj[0]) not in object_types_to_ignore
+            and ObjectIdentifier(obj) != device_identifier
+        ]
+
+        for object_identifier in object_list:
+            # Get property list of the device
+            property_list = await self.get_property_list(
+                device_identifier, object_identifier, object_properties_to_read_once
+            )
+
+            properties_to_read = list(
+                set(property_list) & set(object_properties_to_read_once)
+            )
+
+            tasks.append(
+                read_func(device_identifier, object_identifier, properties_to_read)
+            )
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        if any(result is False for result in results):
+            LOGGER.warning(f"Some properties failed to read for {device_identifier}")
+
+        return True
+
+    def has_read_multiple_service(self, device_identifier: ObjectIdentifier) -> bool:
+        device_id_str = self.identifier_to_string(device_identifier)
+
+        services_supported = self.bacnet_device_dict[device_id_str][device_id_str].get(
+            "protocolServicesSupported", ServicesSupported()
+        )
+
+        if ServicesSupported(services_supported)["read-property-multiple"] != 1:
+            return False
+
+        return True
+
+    def has_segmentation(self, device_identifier):
+        device_id_str = self.identifier_to_string(device_identifier)
+
+        segmentation = self.bacnet_device_dict[device_id_str][device_id_str].get(
+            "segmentationSupported", Segmentation()
+        )
+
+        if segmentation in (Segmentation.segmentedBoth, Segmentation.segmentedReceive):
+            return True
+
+        return False
+
+    def is_in_dict(
+        self, device_identifier: ObjectIdentifier, object_identifier: ObjectIdentifier
+    ) -> bool:
+        device_id_str = self.identifier_to_string(device_identifier)
+        object_id_str = self.identifier_to_string(object_identifier)
+
+        if not self.bacnet_device_dict.get(device_id_str, None):
+            return False
+
+        if not self.bacnet_device_dict[device_id_str].get(object_id_str, None):
+            return False
+
+        return True
+
+    def get_config_dict(self, device_identifier: ObjectIdentifier) -> dict:
         specific_config = next(
             (
                 config
                 for config in self.addon_device_config
                 if config.get("deviceID")
-                == f"{device_identifier[0]}:{device_identifier[1]}"
+                == self.identifier_to_string(device_identifier)
             ),
             None,
         )
         if specific_config:
             return specific_config
 
-        all_config = next(
+        generic_config = next(
             (
                 config
                 for config in self.addon_device_config
@@ -186,353 +714,74 @@ class BACnetIOHandler(
             ),
             None,
         )
-        if all_config:
-            return all_config
+        if generic_config:
+            return {
+                **generic_config,
+                "deviceID": self.identifier_to_string(device_identifier),
+            }
 
         return dict()
 
-    async def generate_specific_tasks(
-        self, device_identifier: ObjectIdentifier
-    ) -> None:
-        """Handle generating tasks for specific identifiers after reading object."""
-
-        specific_config = [
-            config
-            for config in self.addon_device_config
-            if config.get("deviceID")
-            == f"{device_identifier[0]}:{device_identifier[1]}"
-        ]
-
-        if not specific_config:
-            # assume generic handling
-            await self.generate_generic_tasks(device_identifier=device_identifier)
-            return
-
-        if len(specific_config) > 1:
-            # duplicate
-            return
-
-        index = self.addon_device_config.index(specific_config[0])
-
-        config = self.addon_device_config[index]
-
-        if config.get("quick_poll_list", []):
-            await self.create_poll_task(
-                device_identifier=device_identifier,
-                object_list=config.get("quick_poll_list"),
-                poll_rate=config.get("quick_poll_rate", 30),
-            )
-
-        if "all" in config.get("slow_poll_list", []):
-            object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
-                f"device:{device_identifier[1]}"
-            ].get("objectList")
-
-            if device_identifier in object_list:
-                object_list.remove(device_identifier)
-
-        elif config.get("slow_poll_list", []):
-            object_list = config.get("slow_poll_list", [])
-        else:
-            object_list = []
-
-        if object_list:
-            await self.create_poll_task(
-                device_identifier=device_identifier,
-                object_list=object_list,
-                poll_rate=config.get("slow_poll_rate", 600),
-            )
-
-        if "all" in config.get("CoV_list", []):
-            object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
-                f"device:{device_identifier[1]}"
-            ].get("objectList")
-
-            if device_identifier in object_list:
-                object_list.remove(device_identifier)
-
-            object_list = [
-                object_identifier
-                for object_identifier in object_list
-                if ObjectType(object_identifier[0]) in subscribable_objects
-            ]
-
-            for object_identifier in object_list:
-                await self.create_subscription_task(
-                    device_identifier=device_identifier,
-                    object_identifier=object_identifier,
-                    confirmed_notifications=True,
-                    lifetime=config.get(
-                        "CoV_lifetime", self.default_subscription_lifetime
-                    ),
-                )
-                await asyncio.sleep(_create_task_delay)
-
-        elif config.get("CoV_list", []):
-            for object_identifier in config.get("CoV_list"):
-                await self.create_subscription_task(
-                    device_identifier=device_identifier,
-                    object_identifier=object_identifier,
-                    confirmed_notifications=True,
-                    lifetime=config.get("CoV_lifetime"),
-                )
-                await asyncio.sleep(_create_task_delay)
-
-        return
-
-    async def generate_generic_tasks(self, device_identifier: ObjectIdentifier) -> None:
-        specific_config = [
-            config
-            for config in self.addon_device_config
-            if config.get("deviceID") == "all"
-        ]
-
-        if not specific_config:
-            # use generic settings:
-            await self.subscribe_object_list(device_identifier=device_identifier)
-            return
-
-        index = self.addon_device_config.index(specific_config[0])
-
-        config = self.addon_device_config[index]
-
-        if config.get("quick_poll_list", []):
-            await self.create_poll_task(
-                device_identifier=device_identifier,
-                object_list=config.get("quick_poll_list"),
-                poll_rate=config.get("quick_poll_rate", 30),
-            )
-
-        if "all" in config.get("slow_poll_list", []):
-            object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
-                f"device:{device_identifier[1]}"
-            ].get("objectList")
-
-            if device_identifier in object_list:
-                object_list.remove(device_identifier)
-
-        elif config.get("slow_poll_list", []):
-            object_list = config.get("slow_poll_list")
-        else:
-            object_list = []
-
-        if object_list:
-            await self.create_poll_task(
-                device_identifier=device_identifier,
-                object_list=object_list,
-                poll_rate=config.get(
-                    "slow_poll_rate", self.default_subscription_lifetime
-                ),
-            )
-
-        if "all" in config.get("CoV_list", []):
-            object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
-                f"device:{device_identifier[1]}"
-            ].get("objectList")
-            if device_identifier in object_list:
-                object_list.remove(device_identifier)
-
-            object_list = [
-                object_identifier
-                for object_identifier in object_list
-                if ObjectType(object_identifier[0]) in subscribable_objects
-            ]
-
-            for object_identifier in object_list:
-                await self.create_subscription_task(
-                    device_identifier=device_identifier,
-                    object_identifier=object_identifier,
-                    confirmed_notifications=True,
-                    lifetime=config.get("CoV_lifetime", 600),
-                )
-                await asyncio.sleep(_create_task_delay)
-
-        elif config.get("CoV_list", []):
-            for object_identifier in config.get("CoV_list"):
-                await self.create_subscription_task(
-                    device_identifier=device_identifier,
-                    object_identifier=object_identifier,
-                    confirmed_notifications=True,
-                    lifetime=config.get("CoV_lifetime", 600),
-                )
-                await asyncio.sleep(_create_task_delay)
-
-        return
-
-    async def poll_task(
+    async def object_poll_task(
         self,
         device_identifier: ObjectIdentifier,
-        object_list: list[ObjectIdentifier],
-        poll_rate: int = 30,
-    ) -> None:
-        LOGGER.debug(f"TASK: {device_identifier} {object_list} {device_identifier}")
+        object_identifier: ObjectIdentifier,
+        poll_rate: int | float = 300,
+    ):
+        device_identifier = ObjectIdentifier(device_identifier)
+        object_identifier = ObjectIdentifier(object_identifier)
 
-        try:
-            services_supported = self.bacnet_device_dict[
-                f"device:{device_identifier[1]}"
-            ][f"device:{device_identifier[1]}"].get(
-                "protocolServicesSupported", ServicesSupported()
-            )
+        if self.has_read_multiple_service(device_identifier):
+            read_func = self.properties_read_multiple
+        else:
+            read_func = self.properties_read
 
-            while True:
-                await asyncio.sleep(poll_rate)
+        property_list = [
+            PropertyIdentifier(property_id)
+            for property_id in self.bacnet_device_dict[
+                self.identifier_to_string(device_identifier)
+            ][self.identifier_to_string(object_identifier)]
+        ]
 
-                for object_identifier in object_list:
+        properties_to_read = list(
+            set(property_list) & set(object_properties_to_read_periodically)
+        )
 
-                    object_class = self.vendor_info.get_object_class(
-                        object_identifier[0]
-                    )
+        while True:
+            await asyncio.sleep(poll_rate)
 
-                    if object_class is None:
-                        LOGGER.warning(
-                            f"Object type is unknown: {device_identifier}, {object_identifier}"
-                        )
-                        continue
+            await read_func(device_identifier, object_identifier, properties_to_read)
 
-                    property_list = [
-                        PropertyIdentifier(property_id)
-                        for property_id in self.bacnet_device_dict[
-                            format_identifier(device_identifier)
-                        ][format_identifier(object_identifier)]
-                    ]
-
-                    properties_to_read = list(
-                        set(property_list) & set(object_properties_to_read_periodically)
-                    )
-
-                    if (
-                        ServicesSupported(services_supported)["read-property-multiple"]
-                        == 1
-                    ):
-                        try:
-                            response = await self.read_property_multiple(
-                                address=self.dev_to_addr(device_identifier),
-                                parameter_list=[
-                                    object_identifier,
-                                    properties_to_read,
-                                ],
-                            )
-                        except ErrorRejectAbortNack as err:
-                            LOGGER.error(
-                                f"Read multiple error: {device_identifier} {object_identifier}: {err}"
-                            )
-                            continue
-                        else:
-                            for (
-                                object_identifier,
-                                property_identifier,
-                                property_array_index,
-                                property_value,
-                            ) in response:
-                                if not isinstance(property_value, ErrorType):
-                                    self.dict_updater(
-                                        device_identifier=device_identifier,
-                                        object_identifier=object_identifier,
-                                        property_identifier=property_identifier,
-                                        property_value=property_value,
-                                    )
-                    else:
-                        for property_id in properties_to_read:
-
-                            property_class = object_class.get_property_type(property_id)
-
-                            if property_class is None:
-                                continue
-
-                            try:
-                                response = await self.read_property(
-                                    address=self.dev_to_addr(device_identifier),
-                                    objid=object_identifier,
-                                    prop=property_id,
-                                )
-                            except ErrorRejectAbortNack as err:
-                                LOGGER.error(
-                                    f"Read error: {device_identifier} {object_identifier} {property_id}: {err}"
-                                )
-                                continue
-                            else:
-                                if response is not ErrorType:
-                                    self.dict_updater(
-                                        device_identifier=device_identifier,
-                                        object_identifier=object_identifier,
-                                        property_identifier=property_id,
-                                        property_value=response,
-                                    )
-
-        except asyncio.CancelledError as err:
-            LOGGER.info(f"Poll task for {device_identifier} cancelled")
-
-        except Exception as err:
-            LOGGER.error(err)
-
-    async def create_poll_task(
+    def create_poll_task(
         self,
         device_identifier: ObjectIdentifier,
-        object_list: list[ObjectIdentifier],
-        poll_rate: int = 30,
+        object_identifier: ObjectIdentifier,
+        poll_rate: int = 300,
     ) -> None:
         """Create a task that'll poll every so many seconds."""
         try:
             device_identifier = ObjectIdentifier(device_identifier)
+            object_identifier = ObjectIdentifier(object_identifier)
 
-            if not self.bacnet_device_dict.get(f"device:{device_identifier[1]}"):
-                await asyncio.sleep(15)
+            device_id_str = self.identifier_to_string(device_identifier)
+            object_id_str = self.identifier_to_string(object_identifier)
 
-            if not self.bacnet_device_dict.get(f"device:{device_identifier[1]}"):
-                self.who_is(device_identifier[1], device_identifier[1])
-                await asyncio.sleep(45)
-
-            if not self.bacnet_device_dict.get(f"device:{device_identifier[1]}"):
+            if not self.is_in_dict(device_identifier, object_identifier):
                 LOGGER.warning(
-                    f"{device_identifier} did not respond the requests. No polling possible."
+                    f"{device_identifier} not in memory, something went wrong."
                 )
                 return
 
-            objects_to_poll: list = []
-
-            for object_identifier in object_list:
-                object_identifier = ObjectIdentifier(object_identifier)
-
-                if not self.bacnet_device_dict[f"device:{device_identifier[1]}"].get(
-                    f"{object_identifier[0].attr}:{object_identifier[1]}"
-                ):
-                    """
-                    try:
-                            response = await self.read_property(
-                                    address=self.dev_to_addr(device_identifier),
-                                    objid=object_identifier,
-                                    prop=PropertyIdentifier("presentValue"),
-                            )
-                    except ErrorRejectAbortNack as err:
-                            LOGGER.warning(
-                                    f"{device_identifier} {object_identifier} failed to read: {err}"
-                            )
-                            LOGGER.info(
-                                    f"{device_identifier} {object_identifier} won't get polled."
-                            )
-                            continue
-                    """
-                    # This part caused a lot of overhead, just skip
-                    continue
-
-                objects_to_poll.append(object_identifier)
-
-            if not objects_to_poll:
-                LOGGER.warning(f"No objects to poll for {device_identifier}.")
-                return
-
             task = asyncio.create_task(
-                self.poll_task(device_identifier, objects_to_poll, poll_rate),
-                name=f"{device_identifier[0]}:{device_identifier[1]}",
+                self.object_poll_task(device_identifier, object_identifier, poll_rate),
+                name=f"{device_id_str}{object_id_str}",
             )
-
-            await asyncio.sleep(_create_task_delay)
 
             self.poll_tasks.append(task)
 
         except Exception as err:
             LOGGER.error(
-                f"Failed to create polling task {device_identifier}, {object_identifier}"
+                f"Failed to create polling task {device_identifier}, {object_identifier} {err}"
             )
 
     def deep_update(
@@ -540,20 +789,15 @@ class BACnetIOHandler(
     ) -> Dict[KeyType, Any]:
         for updating_mapping in updating_mappings:
             for k, v in updating_mapping.items():
-                if (
-                    k in mapping
-                    and isinstance(mapping[k], dict)
-                    and isinstance(v, dict)
-                ):
+                if isinstance(v, Mapping) and isinstance(mapping.get(k), dict):
                     mapping[k] = self.deep_update(mapping[k], v)
                 else:
                     mapping[k] = v
+
         self.update_event.set()
-        # LOGGER.debug(f"Updating {updating_mapping}")
         return mapping
 
     def dev_to_addr(self, dev: ObjectIdentifier) -> Address | None:
-
         for address, device_info in self.device_info_cache.address_cache.items():
             if device_info.device_instance == dev[1]:
                 return address
@@ -568,36 +812,6 @@ class BACnetIOHandler(
                 )
         return None
 
-    def assign_id(self, obj: ObjectIdentifier, dev: ObjectIdentifier) -> int:
-        """Assign an ID to the given object and return it."""
-        if (obj, dev) in self.object_to_id:
-            # The object already has an ID, return it
-            return self.object_to_id[(obj, dev)]
-
-        # Assign a new ID to the object
-        if self.available_ids:
-            # Use an available ID if there is one
-            new_id = self.available_ids.pop()
-        else:
-            # Assign a new ID if there are no available IDs
-            new_id = self.next_id
-            self.next_id += 1
-
-        self.id_to_object[new_id] = (obj, dev)
-        self.object_to_id[(obj, dev)] = new_id
-        return new_id
-
-    def unassign_id(self, obj: ObjectIdentifier, dev: ObjectIdentifier) -> None:
-        """Remove the ID assignment for the given object."""
-        if (obj, dev) not in self.object_to_id:
-            return
-
-        # Remove the ID assignment for the object and add the ID to the available IDs set
-        obj_id = self.object_to_id[(obj, dev)]
-        del self.id_to_object[obj_id]
-        del self.object_to_id[(obj, dev)]
-        self.available_ids.add(obj_id)
-
     async def do_WhoIsRequest(self, apdu) -> None:
         """Handle incoming Who Is request."""
         LOGGER.info(f"Received Who Is Request from {apdu.pduSource}")
@@ -608,204 +822,26 @@ class BACnetIOHandler(
 
         LOGGER.info(f"I Am from {apdu.iAmDeviceIdentifier}")
 
-        device_id = apdu.iAmDeviceIdentifier[1]
-
-        if device_id in self.device_info_cache.instance_cache:
-            await self.device_info_cache.set_device_info(apdu)
-            LOGGER.debug(f"Device {apdu.iAmDeviceIdentifier} already in cache!")
-            if self.bacnet_device_dict.get(f"device:{device_id}", False):
-                in_cache = False
-            else:
-                in_cache = True
-        else:
-            await self.device_info_cache.set_device_info(apdu)
-            in_cache = False
-
         await super().do_IAmRequest(apdu)
 
-        if not in_cache:
-            await self.i_am_queue.put(apdu.iAmDeviceIdentifier)
+        if not self.init_discovery_complete.is_set():
             return
 
-        # if it is, did we ask for it?
+        config = self.retrieve_config(apdu.iAmDeviceIdentifier)
 
-        config = self.get_config_from_addon_config(apdu.iAmDeviceIdentifier)
+        await self.config_to_tasks(config, False)
 
-        if config.get("reread_on_iam", True):
-            # Check if object list is still the same, otherwise read entire dict again
-            await self.handle_object_list_check(apdu.iAmDeviceIdentifier)
+    def identifier_to_string(self, object_identifier: ObjectIdentifier | str) -> str:
+        if isinstance(object_identifier, ObjectIdentifier):
+            return f"{object_identifier[0].attr}:{object_identifier[1]}"
+        else:
+            return object_identifier
 
-        if config.get("resub_on_iam", True):
-            # Check if CoV tasks are still active, otherwise resub.
-            await self.handle_cov_check(apdu.iAmDeviceIdentifier)
-
-    async def handle_object_list_check(
-        self, device_identifier: ObjectIdentifier
-    ) -> None:
-
-        device_id = device_identifier[1]
-
-        try:
-            old_object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
-                f"device:{device_identifier[1]}"
-            ].get("objectList")
-        except KeyError as err:
-            LOGGER.warning(f"Key error: {err}, reading device again...")
-            await self.i_am_queue.put(device_identifier)
-            return
-
-        if not await self.read_multiple_device_props(device_identifier):
-            LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
-            if self.bacnet_device_dict.get(f"device:{device_id}"):
-                self.bacnet_device_dict.pop(f"device:{device_id}")
-
-        new_object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
-            f"device:{device_identifier[1]}"
-        ].get("objectList")
-
-        if device_identifier in new_object_list:
-            new_object_list.remove(device_identifier)
-
-        if list(old_object_list) != list(new_object_list):
-            LOGGER.debug(
-                f"Object lists aren't equal!... {old_object_list} -> {new_object_list}"
-            )
-
-            await self.read_multiple_objects(device_identifier)
-
-    def identifier_to_string(self, object_identifier) -> str:
-        return f"{object_identifier[0].attr}:{object_identifier[1]}"
-
-    def task_in_tasklist(self, task_name) -> bool:
+    def task_in_cov_tasklist(self, task_name) -> bool:
         return any(task_name in task.get_name() for task in self.subscription_tasks)
 
-    async def handle_cov_check(self, device_identifier) -> None:
-
-        device_string = self.identifier_to_string(device_identifier)
-
-        if self.addon_device_config is None:
-            return
-
-        specific_config = [
-            config
-            for config in self.addon_device_config
-            if config.get("deviceID")
-            == f"{device_identifier[0]}:{device_identifier[1]}"
-        ]
-
-        if not specific_config:
-            specific_config = [
-                config
-                for config in self.addon_device_config
-                if config.get("deviceID") == "all"
-            ]
-            if not specific_config:
-                return
-
-        index = self.addon_device_config.index(specific_config[0])
-
-        config = self.addon_device_config[index]
-
-        # check if we have some device info
-
-        try:
-            old_object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
-                f"device:{device_identifier[1]}"
-            ].get("objectList")
-        except KeyError as err:
-            LOGGER.warning(f"Key error: {err}, reading device again...")
-            await self.i_am_queue.put(device_identifier)
-            return
-
-        if "all" in config.get("CoV_list", []):
-            object_list = self.bacnet_device_dict[f"device:{device_identifier[1]}"][
-                f"device:{device_identifier[1]}"
-            ].get("objectList")
-
-            if device_identifier in object_list:
-                object_list.remove(device_identifier)
-
-            object_list = [
-                object_identifier
-                for object_identifier in object_list
-                if ObjectType(object_identifier[0]) in subscribable_objects
-            ]
-
-            for object_identifier in object_list:
-
-                task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)},confirmed"
-
-                if self.task_in_tasklist(task_name):
-                    continue
-
-                await self.create_subscription_task(
-                    device_identifier=device_identifier,
-                    object_identifier=object_identifier,
-                    confirmed_notifications=True,
-                    lifetime=config.get(
-                        "CoV_lifetime", self.default_subscription_lifetime
-                    ),
-                )
-                await asyncio.sleep(_create_task_delay)
-
-        elif config.get("CoV_list", []):
-
-            for object_identifier in config.get("CoV_list"):
-
-                task_name = f"{self.identifier_to_string(device_identifier)},{self.identifier_to_string(object_identifier)},confirmed"
-
-                if self.task_in_tasklist(task_name):
-                    continue
-
-                await self.create_subscription_task(
-                    device_identifier=device_identifier,
-                    object_identifier=object_identifier,
-                    confirmed_notifications=True,
-                    lifetime=config.get("CoV_lifetime"),
-                )
-                await asyncio.sleep(_create_task_delay)
-
-    async def IAm_handler(self):
-        """Do the things when receiving I Am requests"""
-
-        while True:
-            device_identifier = await self.i_am_queue.get()
-            asyncio.create_task(
-                self.handle_iAm_request(device_identifier=device_identifier)
-            )
-            await asyncio.sleep(4)
-
-    async def handle_iAm_request(self, device_identifier: ObjectIdentifier):
-        device_id = device_identifier[1]
-
-        LOGGER.debug(f"I am handler for: {device_id}")
-
-        # if failed stop handling response
-        if not await self.read_multiple_device_props(device_identifier):
-            LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
-            if self.bacnet_device_dict.get(f"device:{device_id}"):
-                self.bacnet_device_dict.pop(f"device:{device_id}")
-            return
-
-        if not self.bacnet_device_dict[f"device:{device_id}"].get(
-            f"device:{device_id}"
-        ):
-            LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
-            return
-
-        services_supported = self.bacnet_device_dict[f"device:{device_id}"][
-            f"device:{device_id}"
-        ].get("protocolServicesSupported", ServicesSupported())
-
-        if ServicesSupported(services_supported)["read-property-multiple"] == 1:
-            await self.read_multiple_objects(device_identifier=device_identifier)
-        else:
-            await self.read_objects(device_identifier=device_identifier)
-
-        if self.addon_device_config:
-            await self.generate_specific_tasks(device_identifier=device_identifier)
-        else:
-            await self.subscribe_object_list(device_identifier=device_identifier)
+    def task_in_poll_tasklist(self, task_name) -> bool:
+        return any(task_name in task.get_name() for task in self.poll_tasks)
 
     def dict_updater(
         self,
@@ -814,7 +850,6 @@ class BACnetIOHandler(
         property_identifier: PropertyIdentifier,
         property_value,
     ):
-
         if isinstance(property_value, ErrorType):
             LOGGER.info(
                 f"Error updating: {device_identifier} {object_identifier} {property_identifier} {sequence_to_json(property_value)}"
@@ -827,7 +862,6 @@ class BACnetIOHandler(
                 f"Get value from AnyAtomic: {device_identifier} {object_identifier} {property_identifier} {property_value}"
             )
         elif isinstance(property_value, BACpypesAny):
-
             object_class = self.vendor_info.get_object_class(object_identifier[0])
             property_type = object_class.get_property_type(property_identifier)
 
@@ -839,32 +873,19 @@ class BACnetIOHandler(
 
         if isinstance(property_value, Atomic):
             property_value = atomic_encode(property_value)
-            # LOGGER.debug(
-            # 	f"Update atomic: {device_identifier} {object_identifier} {property_identifier} {property_value}"
-            # )
 
         elif isinstance(property_value, Sequence):
             property_value = sequence_to_json(property_value)
-            # LOGGER.debug(
-            # 	f"Update sequence: {device_identifier} {object_identifier} {property_identifier} {property_value}"
-            # )
 
         elif isinstance(property_value, ExtendedList):
             property_value = extendedlist_to_json_list(property_value)
-            # LOGGER.debug(
-            # 	f"Update extendedlist: {device_identifier} {object_identifier} {property_identifier} {property_value}"
-            # )
 
         elif isinstance(property_value, TagList):
             property_value = taglist_to_json_list(property_value)
-            # LOGGER.debug(
-            # 	f"Update taglist: {device_identifier} {object_identifier} {property_identifier} {property_value}"
-            # )
+
         elif isinstance(property_value, (list, tuple)):
             property_value = extendedlist_to_json_list(property_value)
-            # LOGGER.debug(
-            # 	f"Update list or tuple: {device_identifier} {object_identifier} {property_identifier} {property_value}"
-            # )
+
         else:
             LOGGER.warning(
                 f"Unknown type {type(property_value)}: {device_identifier} {object_identifier} {property_identifier} {property_value}"
@@ -888,310 +909,13 @@ class BACnetIOHandler(
         self.deep_update(
             self.bacnet_device_dict,
             {
-                f"{device_identifier[0]}:{device_identifier[1]}": {
-                    f"{object_identifier[0].attr}:{object_identifier[1]}": {
+                self.identifier_to_string(device_identifier): {
+                    self.identifier_to_string(object_identifier): {
                         property_identifier.attr: property_value
                     }
                 }
             },
         )
-
-    async def read_multiple_device_props(self, device_identifier) -> bool:
-        try:  # Send readPropertyMultiple and get response
-            device_identifier = ObjectIdentifier(device_identifier)
-            parameter_list = [device_identifier, device_properties_to_read]
-
-            LOGGER.debug(f"Reading device properties of {device_identifier}")
-
-            response = await self.read_property_multiple(
-                address=self.dev_to_addr(device_identifier),
-                parameter_list=parameter_list,
-            )
-
-        except ErrorRejectAbortNack as err:
-            LOGGER.error(f"Error reading device props: {device_identifier}: {err}")
-
-            if "segmentation-not-supported" in str(err):
-                LOGGER.debug(f"Segmentation not supported: {device_identifier}")
-                return await self.read_device_props(device_identifier)
-            elif "unrecognized-service" in str(err):
-                LOGGER.debug(f"No ReadMultiple: {device_identifier}")
-                return await self.read_device_props(device_identifier)
-            elif "no-response" in str(err):
-                return False
-            else:
-                return False
-
-        except AttributeError as err:
-            LOGGER.error(
-                f"Attribute error reading device props: {device_identifier}: {err}"
-            )
-            return False
-        else:
-            for (
-                object_identifier,
-                property_identifier,
-                property_array_index,
-                property_value,
-            ) in response:
-                if not isinstance(property_value, ErrorType):
-                    self.dict_updater(
-                        device_identifier=device_identifier,
-                        object_identifier=object_identifier,
-                        property_identifier=property_identifier,
-                        property_value=property_value,
-                    )
-            return True
-
-    async def read_device_props(self, device_identifier):
-        address = self.dev_to_addr(device_identifier)
-        device_identifier = ObjectIdentifier(device_identifier)
-
-        LOGGER.debug(f"Reading device properties of {device_identifier} one by one.")
-
-        for property_id in device_properties_to_read:
-            if property_id == PropertyIdentifier("objectList"):
-                continue
-
-            try:
-                response = await self.read_property(
-                    address=address, objid=device_identifier, prop=property_id
-                )
-            except ErrorRejectAbortNack as err:
-                LOGGER.error(
-                    f"Error reading device properties one by one: {device_identifier}: {property_id} {err}"
-                )
-
-                if "no-response" in str(err):
-                    return False
-
-                continue
-            except AttributeError as err:
-                LOGGER.error(
-                    f"Attribute error reading device properties one by one: {device_identifier}: {property_id} {err}"
-                )
-                continue
-            except ValueError as err:
-                LOGGER.error(
-                    f"ValueError reading device props one by one: {device_identifier}: {property_id} {err}"
-                )
-                continue
-            except Exception as err:
-                LOGGER.error(
-                    f"Exception reading device props one by one: {device_identifier}: {property_id} {err}"
-                )
-                continue
-            else:
-                if response is not ErrorType:
-                    self.dict_updater(
-                        device_identifier=device_identifier,
-                        object_identifier=device_identifier,
-                        property_identifier=property_id,
-                        property_value=response,
-                    )
-
-        if await self.read_object_list_property(device_identifier):
-            return True
-        else:
-            return False
-
-    async def read_object_list_property(self, device_identifier) -> bool:
-        """Read object list property in the smallest possible way."""
-        address = self.dev_to_addr(dev=device_identifier)
-
-        LOGGER.debug(f"Reading objectList property of {device_identifier} one by one.")
-
-        try:
-            object_amount = await self.read_property(
-                address=address,
-                objid=device_identifier,
-                prop=PropertyIdentifier("objectList"),
-                array_index=0,
-            )
-
-            if object_amount == 0:
-                return False
-        except ErrorRejectAbortNack as err:
-            LOGGER.warning(
-                f"Error getting object list size for {device_identifier} at {address}: {err}"
-            )
-            return False
-
-        object_list = []
-
-        try:
-            for number in range(1, object_amount + 1):
-                object_type = await self.read_property(
-                    address=address,
-                    objid=device_identifier,
-                    prop=PropertyIdentifier("objectList"),
-                    array_index=number,
-                )
-                object_list.append(object_type)
-
-            self.dict_updater(
-                device_identifier=device_identifier,
-                object_identifier=device_identifier,
-                property_identifier=PropertyIdentifier("objectList"),
-                property_value=object_list,
-            )
-        except ErrorRejectAbortNack as err:
-            LOGGER.warning(
-                f"Error getting object list size for {device_identifier} at {address}: {err}"
-            )
-            return False
-        else:
-            return True
-
-    async def read_multiple_objects(self, device_identifier):
-        """Read all objects from a device."""
-        LOGGER.info(f"Reading objects from objectList of {device_identifier}...")
-        device_identifier = ObjectIdentifier(device_identifier)
-        for obj_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"][
-            f"device:{device_identifier[1]}"
-        ]["objectList"]:
-            if not isinstance(obj_id, ObjectIdentifier):
-                obj_id = ObjectIdentifier(obj_id)
-
-            if (
-                ObjectType(obj_id[0]) == ObjectType("device")
-                or ObjectType(obj_id[0])
-                not in self.vendor_info.registered_object_classes
-            ):
-                continue
-
-            parameter_list = [obj_id, object_properties_to_read_once]
-
-            try:  # Send readPropertyMultiple and get response
-                response = await self.read_property_multiple(
-                    address=self.dev_to_addr(device_identifier),
-                    parameter_list=parameter_list,
-                )
-
-            except ErrorRejectAbortNack as err:
-                LOGGER.error(
-                    f"Error while reading object list: {device_identifier}: {obj_id} {err}"
-                )
-
-                if "unrecognized-service" in str(err):
-                    await self.read_objects(device_identifier)
-                    return
-                elif "segmentation-not-supported" in str(err):
-                    await self.read_objects(device_identifier)
-                    return
-                elif "no-response" in str(err):
-                    return False
-
-            except AssertionError as err:
-                LOGGER.error(
-                    f"Assertion error for: {device_identifier}: {obj_id} {err}"
-                )
-
-            except AttributeError as err:
-                LOGGER.error(
-                    f"Attribute error while reading object list: {device_identifier}: {obj_id} {err}"
-                )
-            else:
-                for (
-                    object_identifier,
-                    property_identifier,
-                    property_array_index,
-                    property_value,
-                ) in response:
-                    if not isinstance(property_value, ErrorType):
-                        self.dict_updater(
-                            device_identifier=device_identifier,
-                            object_identifier=object_identifier,
-                            property_identifier=property_identifier,
-                            property_value=property_value,
-                        )
-
-    async def read_objects(self, device_identifier):
-        try:
-
-            for obj_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"][
-                f"device:{device_identifier[1]}"
-            ].get("objectList", []):
-                if not isinstance(obj_id, ObjectIdentifier):
-                    obj_id = ObjectIdentifier(obj_id)
-
-                if (
-                    ObjectType(obj_id[0]) == ObjectType("device")
-                    or ObjectType(obj_id[0])
-                    not in self.vendor_info.registered_object_classes
-                ):
-                    continue
-
-                object_class = self.vendor_info.get_object_class(obj_id[0])
-
-                if object_class is None:
-                    LOGGER.warning(
-                        f"Object type is unknown: {device_identifier}, {obj_id}"
-                    )
-                    continue
-
-                property_list = []
-
-                try:
-                    property_list = await self.read_property(
-                        address=self.dev_to_addr(device_identifier),
-                        objid=obj_id,
-                        prop=PropertyIdentifier("propertyList"),
-                    )
-
-                except Exception:
-                    pass
-                except ErrorRejectAbortNack:
-                    LOGGER.debug(f"No propertylist {obj_id}")
-
-                for property_id in object_properties_to_read_once:
-
-                    if property_id not in property_list and property_list:
-                        continue
-
-                    property_class = object_class.get_property_type(property_id)
-
-                    if property_class is None:
-                        continue
-
-                    try:
-                        response = await self.read_property(
-                            address=self.dev_to_addr(device_identifier),
-                            objid=obj_id,
-                            prop=property_id,
-                        )
-                    except ErrorRejectAbortNack as err:
-                        LOGGER.warning(
-                            f"Error reading object list one by one: {device_identifier} {obj_id} {property_id}: {err}"
-                        )
-                        if "no-response" in str(err):
-                            return False
-                        continue
-                    else:
-                        if response is not ErrorType:
-                            self.dict_updater(
-                                device_identifier=device_identifier,
-                                object_identifier=obj_id,
-                                property_identifier=property_id,
-                                property_value=response,
-                            )
-
-        except AttributeError as err:
-            LOGGER.error(
-                f"Attribute error reading object list one by one: {device_identifier}: {err}"
-            )
-
-    async def subscribe_object_list(self, device_identifier):
-        """ "Subscribe to selected objects."""  # Maybe make a blacklist to exclude objects we dont want to subscribe to.
-        for object_id in self.bacnet_device_dict[f"device:{device_identifier[1]}"]:
-            if ObjectIdentifier(object_id)[0] in self.subscription_list:
-                await self.create_subscription_task(
-                    device_identifier=device_identifier,
-                    object_identifier=ObjectIdentifier(object_id),
-                    confirmed_notifications=True,
-                    lifetime=self.default_subscription_lifetime,
-                )
-                await asyncio.sleep(_create_task_delay)
 
     async def create_subscription_task(
         self,
@@ -1209,8 +933,7 @@ class BACnetIOHandler(
 
         object_identifier = ObjectIdentifier(object_identifier)
 
-        task = asyncio.eager_task_factory(
-            asyncio.get_event_loop(),
+        task = asyncio.create_task(
             self.subscription_task(
                 device_address=device_address,
                 object_identifier=ObjectIdentifier(object_identifier),
@@ -1220,9 +943,10 @@ class BACnetIOHandler(
             name=f"{device_identifier[0].attr}:{device_identifier[1]},{object_identifier[0].attr}:{object_identifier[1]},{notifications}",
         )
 
+        await asyncio.sleep(_create_task_delay)
+
         task.add_done_callback(done_callback)
 
-        await asyncio.sleep(_create_task_delay)
         self.subscription_tasks.append(task)
 
     async def subscription_task(
@@ -1246,21 +970,16 @@ class BACnetIOHandler(
         unsubscribe_cov_request = None
 
         device_context = ContextVar("device_context")
-
         device_context.set(device_identifier)
 
         object_context = ContextVar("object_context")
-
         object_context.set(object_identifier)
 
         confirmation_context = ContextVar("confirmation_context")
-
         confirmation_context.set(notifications)
 
         lifetime_context = ContextVar("lifetime_context")
-
         lifetime_context.set(lifetime)
-
         lifetime_remaining_context = ContextVar("lifetime_remaining_context")
 
         try:
@@ -1280,13 +999,16 @@ class BACnetIOHandler(
 
                 unsubscribe_cov_request.pduDestination = device_address
 
+                object_class = self.vendor_info.get_object_class(
+                    subscription.monitored_object_identifier[0]
+                )
+
                 LOGGER.debug(f"Created {task_name} subscription task successfully")
 
                 while True:
-
                     try:
                         property_identifier, property_value = await asyncio.wait_for(
-                            subscription.get_value(), 30
+                            subscription.get_value(), 60
                         )
                     except asyncio.TimeoutError:
                         # check if address has changes
@@ -1310,9 +1032,7 @@ class BACnetIOHandler(
 
                             self._cov_contexts[new_key] = subscription
 
-                        if not isinstance(
-                            subscription.refresh_subscription_task, asyncio.Task
-                        ):
+                        if not subscription.refresh_subscription_task:
                             continue
 
                         if subscription.refresh_subscription_task.done():
@@ -1328,9 +1048,6 @@ class BACnetIOHandler(
                         subscription.refresh_subscription_handle.when()
                     )
 
-                    object_class = self.vendor_info.get_object_class(
-                        subscription.monitored_object_identifier[0]
-                    )
                     property_type = object_class.get_property_type(property_identifier)
 
                     if property_type is None or property_value is None:
@@ -1343,10 +1060,6 @@ class BACnetIOHandler(
                             f"Ignoring property: {subscription.monitored_object_identifier[0]} {property_identifier} {property_value}"
                         )
                         continue
-
-                    # LOGGER.debug(
-                    # 	f"{notifications} CoV: {device_identifier} {object_identifier} {property_identifier} {property_value}"
-                    # )
 
                     self.dict_updater(
                         device_identifier=device_identifier,
@@ -1404,7 +1117,6 @@ class BACnetIOHandler(
     async def do_ConfirmedCOVNotificationRequest(
         self, apdu: ConfirmedCOVNotificationRequest
     ) -> None:
-
         address = apdu.pduSource
         subscriber_process_identifier = apdu.subscriberProcessIdentifier
 
@@ -1458,9 +1170,9 @@ class BACnetIOHandler(
 
     async def do_WritePropertyRequest(self, apdu: WritePropertyRequest):
         try:
-            obj_id = apdu.objectIdentifier
+            object_identifier = apdu.objectIdentifier
 
-            obj = self.get_object_id(obj_id)
+            obj = self.get_object_id(object_identifier)
 
             if not obj:
                 raise ExecutionError(errorClass="object", errorCode="unknownObject")
@@ -1482,7 +1194,13 @@ class BACnetIOHandler(
                 and not obj_out_of_service
             ):
                 await self.write_to_api_queue.put(
-                    (obj_id, property_type, array_index, priority, property_value)
+                    (
+                        object_identifier,
+                        property_type,
+                        array_index,
+                        priority,
+                        property_value,
+                    )
                 )
 
                 self.write_to_api.set()

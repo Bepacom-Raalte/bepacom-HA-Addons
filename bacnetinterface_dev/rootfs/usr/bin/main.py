@@ -5,6 +5,7 @@ import configparser
 import ipaddress
 import json
 import os
+import signal
 import socket
 from datetime import datetime
 from logging import Formatter, Logger, StreamHandler, getLogger
@@ -49,7 +50,6 @@ def ip_prefix_by_netmask(netmask):
 
 
 def get_auto_ip() -> str:
-
     ipaddr, netmask = get_ip_and_netmask()
 
     if ipaddr:
@@ -283,12 +283,16 @@ def get_configuration() -> tuple:
     )
 
 
+def handler_stop_signals(signum, frame):
+    LOGGER.info("Shutting down!")
+
+
 async def main():
     """Main function of the application."""
 
     loop = asyncio.get_event_loop()
 
-    loop.set_exception_handler(exception_handler)
+    # loop.set_exception_handler(exception_handler)
 
     (
         default_write_prio,
@@ -376,6 +380,8 @@ async def main():
 
     app.asap.maxSegmentsAccepted = int(max_segments)
 
+    app.asap.apduTimeout = int(5000)
+
     app.subscription_list = subscribable_objects
 
     update_task = asyncio.create_task(
@@ -420,9 +426,14 @@ async def main():
 
     server = uvicorn.Server(config)
 
+    signal.signal(signal.SIGINT, handler_stop_signals)
+    signal.signal(signal.SIGTERM, handler_stop_signals)
+
     await server.serve()
 
     if app:
+        app.bacnet_device_sqlite.commit()
+        app.bacnet_device_sqlite.close()
         update_task.cancel()
         write_task.cancel()
         sub_task.cancel()

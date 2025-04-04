@@ -11,6 +11,7 @@ from bacpypes3.primitivedata import (
     Enumerated,
     ObjectIdentifier,
 )
+from const import LOGGER
 
 _debug = 0
 
@@ -27,8 +28,94 @@ def bitstring_alt_encode(value: BitString):
     return value
 
 
-def format_identifier(identifier: ObjectIdentifier):
-    return f"{identifier[0]}:{identifier[1]}"
+class DeviceConfiguration:
+    device_identifier: ObjectIdentifier | str = "all"
+    cov_lifetime: int | float = 600
+    cov_items: list[ObjectIdentifier | str] = []
+    poll_rate_quick: int | float = 60
+    poll_items_quick: list[ObjectIdentifier | str] = []
+    poll_rate_slow: int | float = 600
+    poll_items_slow: list[ObjectIdentifier | str] = []
+    resub_on_iam: bool = False
+    reread_on_iam: bool = False
+
+    def __init__(self, config: dict):
+        self.device_identifier = config.get("deviceID", "all")
+        self.cov_lifetime = config.get("CoV_lifetime", 600)
+        self.cov_items = self._validate_object_list(config.get("CoV_list", []))
+        self.poll_rate_quick = config.get("quick_poll_rate", 60)
+        self.poll_items_quick = self._validate_object_list(
+            config.get("quick_poll_list", [])
+        )
+        self.poll_rate_slow = config.get("slow_poll_rate", 600)
+        self.poll_items_slow = self._validate_object_list(
+            config.get("slow_poll_list", [])
+        )
+        self.resub_on_iam = config.get("resub_on_iam", False)
+        self.reread_on_iam = config.get("reread_on_iam", False)
+
+    def _validate_object_list(self, items):
+        """Ensure all list items are either valid ObjectIdentifiers or 'all' as a string."""
+        valid_items = []
+        for item in items:
+            if isinstance(item, ObjectIdentifier) or item == "all":
+                valid_items.append(item)
+            else:
+                try:
+                    valid_items.append(ObjectIdentifier(item))  # Attempt to convert
+                except Exception:
+                    LOGGER.warning(
+                        f"Invalid object identifier in configuration: {item}"
+                    )
+        return valid_items
+
+    def all_to_objects(self, object_list: list[ObjectIdentifier]):
+        if self.cov_items == ["all"]:
+            self.cov_items = object_list
+
+        if self.poll_items_quick == ["all"]:
+            self.poll_items_quick = object_list
+
+        if self.poll_items_slow == ["all"]:
+            self.poll_items_slow = object_list
+
+    def remove_duplicate_slow_polls(self):
+        """Remove non-unique identifiers from poll_items_slow if they exist in poll_items_quick."""
+        quick_set = {
+            ObjectIdentifier(item) for item in self.poll_items_quick
+        }  # Convert quick poll list to a set for fast lookup
+        self.poll_items_slow = [
+            ObjectIdentifier(item)
+            for item in self.poll_items_slow
+            if ObjectIdentifier(item) not in quick_set
+        ]
+
+    def remove_duplicate_quick_polls(self):
+        """Remove non-unique identifiers from poll_items_quick if they exist in cov_items."""
+        cov_set = {
+            ObjectIdentifier(item) for item in self.cov_items
+        }  # Convert quick poll list to a set for fast lookup
+        self.poll_items_quick = [
+            ObjectIdentifier(item)
+            for item in self.poll_items_quick
+            if ObjectIdentifier(item) not in cov_set
+        ]
+
+    def to_dict(self):
+        return {
+            "deviceID": self.device_identifier,
+            "CoV_lifetime": self.cov_lifetime,
+            "CoV_list": self.cov_items,
+            "quick_poll_rate": self.poll_rate_quick,
+            "quick_poll_list": self.poll_items_quick,
+            "slow_poll_rate": self.poll_rate_slow,
+            "slow_poll_list": self.poll_items_slow,
+            "resub_on_iam": self.resub_on_iam,
+            "reread_on_iam": self.reread_on_iam,
+        }
+
+    def __repr__(self):
+        return str(self.to_dict())
 
 
 class TimeSynchronizationService:
