@@ -68,7 +68,7 @@ schema:
       reread_on_iam: bool?
   entity_list:
     - str?
-  semaphore: int(1, 40)
+  semaphore: int(1,40)?
   api_accessible: bool?
   foreignBBMD: str?
   foreignTTL: str?
