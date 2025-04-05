@@ -41,6 +41,9 @@ configuration:
   api_accessible:
     name: Toegang tot API toestaan
     description: Sta toe dat de API toegankelijk is buiten Home Assistant.
+  semaphore:
+    name: Berichten tegelijkertijd
+    description: De hoeveelheid berichten er tegelijkertijd verstuurd mogen worden.
 network:
   47808/udp: BACnet poort.
   80/tcp: Poort waarmee de integration moet verbinden. Wanneer je deze poort leeg laat, moet de integration met poort 8099 verbinden.

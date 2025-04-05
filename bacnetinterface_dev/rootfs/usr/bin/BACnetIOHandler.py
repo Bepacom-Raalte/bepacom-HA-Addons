@@ -108,6 +108,15 @@ original_init = SubscriptionContextManager.__init__
 
 SubscriptionContextManager.__init__ = custom_init
 
+original_refresh = SubscriptionContextManager.refresh_subscription
+
+async def refresh_subscription_wrapper(self):
+    async with self.app.read_semaphore:
+        await original_refresh()
+
+SubscriptionContextManager.refresh_subscription = original_refresh
+
+
 # reinitializeDevice service
 
 
@@ -128,7 +137,7 @@ class BACnetIOHandler(
     poll_tasks: list[asyncio.Task] = []
     addon_device_config: list = []
     init_discovery_complete: asyncio.Event = asyncio.Event()
-    read_semaphore: asyncio.Semaphore = asyncio.Semaphore(20)
+    read_semaphore: asyncio.Semaphore
     device_configurations: list[DeviceConfiguration] = []
 
     def __init__(
@@ -139,6 +148,7 @@ class BACnetIOHandler(
         ttl=255,
         update_event=asyncio.Event(),
         addon_device_config=[],
+        semaphore: int = 20
     ) -> None:
         if foreign_ip:
             ForeignApplication.__init__(self, device, local_ip)
@@ -152,6 +162,7 @@ class BACnetIOHandler(
             addon_device_config if addon_device_config else list()
         )
         self.sqlite_restore()
+        self.read_semaphore = asyncio.Semaphore(semaphore)
         self.startup_complete.set()
         asyncio.get_event_loop().create_task(self.discover_devices())
         asyncio.get_event_loop().create_task(self.sqlite_updater())
