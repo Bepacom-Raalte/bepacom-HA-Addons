@@ -197,8 +197,8 @@ class BACnetIOHandler(
 
 			configuration = self.generate_config(device_identifier)
 			self.device_configurations.append(configuration)
-			
 			await self.explore_device(device_identifier)
+			self.update_config(device_identifier)
 			generated_configs.append(configuration)
 
 		# Run all device handling tasks concurrently
@@ -237,15 +237,6 @@ class BACnetIOHandler(
 		configuration = DeviceConfiguration(self.get_config_dict(device_identifier))
 		device_id_str = self.identifier_to_string(device_identifier)
 
-		# populate config with actual objects
-		object_list = [
-			obj
-			for obj in self.bacnet_device_dict[device_id_str][device_id_str].get(
-				"objectList", []
-			)
-			if ObjectType(obj[0]) not in object_types_to_ignore
-		]
-
 		if configuration.device_identifier == "all":
 			configuration.device_identifier = device_identifier
 		elif isinstance(configuration.device_identifier, str):
@@ -255,6 +246,26 @@ class BACnetIOHandler(
 				)
 			except Exception as error:
 				LOGGER.error(f"We got here... {error}")
+
+		return configuration
+
+	def update_config(
+		self, device_identifier: ObjectIdentifier
+	) -> DeviceConfiguration:
+		
+		configuration = self.retrieve_config(device_identifier)
+		device_id_str = self.identifier_to_string(device_identifier)
+		
+		config_index = self.addon_device_config.index(configuration)
+
+		# populate config with actual objects
+		object_list = [
+			obj
+			for obj in self.bacnet_device_dict[device_id_str][device_id_str].get(
+				"objectList", []
+			)
+			if ObjectType(obj[0]) not in object_types_to_ignore
+		]
 
 		configuration.all_to_objects(object_list)
 		# remove object from slow poll if fast polled
@@ -268,7 +279,9 @@ class BACnetIOHandler(
 			configuration.poll_items_quick.remove(device_identifier)
 		if device_identifier in configuration.poll_items_slow:
 			configuration.poll_items_slow.remove(device_identifier)
-
+			
+		self.addon_device_config[config_index] = configuration
+				
 		return configuration
 
 	def is_valid_object_class(self, object_identifier: ObjectIdentifier) -> bool:
