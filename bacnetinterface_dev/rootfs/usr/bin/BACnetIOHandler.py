@@ -115,6 +115,8 @@ async def refresh_subscription_wrapper(self):
 	config = self.app.retrieve_config(device_identifier)
 	async with config.semaphore:
 		await original_refresh()
+		if config.delay:
+			await asyncio.sleep(config.delay)
 
 SubscriptionContextManager.refresh_subscription = original_refresh
 
