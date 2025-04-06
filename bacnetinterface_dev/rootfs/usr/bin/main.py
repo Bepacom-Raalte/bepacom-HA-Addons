@@ -264,8 +264,6 @@ def get_configuration() -> tuple:
     foreign_ttl = options.get("foreignTTL", 255)
 
     update_interval = options.get("updateInterval", 60)
-    
-    semaphore = options.get("semaphore", 20)
 
     return (
         default_write_prio,
@@ -282,7 +280,6 @@ def get_configuration() -> tuple:
         update_interval,
         options,
         token,
-        semaphore,
     )
 
 
@@ -312,7 +309,6 @@ async def main():
         update_interval,
         options,
         token,
-        semaphore
     ) = get_configuration()
 
     formatter = Formatter(
@@ -372,7 +368,6 @@ async def main():
         ttl=int(foreign_ttl),
         update_event=webAPI.events.val_updated_event,
         addon_device_config=options.get("devices_setup"),
-        semaphore=semaphore
     )
 
     object_manager = ObjectManager(

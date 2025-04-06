@@ -1,6 +1,6 @@
 import time
 from typing import Callable, Dict, List, Optional
-
+import asyncio
 from bacpypes3.apdu import TimeSynchronizationRequest, UTCTimeSynchronizationRequest
 from bacpypes3.basetypes import DateTime
 from bacpypes3.errors import MissingRequiredParameter
@@ -36,6 +36,9 @@ class DeviceConfiguration:
     poll_items_quick: list[ObjectIdentifier | str] = []
     poll_rate_slow: int | float = 600
     poll_items_slow: list[ObjectIdentifier | str] = []
+    semaphore_size: int = 10
+    semaphore: asyncio.Semaphore
+    delay: float = 0
     resub_on_iam: bool = False
     reread_on_iam: bool = False
 
@@ -51,6 +54,9 @@ class DeviceConfiguration:
         self.poll_items_slow = self._validate_object_list(
             config.get("slow_poll_list", [])
         )
+        self.semaphore_size = int(config.get("semaphore_size", 10))
+        self.semaphore = asyncio.Semaphore(self.semaphore_size)
+        self.delay = float(config.get("delay", 0))
         self.resub_on_iam = config.get("resub_on_iam", False)
         self.reread_on_iam = config.get("reread_on_iam", False)
 
@@ -110,6 +116,8 @@ class DeviceConfiguration:
             "quick_poll_list": self.poll_items_quick,
             "slow_poll_rate": self.poll_rate_slow,
             "slow_poll_list": self.poll_items_slow,
+            "semaphore_size": self.semaphore_size,
+            "delay": self.delay,
             "resub_on_iam": self.resub_on_iam,
             "reread_on_iam": self.reread_on_iam,
         }

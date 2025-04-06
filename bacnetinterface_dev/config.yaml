@@ -64,11 +64,12 @@ schema:
       slow_poll_rate: int(30,3000)?
       slow_poll_list:
         - str?
+      semaphore_size: int(1,40)?
+      delay: float(0,2)?
       resub_on_iam: bool?
       reread_on_iam: bool?
   entity_list:
     - str?
-  semaphore: int(1,40)?
   api_accessible: bool?
   foreignBBMD: str?
   foreignTTL: str?
