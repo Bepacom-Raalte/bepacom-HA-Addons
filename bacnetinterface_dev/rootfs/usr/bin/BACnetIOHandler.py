@@ -220,7 +220,7 @@ class BACnetIOHandler(
 
 		device_id_str = self.identifier_to_string(device_identifier)
 
-		configuration: DeviceConfiguration
+		configuration = None
 
 		for config in self.device_configurations:
 			if self.identifier_to_string(config.device_identifier) == device_id_str:
