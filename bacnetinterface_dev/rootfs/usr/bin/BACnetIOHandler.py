@@ -256,7 +256,7 @@ class BACnetIOHandler(
 		configuration = self.retrieve_config(device_identifier)
 		device_id_str = self.identifier_to_string(device_identifier)
 		
-		config_index = self.addon_device_config.index(configuration)
+		config_index = self.device_configurations.index(configuration)
 
 		# populate config with actual objects
 		object_list = [
@@ -280,7 +280,7 @@ class BACnetIOHandler(
 		if device_identifier in configuration.poll_items_slow:
 			configuration.poll_items_slow.remove(device_identifier)
 			
-		self.addon_device_config[config_index] = configuration
+		self.device_configurations[config_index] = configuration
 				
 		return configuration
 
