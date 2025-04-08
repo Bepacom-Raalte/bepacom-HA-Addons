@@ -112,7 +112,7 @@ original_refresh = SubscriptionContextManager.refresh_subscription
 
 async def refresh_subscription_wrapper(self):
     async with self.app.read_semaphore:
-        await original_refresh()
+        await original_refresh(self)
 
 SubscriptionContextManager.refresh_subscription = refresh_subscription_wrapper
 
