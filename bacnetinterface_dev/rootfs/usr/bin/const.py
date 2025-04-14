@@ -1,4 +1,5 @@
 import logging
+from enum import Enum
 
 from bacpypes3.basetypes import ObjectType, PropertyIdentifier
 
@@ -94,3 +95,9 @@ object_types_to_ignore: list[ObjectType] = [
     ObjectType("eventEnrollment"),
     ObjectType("notificationClass"),
 ]
+
+
+class ResponseType(Enum):
+    NO_RESPONSE = 0
+    SUCCESS = 1
+    FAULT = 2

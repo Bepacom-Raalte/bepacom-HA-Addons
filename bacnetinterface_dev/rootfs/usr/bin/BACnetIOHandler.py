@@ -58,6 +58,7 @@ from bacpypes3.primitivedata import (
 from bacpypes3.service.cov import SubscriptionContextManager
 from const import (
     LOGGER,
+    ResponseType,
     device_properties_to_read,
     object_properties_to_read_once,
     object_properties_to_read_periodically,
@@ -81,38 +82,13 @@ bacpypes3.json.util.bitstring_encode = bitstring_alt_encode
 bacpypes3.json.util.enumerated_encode = enumerated_alt_encode
 
 
-def custom_init(
-    self,
-    app: "Application",  # noqa: F821
-    address: Address,
-    monitored_object_identifier: ObjectIdentifier,
-    subscriber_process_identifier: int,
-    issue_confirmed_notifications: bool,
-    lifetime: int,
-):
-    original_init(
-        self,
-        app,
-        address,
-        monitored_object_identifier,
-        subscriber_process_identifier,
-        issue_confirmed_notifications,
-        lifetime,
-    )
-
-    # result of refresh task to check if exception occurred
-    self.refresh_subscription_task = None
-
-
-original_init = SubscriptionContextManager.__init__
-
-SubscriptionContextManager.__init__ = custom_init
-
 original_refresh = SubscriptionContextManager.refresh_subscription
+
 
 async def refresh_subscription_wrapper(self):
     async with self.app.read_semaphore:
         await original_refresh(self)
+
 
 SubscriptionContextManager.refresh_subscription = refresh_subscription_wrapper
 
@@ -148,7 +124,7 @@ class BACnetIOHandler(
         ttl=255,
         update_event=asyncio.Event(),
         addon_device_config=[],
-        semaphore: int = 20
+        semaphore: int = 20,
     ) -> None:
         if foreign_ip:
             ForeignApplication.__init__(self, device, local_ip)
@@ -196,7 +172,9 @@ class BACnetIOHandler(
                     retrieved_configs.append(self.retrieve_config(device_identifier))
                     return  # Skip if already known
 
-            await self.explore_device(device_identifier)
+            if not await self.explore_device(device_identifier):
+                return False
+
             configuration = self.generate_config(device_identifier)
             self.device_configurations.append(configuration)
             generated_configs.append(configuration)
@@ -407,11 +385,13 @@ class BACnetIOHandler(
                 LOGGER.warning(
                     f"Failed to get device properties for {device_identifier}"
                 )
-                return
+                return False
 
         # Actually read object properties
         if not await self.read_objects_of_device(device_identifier):
             LOGGER.warning(f"Failed to get object properties for {device_identifier}")
+
+        return True
 
     async def get_property_list(
         self, device_identifier, object_identifier, fallback_list
@@ -444,7 +424,7 @@ class BACnetIOHandler(
         device_identifier: ObjectIdentifier,
         object_identifier: ObjectIdentifier,
         property_list: list[PropertyIdentifier],
-    ) -> bool:
+    ) -> ResponseType:
         # Basic useful vars
         device_identifier = ObjectIdentifier(device_identifier)
         object_identifier = ObjectIdentifier(object_identifier)
@@ -469,9 +449,9 @@ class BACnetIOHandler(
                     device_identifier, object_identifier, property_list
                 )
             elif "no-response" in str(err):
-                return False
+                return ResponseType.NO_RESPONSE
             else:
-                return False
+                return ResponseType.FAULT
         except InvalidTag as err:
             LOGGER.debug(
                 f"Invalid tag received: {device_identifier} {object_identifier} {err}"
@@ -493,14 +473,14 @@ class BACnetIOHandler(
                         property_identifier=property_identifier,
                         property_value=property_value,
                     )
-            return True
+            return ResponseType.SUCCESS
 
     async def properties_read(
         self,
         device_identifier: ObjectIdentifier,
         object_identifier: ObjectIdentifier,
         property_list: list[PropertyIdentifier],
-    ) -> bool:
+    ) -> ResponseType:
         # Basic useful vars
         device_identifier = ObjectIdentifier(device_identifier)
         object_identifier = ObjectIdentifier(object_identifier)
@@ -524,16 +504,16 @@ class BACnetIOHandler(
                         device_identifier, object_identifier, property_id
                     )
                 elif "unknown-property" in str(err):
-                    return True
+                    return ResponseType.FAULT
                 elif "no-response" in str(err):
-                    return False
+                    return ResponseType.NO_RESPONSE
                 else:
-                    return False
+                    return ResponseType.FAULT
             except InvalidTag as err:
                 LOGGER.debug(
                     f"Invalid tag received: {device_identifier} {object_identifier} {err}"
                 )
-                return False
+                return ResponseType.FAULT
             else:
                 if response is not ErrorType:
                     self.dict_updater(
@@ -542,7 +522,9 @@ class BACnetIOHandler(
                         property_identifier=property_id,
                         property_value=response,
                     )
-            return True  # Ensure the function returns something in all cases
+            return (
+                ResponseType.SUCCESS
+            )  # Ensure the function returns something in all cases
 
         # Now outside read_property_safely: create tasks
         tasks = [read_property_safely(property_id) for property_id in property_list]
@@ -551,14 +533,18 @@ class BACnetIOHandler(
         results = await asyncio.gather(*tasks)
 
         # If any property read returned False (due to "no-response"), return False
-        return False if False in results else True
+        return (
+            ResponseType.NO_RESPONSE
+            if ResponseType.NO_RESPONSE in results
+            else ResponseType.SUCCESS
+        )
 
     async def read_list_property(
         self,
         device_identifier: ObjectIdentifier,
         object_identifier: ObjectIdentifier,
         property_id: PropertyIdentifier,
-    ) -> bool:
+    ) -> ResponseType:
         """Read list type property in the smallest possible way."""
 
         # Basic useful vars
@@ -580,12 +566,12 @@ class BACnetIOHandler(
                 LOGGER.debug(
                     f"Amount is zero: {device_identifier} {object_identifier} {property_id}"
                 )
-                return False
+                return ResponseType.FAULT
         except ErrorRejectAbortNack as err:
             LOGGER.warning(
                 f"Error reading list size for: {device_identifier} {object_identifier} {property_id} {err}"
             )
-            return False
+            return ResponseType.FAULT
 
         try:
             # Read properties one by one, respecting the semaphore limit
@@ -615,9 +601,9 @@ class BACnetIOHandler(
             LOGGER.warning(
                 f"Error reading list size for: {device_identifier} {object_identifier} {property_id} {err}"
             )
-            return False
+            return ResponseType.FAULT
         else:
-            return True
+            return ResponseType.SUCCESS
 
     async def read_objects_of_device(self, device_identifier: ObjectIdentifier) -> bool:
         device_identifier = ObjectIdentifier(device_identifier)
