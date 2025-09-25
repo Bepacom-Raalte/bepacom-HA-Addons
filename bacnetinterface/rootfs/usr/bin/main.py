@@ -38,7 +38,8 @@ def exception_handler(loop, context):
 
 def get_ip_and_netmask():
     for iface, addrs in psutil.net_if_addrs().items():
-        if iface.startswith(("enp", "eth", "eno")):
+        # Support more modern ethernet naming schemes (including 'end' observed on HA Yellow)
+        if iface.startswith(("enp", "eth", "eno", "end")):
             for addr in addrs:
                 if addr.family == socket.AF_INET:
                     return addr.address, addr.netmask
@@ -57,8 +58,8 @@ def get_auto_ip() -> str:
         cidr = ip_prefix_by_netmask(netmask)
 
     else:
-        print(
-            "Warning: No suitable ethernet adapters found. You probably won't detect anything now."
+        LOGGER.warning(
+            "No suitable ethernet adapters found in preferred list (enp/eth/eno/end). Falling back to hostname IP; BACnet discovery may fail."
         )
         ipaddr = socket.gethostbyname(socket.gethostname())
         cidr = "24"

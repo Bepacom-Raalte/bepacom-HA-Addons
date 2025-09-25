@@ -3,7 +3,7 @@ name: Bepacom EcoPanel BACnet/IP Interface Legacy
 version: "0.2.1"
 slug: bacnetinterface_legacy
 description: Bepacom BACnet/IP interface for the Bepacom EcoPanel
-url: "https://github.com/Bepacom-Raalte/bepacom-HA-Addons/tree/main/bacnetinterface"
+url: "https://github.com/NemiahUK/bepacom-HA-Addons/tree/main/bacnetinterface"
 arch:
   - armhf
   - armv7
@@ -43,4 +43,4 @@ schema:
   foreignBBMD: str?
   foreignTTL: int?
   maxSegmentsAccepted: int?
-image: "ghcr.io/bepacom-raalte/{arch}-bacnet-interface-legacy"
+image: "ghcr.io/nemiahuk/{arch}-bacnet-interface-legacy"

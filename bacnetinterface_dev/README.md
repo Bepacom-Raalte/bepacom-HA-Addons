@@ -6,11 +6,11 @@ To get entities on your Home Assistant dashboard, use our integration in combina
 
 The accompanying integration can be found on Bepacom's Custom Component Components Repository!
 
-## [Bepacom Custom Integration Repository](https://github.com/Bepacom-Raalte/bepacom-custom_components)
+## [Bepacom Custom Integration Repository](https://github.com/NemiahUK/bepacom-custom_components)
 
 If you have any issues, please check the logs and contact the add-on developer at the GitHub repository.
 
-## [Bepacom Add-on Repository](https://github.com/Bepacom-Raalte/bepacom-HA-Addons)
+## [Bepacom Add-on Repository](https://github.com/NemiahUK/bepacom-HA-Addons)
 
 ![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]
