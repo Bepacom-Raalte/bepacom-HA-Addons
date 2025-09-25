@@ -43,4 +43,4 @@ configuration:
     description: Allow API access from outside of Home Assistant.
 network:
   47808/udp: BACnet port.
-  80/tcp: Port which the integration should connect to. If you leave this empty, the integration should connect to port 8099.
+  80/tcp: Port which the integration should connect to. If you leave this empty, the integration should connect to port 8420.

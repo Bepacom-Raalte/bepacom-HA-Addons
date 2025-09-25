@@ -47,7 +47,7 @@ sensor:
     state_class: measurement
     unit_of_measurement: "%"
     method: GET
-    resource: http://97683af0-bacnetinterface:8099/apiv1/device:100/analogInput:1/presentValue
+    resource: http://97683af0-bacnetinterface:8420/apiv1/device:100/analogInput:1/presentValue
 ```
 
 
@@ -276,7 +276,7 @@ A common BACnet/IP value and the default for the add-on is 1476, and a common BA
 
 
 ### Network port: `80/TCP`
-Port which the integration should connect to. If you leave this empty, the integration should connect to port 8099.
+Port which the integration should connect to. If you leave this empty, the integration should connect to port 8420.
 
 ### Network port: `47808/UDP`
 BACnet/IP port. The add-on seems to work if you leave this empty. Feel free to set it to empty if opening it causes issues.
