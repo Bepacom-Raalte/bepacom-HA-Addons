@@ -47,7 +47,7 @@ sensor:
     state_class: measurement
     unit_of_measurement: "%"
     method: GET
-    resource: http://97683af0-bacnetinterface:8420/apiv1/device:100/analogInput:1/presentValue
+    resource: http://97683af0-bacnetinterface:8099/apiv1/device:100/analogInput:1/presentValue
 ```
 
 
@@ -276,7 +276,10 @@ A common BACnet/IP value and the default for the add-on is 1476, and a common BA
 
 
 ### Network port: `80/TCP`
-Port which the integration should connect to. If you leave this empty, the integration should connect to port 8420.
+Port which the integration should connect to internally (legacy mapping). For direct (non-ingress) access you can still expose this port. The add-on also serves an ingress web UI.
+
+### Option: `ingress_port` Ingress Web UI Port
+External port the add-on's NGINX ingress listener will bind to (for local network access or when not relying solely on HA's managed ingress). Defaults to 8099. Change this if 8099 conflicts with another service. If omitted, 8099 is used.
 
 ### Network port: `47808/UDP`
 BACnet/IP port. The add-on seems to work if you leave this empty. Feel free to set it to empty if opening it causes issues.

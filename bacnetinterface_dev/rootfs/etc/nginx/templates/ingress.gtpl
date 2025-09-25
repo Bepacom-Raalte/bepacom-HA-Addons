@@ -1,6 +1,6 @@
 server {
     # listen on port
-    listen 8420;
+    listen 8099;
     {{if .port}}
         listen {{.port}};
     {{end}}

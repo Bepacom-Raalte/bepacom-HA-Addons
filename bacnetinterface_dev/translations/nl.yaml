@@ -43,4 +43,4 @@ configuration:
     description: Sta toe dat de API toegankelijk is buiten Home Assistant.
 network:
   47808/udp: BACnet poort.
-  80/tcp: Poort waarmee de integration moet verbinden. Wanneer je deze poort leeg laat, moet de integration met poort 8420 verbinden.
+  80/tcp: Poort waarmee de integration moet verbinden. Wanneer je deze poort leeg laat, moet de integration met poort 8099 verbinden.

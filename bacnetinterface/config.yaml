@@ -30,6 +30,7 @@ options:
   address: auto
   objectIdentifier: 420
   defaultPriority: 15
+  ingress_port: 8099
   devices_setup:
     - deviceID: all
       CoV_lifetime: 600
@@ -74,4 +75,5 @@ schema:
   maxApduLenghtAccepted: int?
   segmentation: list(segmentedBoth|segmentedTransmit|segmentedReceive|noSegmentation||)?
   maxSegmentsAccepted: int?
+  ingress_port: int(1,65535)?
 #image: "ghcr.io/nemiahuk/{arch}-bacnet-interface"

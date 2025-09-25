@@ -5,6 +5,9 @@
 ## Fixed
 - Support more modern ethernet naming schemes (including 'end' observed on HA Yellow)
 
+## Added
+- New `ingress_port` configuration option to allow changing the previously hard-coded ingress web UI port (default remains 8099). If not set, it falls back to 8099.
+
 
 # 1.5.1
 07/09/2024
