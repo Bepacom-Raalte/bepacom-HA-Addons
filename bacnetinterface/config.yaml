@@ -74,4 +74,4 @@ schema:
   maxApduLenghtAccepted: int?
   segmentation: list(segmentedBoth|segmentedTransmit|segmentedReceive|noSegmentation||)?
   maxSegmentsAccepted: int?
-image: "ghcr.io/nemiahuk/{arch}-bacnet-interface"
+#image: "ghcr.io/nemiahuk/{arch}-bacnet-interface"

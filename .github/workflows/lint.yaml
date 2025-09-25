@@ -1,14 +1,16 @@
 name: Lint
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  schedule:
-    - cron: "0 0 * * *"
+  workflow_dispatch:
+  # Uncomment the following to enable automatic linting on push or pull request to main
+  # push:
+  #   branches:
+  #     - main
+  # pull_request:
+  #   branches:
+  #     - main
+  # schedule:
+  #   - cron: "0 0 * * *"
 
 jobs:
   find:
