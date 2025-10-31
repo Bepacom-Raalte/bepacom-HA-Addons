@@ -1,4 +1,10 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
+# 1.5.3
+31/10/2025
+
+## Fixed
+- Added defensive checks to prevent the KeyError in handle_cov_check, made handle_object_list_check resilient if the device isn’t in the dict yet, and log when duplicate device instances are seen from different addresses to help diagnose duplicate device IDs.
+
 # 1.5.2
 25/09/2025
 

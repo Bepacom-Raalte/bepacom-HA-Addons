@@ -536,6 +536,23 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         LOGGER.info(f"I Am from {apdu.iAmDeviceIdentifier}")
 
+        # Detect duplicate device instances seen from different addresses (unstable network state)
+        try:
+            device_id = apdu.iAmDeviceIdentifier[1]
+            addr = apdu.pduSource
+            if not hasattr(self, "device_instance_addresses"):
+                self.device_instance_addresses = {}
+            prev_addr = self.device_instance_addresses.get(device_id)
+            if prev_addr and prev_addr != addr:
+                LOGGER.error(
+                    f"Duplicate BACnet device instance {device_id} seen from {prev_addr} and {addr}. "
+                    "Device instances must be unique; this will cause read/subscription instability."
+                )
+            self.device_instance_addresses[device_id] = addr
+        except Exception:
+            # Best-effort diagnostic; ignore if structure not yet available
+            pass
+
         device_id = apdu.iAmDeviceIdentifier[1]
 
         if device_id in self.device_info_cache.instance_cache:
@@ -566,9 +583,13 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
 
         device_id = apdu.iAmDeviceIdentifier[1]
 
-        old_object_list = self.bacnet_device_dict[
-            f"device:{apdu.iAmDeviceIdentifier[1]}"
-        ][f"device:{apdu.iAmDeviceIdentifier[1]}"].get("objectList")
+        # Safely get old object list if present
+        try:
+            old_object_list = self.bacnet_device_dict[
+                f"device:{apdu.iAmDeviceIdentifier[1]}"
+            ][f"device:{apdu.iAmDeviceIdentifier[1]}"].get("objectList")
+        except KeyError:
+            old_object_list = []
 
         if not await self.read_multiple_device_props(apdu=apdu):
             LOGGER.warning(f"Failed to get: {device_id}, {device_id}")
@@ -600,6 +621,21 @@ class BACnetIOHandler(NormalApplication, ForeignApplication):
         device_string = self.identifier_to_string(device_identifier)
 
         if self.addon_device_config is None:
+            return
+
+        # Ensure device exists in dictionary before proceeding
+        device_key = f"{device_identifier[0].attr}:{device_identifier[1]}"
+        try:
+            if (
+                device_key not in self.bacnet_device_dict
+                or device_key not in self.bacnet_device_dict.get(device_key, {})
+            ):
+                LOGGER.debug(
+                    f"Skipping CoV check; {device_identifier} not (yet) present in device dictionary"
+                )
+                return
+        except Exception:
+            # Defensive: if any structure differs, skip without crashing
             return
 
         specific_config = [
