@@ -1,8 +1,9 @@
 server {
-    # listen on port
+    # listen on port (default 8099, overridable by ingress_port option)
+    {{if .ingress_port}}
+    listen {{.ingress_port}};
+    {{else}}
     listen 8099;
-    {{if .port}}
-        listen {{.port}};
     {{end}}
 
 

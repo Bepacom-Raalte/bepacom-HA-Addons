@@ -6,11 +6,14 @@ To get entities on your Home Assistant dashboard, use our integration in combina
 
 The accompanying integration can be found on our Bepacom BACnet Interface repository!
 
-## [Bepacom BACnet Integration](https://github.com/Bepacom-Raalte/Bepacom-BACnet-IP-Integration)
+## [Bepacom BACnet Integration](https://github.com/NemiahUK/Bepacom-BACnet-IP-Integration)
 
 If you have any issues, please check the logs and contact the add-on developer at the GitHub repository.
 
-## [Bepacom Add-on Repository](https://github.com/Bepacom-Raalte/bepacom-HA-Addons)
+### Ingress Port Configuration
+The web UI ingress port was previously fixed at 8099. You can now change it via the new `ingress_port` option in the add-on configuration (default 8099) if that port conflicts with another service.
+
+## [Bepacom Add-on Repository](https://github.com/NemiahUK/bepacom-HA-Addons)
 
 ![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]

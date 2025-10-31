@@ -4,7 +4,7 @@ The Bepacom BACnet/IP interface add-on is intended to be a bridge between the BA
 
 The goal of this add-on is to add BACnet functionality to Home Assistant so these devices can be displayed on the dashboard.
 
-The add-on is not directly responsible for generating entities in Home Assistant, for that, check out the [Bepacom BACnet/IP Interface integration](https://github.com/Bepacom-Raalte/Bepacom-BACnet-IP-Integration/tree/main).
+The add-on is not directly responsible for generating entities in Home Assistant, for that, check out the [Bepacom BACnet/IP Interface integration](https://github.com/NemiahUK/Bepacom-BACnet-IP-Integration/tree/main).
 
 This add-on works on Home Assistant OS as well as Home Assistant Supervised.
 
@@ -31,7 +31,7 @@ After installing the add-on, there are 2 ways you can turn data into Home Assist
 
 ### Integration
 
-The first and recommended way is to use the accompanying integration made by us. This is the [Bepacom BACnet/IP Interface integration](https://github.com/Bepacom-Raalte/Bepacom-BACnet-IP-Integration/tree/main).
+The first and recommended way is to use the accompanying integration made by us. This is the [Bepacom BACnet/IP Interface integration](https://github.com/NemiahUK/Bepacom-BACnet-IP-Integration/tree/main).
 Installation instructions are included in the README.md file. The installation is straightforward, like any other custom integration.
 
 ### RESTful Sensor
@@ -276,7 +276,10 @@ A common BACnet/IP value and the default for the add-on is 1476, and a common BA
 
 
 ### Network port: `80/TCP`
-Port which the integration should connect to. If you leave this empty, the integration should connect to port 8099.
+Port which the integration should connect to internally (legacy mapping). For direct (non-ingress) access you can still expose this port. The add-on also serves an ingress web UI.
+
+### Option: `ingress_port` Ingress Web UI Port
+External port the add-on's NGINX ingress listener will bind to (for local network access or when not relying solely on HA's managed ingress). Defaults to 8099. Change this if 8099 conflicts with another service. If omitted, 8099 is used.
 
 ### Network port: `47808/UDP`
 BACnet/IP port. The add-on seems to work if you leave this empty. Feel free to set it to empty if opening it causes issues.

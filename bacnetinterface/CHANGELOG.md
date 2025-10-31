@@ -1,4 +1,19 @@
 ﻿﻿<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
+# 1.5.3
+31/10/2025
+
+## Fixed
+- Added defensive checks to prevent the KeyError in handle_cov_check, made handle_object_list_check resilient if the device isn’t in the dict yet, and log when duplicate device instances are seen from different addresses to help diagnose duplicate device IDs.
+
+# 1.5.2
+25/09/2025
+
+## Fixed
+- Support more modern ethernet naming schemes (including 'end' observed on HA Yellow)
+
+## Added
+- New `ingress_port` configuration option to allow changing the previously hard-coded ingress web UI port (default remains 8099). If not set, it falls back to 8099.
+
 
 # 1.5.1
 07/09/2024
@@ -8,8 +23,8 @@
 - If address changed since last I Am request, it'll get updated internally now.
 
 ## Added
-- Added resubscribing CoV to an object after the subscription had been timed out due to no response. [#52](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/52)
-- `resub_on_iam` and `reread_on_iam` options under `devices_setup` in the add-on configuration. [#57](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/57)
+- Added resubscribing CoV to an object after the subscription had been timed out due to no response. [#52](https://github.com/NemiahUK/bepacom-HA-Addons/issues/52)
+- `resub_on_iam` and `reread_on_iam` options under `devices_setup` in the add-on configuration. [#57](https://github.com/NemiahUK/bepacom-HA-Addons/issues/57)
 
 ## Dependencies
 - ⬆️ Bumped base-python image to version v14.0.1.
@@ -19,18 +34,18 @@
 13/08/2024
 
 ## Added
-- Reading resolution property now. Integration will use it once it's updated as well. [#46](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/46)
-- Added devices_setup configuration option to allow the user to configure behaviour. See Documentation for usage. [#43](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/discussions/43)
+- Reading resolution property now. Integration will use it once it's updated as well. [#46](https://github.com/NemiahUK/bepacom-HA-Addons/issues/46)
+- Added devices_setup configuration option to allow the user to configure behaviour. See Documentation for usage. [#43](https://github.com/NemiahUK/bepacom-HA-Addons/discussions/43)
 - Updated DOCS.md
-- Added units for entity to BACnet translation. [#47](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/47)\
+- Added units for entity to BACnet translation. [#47](https://github.com/NemiahUK/bepacom-HA-Addons/issues/47)\
 - Added array index to apiv2 writes.
 
 ## Fixed
-- If an entity has units that can't be translated, it'll result in the noUnit property value. [#47](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/47)
+- If an entity has units that can't be translated, it'll result in the noUnit property value. [#47](https://github.com/NemiahUK/bepacom-HA-Addons/issues/47)
 - Fixed infinite loop causing BACpypes3 to get stuck when sending too many subscribe requests.(since v1.4.1b4)
 - Fixed sending error reply too soon when receiving values before receiving confirmation of subscription. (since v1.4.1b4)
 - Fixed certain exceptions getting exceptions.
-- Now detecting predictable interface names using auto detection of IP address. [#66](https://github.com/Bepacom-Raalte/bepacom-HA-Addons/issues/66)
+- Now detecting predictable interface names using auto detection of IP address. [#66](https://github.com/NemiahUK/bepacom-HA-Addons/issues/66)
 - Fixed an issue where OctetString would cause the API to fail.
 
 ## Changed
@@ -74,7 +89,7 @@
 
 ## Fixed
 
-- Fixed handling for devices that don't support ReadMultipleServices. [#14](https://github.com/Bepacom-Raalte/Bepacom-BACnet-IP-Integration/issues/14)
+- Fixed handling for devices that don't support ReadMultipleServices. [#14](https://github.com/NemiahUK/Bepacom-BACnet-IP-Integration/issues/14)
 - Reading will now look at protocolServicesSupported. 
 - Made configuration sequence more universal. This is irrelevant for users, but great for debugging.
 

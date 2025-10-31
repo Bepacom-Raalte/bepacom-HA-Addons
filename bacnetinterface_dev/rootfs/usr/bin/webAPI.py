@@ -123,7 +123,7 @@ The BACnet integration will use the websocket and API points to receive and writ
 
 ## Suggestions
 
-Please drop your suggestions in the [GitHub repository](https://github.com/Bepacom-Raalte/bepacom-HA-Addons), or on the Home Assistant community forums @gravyseal.
+Please drop your suggestions in the [GitHub repository](https://github.com/NemiahUK/bepacom-HA-Addons), or on the Home Assistant community forums @gravyseal.
 
 """
 
